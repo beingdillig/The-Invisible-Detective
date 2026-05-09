@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Invisible Detective</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+
+    <!-- OS Container -->
+    <div id="phone-container">
+        
+        <!-- Black Screen (End Act 1 / Dead Battery) -->
+        <div id="black-screen" class="screen"></div>
+
+        <!-- Lock Screen -->
+        <div id="lock-screen" class="screen active">
+            <div class="status-bar">
+                <span class="time">00:00</span>
+                <span class="icons">
+                    <span class="signal-weak">.||</span>
+                    <div class="battery"><div class="battery-level" style="width: 18%;"></div></div>
+                </span>
+            </div>
+            
+            <div class="lock-time-huge time">00:00</div>
+            <div class="lock-date">Monday, Nov 12</div>
+
+            <div class="notification-container" id="notification-container">
+                <!-- Scripted notifications go here -->
+            </div>
+
+            <div class="unlock-area" id="unlock-trigger">
+                <div class="swipe-indicator"></div>
+            </div>
+        </div>
+
+        <!-- Passcode Screen -->
+        <div id="passcode-screen" class="screen">
+            <div class="status-bar">
+                <span class="time">00:00</span>
+                <span class="icons">
+                    <span class="signal-weak">.||</span>
+                    <div class="battery"><div class="battery-level" style="width: 18%;"></div></div>
+                </span>
+            </div>
+            <div class="passcode-container">
+                <h2>Enter Passcode</h2>
+                <div class="passcode-dots" id="main-passcode-dots">
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                </div>
+                <div class="keypad">
+                    <button class="key" onclick="handleKeypad('1')">1</button><button class="key" onclick="handleKeypad('2')">2</button><button class="key" onclick="handleKeypad('3')">3</button>
+                    <button class="key" onclick="handleKeypad('4')">4</button><button class="key" onclick="handleKeypad('5')">5</button><button class="key" onclick="handleKeypad('6')">6</button>
+                    <button class="key" onclick="handleKeypad('7')">7</button><button class="key" onclick="handleKeypad('8')">8</button><button class="key" onclick="handleKeypad('9')">9</button>
+                    <button class="key" id="key-cancel" onclick="handleKeypad('cancel')">Cancel</button><button class="key" onclick="handleKeypad('0')">0</button><button class="key" id="key-delete" onclick="handleKeypad('del')">⌫</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Home Screen -->
+        <div id="home-screen" class="screen">
+            <div class="status-bar">
+                <span class="time">00:00</span>
+                <span class="icons">
+                    <span class="signal-weak">.||</span>
+                    <div class="battery"><div class="battery-level" style="width: 18%;"></div><span id="batt-pct">18%</span></div>
+                </span>
+            </div>
+
+            <div class="app-grid">
+                <div class="app-icon" data-target="messages-app"><div class="icon msg-icon"></div><span>Messages</span></div>
+                <div class="app-icon" data-target="gallery-app"><div class="icon gallery-icon"></div><span>Gallery</span></div>
+                <div class="app-icon" data-target="calendar-app"><div class="icon calendar-icon"></div><span>Calendar</span></div>
+                <div class="app-icon" data-target="notes-app"><div class="icon notes-icon"></div><span>Notes</span></div>
+                <div class="app-icon" data-target="settings-app"><div class="icon settings-icon"></div><span>Settings</span></div>
+                <div class="app-icon" data-target="browser-app"><div class="icon browser-icon"></div><span>Browser</span></div>
+                <div class="app-icon" data-target="weather-app"><div class="icon weather-icon"></div><span>Weather</span></div>
+                <div class="app-icon" data-target="maps-app"><div class="icon maps-icon"></div><span>Maps</span></div>
+                <div class="app-icon" data-target="music-app"><div class="icon music-icon"></div><span>Music</span></div>
+                <div class="app-icon" data-target="bank-app"><div class="icon bank-icon"></div><span>Banking</span></div>
+                <div class="app-icon" data-target="voice-app"><div class="icon voice-icon"></div><span>Recorder</span></div>
+            </div>
+            
+            <div class="dock">
+                <div class="app-icon" data-target="phone-app"><div class="icon phone-icon"></div></div>
+                <div class="app-icon" data-target="email-app"><div class="icon email-icon"></div></div>
+                <div class="app-icon" data-target="camera-app"><div class="icon camera-icon"></div></div>
+            </div>
+        </div>
+
+        <!-- APP: Messages -->
+        <div id="messages-app" class="screen app-screen">
+            <div class="app-header">
+                <button class="back-btn" data-back="home-screen">←</button>
+                <h2>Messages</h2>
+            </div>
+            <div class="scroll-container" id="chat-list-container">
+                <div class="nx-list-group" id="chat-list"></div>
+            </div>
+        </div>
+
+        <div id="chat-view" class="screen app-screen">
+            <div class="app-header app-header-small">
+                <button class="back-btn" data-back="messages-app">←</button>
+                <h2 id="chat-contact-name">Contact</h2>
+            </div>
+            <div class="chat-history" id="chat-history"></div>
+            <div class="chat-input-bar">
+                <div class="chat-attach">＋</div>
+                <div class="chat-input-wrapper">
+                    <input type="text" id="chat-input-field" placeholder="iMessage">
+                    <button class="chat-send-btn" onclick="sendChatMessage()">↑</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP: Gallery -->
+        <div id="gallery-app" class="screen app-screen">
+            <div class="app-header">
+                <button class="back-btn" data-back="home-screen">←</button>
+                <h2>Albums</h2>
+            </div>
+            <div class="scroll-container">
+                <div class="gallery-albums">
+                    <div class="album-card" onclick="openAlbum('camera')">
+                        <div class="album-thumb" id="thumb-camera"></div>
+                        <div class="album-title">Camera Roll</div><div class="album-count">56 items</div>
+                    </div>
+                    <div class="album-card" onclick="promptHiddenAlbum()">
+                        <div class="album-thumb" style="background:#111; display:flex; justify-content:center; align-items:center; font-size:32px;">🔒</div>
+                        <div class="album-title">Hidden</div><div class="album-count">18 items</div>
+                    </div>
+                    <div class="album-card" onclick="openAlbum('downloads')">
+                        <div class="album-thumb" id="thumb-downloads" style="background:#223;"></div>
+                        <div class="album-title">Downloads</div><div class="album-count">20 items</div>
+                    </div>
+                </div>
+            </div>
+            <div class="gallery-nav">
+                <div class="g-nav-item">🖼️<span>Photos</span></div>
+                <div class="g-nav-item active">📁<span>Albums</span></div>
+                <div class="g-nav-item">🔍<span>Search</span></div>
+            </div>
+        </div>
+
+        <div id="album-view" class="screen app-screen">
+            <div class="app-header app-header-small">
+                <button class="back-btn" data-back="gallery-app">←</button>
+                <h2 id="album-title">Album</h2>
+            </div>
+            <div class="gallery-grid" id="gallery-grid"></div>
+        </div>
+
+        <div id="image-view" class="screen app-screen fullscreen-image">
+             <button class="back-btn overlay-btn" data-back="album-view">←</button>
+             <img id="full-image" src="" alt="Full image">
+             <div class="image-metadata" id="image-metadata"></div>
+        </div>
+
+        <!-- Hidden Folder Password Modal -->
+        <div id="hidden-modal" class="modal-overlay">
+            <div class="modal-box">
+                <h3>Hidden Album</h3>
+                <p>Enter passcode</p>
+                <input type="password" id="hidden-password" placeholder="Passcode">
+                <p id="hidden-error" class="warning-text" style="display:none; font-size: 13px; margin-bottom: 15px;">Incorrect Passcode</p>
+                <div class="modal-actions">
+                    <button onclick="closeHiddenModal()">Cancel</button>
+                    <button onclick="checkHiddenPassword()">Unlock</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zip Password Modal -->
+        <div id="zip-modal" class="modal-overlay">
+            <div class="modal-box">
+                <h3>Encrypted Archive</h3>
+                <p>Enter password for final_backup.zip</p>
+                <input type="password" id="zip-password" placeholder="Password">
+                <p id="zip-error" class="warning-text" style="display:none; font-size: 13px; margin-bottom: 15px;">Access Denied</p>
+                <div class="modal-actions">
+                    <button onclick="closeZipModal()">Cancel</button>
+                    <button onclick="checkZipPassword()">Unlock</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP: Settings -->
+        <div id="settings-app" class="screen app-screen">
+            <div class="app-header">
+                <button class="back-btn" data-back="home-screen">←</button>
+                <h2>Settings</h2>
+            </div>
+            <div class="scroll-container" id="settings-list"></div>
+        </div>
+        
+        <div id="settings-detail" class="screen app-screen">
+            <div class="app-header app-header-small">
+                <button class="back-btn" data-back="settings-app">←</button>
+                <h2 id="settings-detail-title">Detail</h2>
+            </div>
+            <div class="detail-content" id="settings-detail-body"></div>
+        </div>
+
+        <!-- APP: Notes -->
+        <div id="notes-app" class="screen app-screen">
+            <div class="app-header">
+                <button class="back-btn" data-back="home-screen">←</button>
+                <h2>Notes</h2>
+            </div>
+            <div class="scroll-container">
+                <div class="notes-grid" id="notes-list"></div>
+            </div>
+        </div>
+
+        <div id="note-view" class="screen app-screen">
+            <div class="app-header app-header-small">
+                <button class="back-btn" data-back="notes-app">←</button>
+                <h2>Note</h2>
+            </div>
+            <div class="note-content-area">
+                <h2 id="note-title">Title</h2>
+                <div id="note-body">Body</div>
+            </div>
+        </div>
+        
+        <!-- APP: Browser -->
+        <div id="browser-app" class="screen app-screen">
+            <div class="browser-top">
+                <input type="text" class="browser-address" id="browser-url-input" value="nx-search.com" onkeypress="if(event.key==='Enter') performBrowserSearch(this.value)" />
+            </div>
+            <div class="scroll-container" id="browser-list" style="padding-top:20px;"></div>
+            <div class="browser-bottom">
+                <span>←</span><span>→</span><span>⎘</span><span>🔖</span><span>◫</span>
+            </div>
+        </div>
+        
+        <div id="search-results" class="screen app-screen">
+            <div class="browser-top">
+                <div class="browser-address">🔒 nx-search.com/search</div>
+            </div>
+            <div class="browser-content">
+                <div style="padding:16px 24px; border-bottom:1px solid #eee; background:#f8f9fa;">
+                    <div style="background:#fff; border:1px solid #ddd; padding:10px 16px; border-radius:24px; display:flex; align-items:center;">
+                        <input type="text" style="color:#000; font-size:16px; border:none; outline:none; width:100%;" id="search-query-text" onkeypress="if(event.key==='Enter') performBrowserSearch(this.value)">
+                    </div>
+                </div>
+                <div class="search-results-list" id="search-results-list"></div>
+            </div>
+            <div class="browser-bottom">
+                <span onclick="showScreen('browser-app')" style="cursor:pointer;">←</span><span style="opacity:0.5">→</span><span>⎘</span><span>🔖</span><span>◫</span>
+            </div>
+        </div>
+
+        <!-- APP: Voice Recorder -->
+        <div id="voice-app" class="screen app-screen">
+            <div class="app-header">
+                <button class="back-btn" data-back="home-screen">←</button>
+                <h2>Voice Memos</h2>
+            </div>
+            <div class="record-ui-top">
+                <div class="record-btn" id="mic-record-btn" onclick="toggleRecording()"><div class="record-btn-inner" id="mic-record-inner"></div></div>
+                <div class="record-time" id="mic-record-time">00:00.00</div>
+            </div>
+            <div class="scroll-container">
+                <div class="nx-list-group" id="voice-list"></div>
+            </div>
+        </div>
+        
+        <div id="audio-player" class="screen app-screen">
+            <div class="app-header app-header-small">
+                <button class="back-btn" data-back="voice-app" onclick="stopVoicePlayer()">←</button>
+                <h2>Now Playing</h2>
+            </div>
+            <div class="audio-view">
+                <div class="audio-title" id="audio-title">Recording.m4a</div>
+                <div class="audio-waveform" id="voice-waveform">
+                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                </div>
+                <div class="audio-transcript" id="audio-transcript"></div>
+                <div style="display:flex; align-items:center; gap:40px; font-size:32px;">
+                    <span>⏮</span> <span id="voice-play-btn" onclick="toggleVoicePlayback()" style="font-size:48px; color:var(--danger-color); cursor:pointer;">▶</span> <span>⏭</span>
+                </div>
+            </div>
+            <audio id="voice-audio-element"></audio>
+        </div>
+
+        <!-- APP: Maps -->
+        <div id="maps-app" class="screen app-screen">
+            <div id="real-map" style="width: 100%; height: 100%; position: absolute; top:0; left:0; z-index:1; background: #000;"></div>
+            <button class="back-btn overlay-btn" data-back="home-screen" style="z-index: 30;">←</button>
+            <div class="map-search-bar" style="z-index:20;">
+                <input type="text" id="map-search-input" placeholder="Search for a place..." style="background:transparent; border:none; color:#fff; outline:none; width:100%; font-size:16px;">
+            </div>
+            <div class="map-controls" style="z-index:20;">
+                <div class="map-btn" onclick="map.setZoom(map.getZoom() + 1)">+</div>
+                <div class="map-btn" onclick="map.setZoom(map.getZoom() - 1)">-</div>
+            </div>
+        </div>
+
+        <!-- APP: Calendar -->
+        <div id="calendar-app" class="screen app-screen">
+            <div class="app-header">
+                <button class="back-btn" data-back="home-screen">←</button>
+                <h2>October</h2>
+            </div>
+            <div class="cal-week-view">
+                <div class="cal-day"><span class="cal-day-name">Mon</span><span class="cal-day-num">10</span></div>
+                <div class="cal-day"><span class="cal-day-name">Tue</span><span class="cal-day-num">11</span></div>
+                <div class="cal-day active"><span class="cal-day-name">Wed</span><span class="cal-day-num">12</span></div>
+                <div class="cal-day"><span class="cal-day-name">Thu</span><span class="cal-day-num">13</span></div>
+                <div class="cal-day"><span class="cal-day-name">Fri</span><span class="cal-day-num">14</span></div>
+            </div>
+            <div class="cal-agenda" id="calendar-list"></div>
+        </div>
+        
+        <div id="event-detail" class="screen app-screen">
+            <div class="app-header app-header-small">
+                <button class="back-btn" data-back="calendar-app">←</button>
+                <h2>Event</h2>
+            </div>
+            <div class="detail-content" id="event-detail-body"></div>
+        </div>
+
+        <!-- Static Shell Apps (Bank, Email, Calls, Music, Camera) -->
+        <div id="phone-app" class="screen app-screen">
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Recents</h2></div>
+            <div class="scroll-container"><div class="nx-list-group" id="calls-list"></div></div>
+        </div>
+        <div id="bank-app" class="screen app-screen">
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Banking</h2></div>
+            <div class="scroll-container"><div class="nx-list-group" id="bank-list"></div></div>
+        </div>
+        <div id="email-app" class="screen app-screen">
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Inbox</h2></div>
+            <div class="scroll-container"><div class="nx-list-group" id="email-list"></div></div>
+        </div>
+        <div id="email-detail" class="screen app-screen">
+            <div class="app-header app-header-small"><button class="back-btn" data-back="email-app">←</button><h2>Message</h2></div>
+            <div class="detail-content" id="email-detail-body"></div>
+        </div>
+
+        <!-- APP: Weather -->
+        <div id="weather-app" class="screen app-screen">
+            <div class="weather-view">
+                <button class="back-btn overlay-btn" data-back="home-screen" style="border:none;">←</button>
+                <div class="weather-main">
+                    <h2>Metro Station Area</h2>
+                    <h1>18°</h1>
+                    <h3>Raining</h3>
+                    <p>H:21° L:15°</p>
+                </div>
+                <div class="weather-hourly">
+                    <div class="wh-item"><span>Now</span><span style="font-size:24px;">🌧️</span><span>18°</span></div>
+                    <div class="wh-item"><span>3 PM</span><span style="font-size:24px;">🌧️</span><span>18°</span></div>
+                    <div class="wh-item"><span>4 PM</span><span style="font-size:24px;">☁️</span><span>19°</span></div>
+                    <div class="wh-item"><span>5 PM</span><span style="font-size:24px;">☁️</span><span>19°</span></div>
+                    <div class="wh-item"><span>6 PM</span><span style="font-size:24px;">🌙</span><span>17°</span></div>
+                </div>
+                <div class="weather-forecast">
+                    <div class="wf-item"><span>Today</span><span>🌧️</span><div class="wf-bar"><div class="wf-fill" style="width:70%"></div></div><span>21°</span></div>
+                    <div class="wf-item"><span>Mon</span><span>☁️</span><div class="wf-bar"><div class="wf-fill" style="width:40%"></div></div><span>19°</span></div>
+                    <div class="wf-item"><span>Tue</span><span>☀️</span><div class="wf-bar"><div class="wf-fill" style="width:10%"></div></div><span>24°</span></div>
+                    <div class="wf-item"><span>Wed</span><span>🌩️</span><div class="wf-bar"><div class="wf-fill" style="width:90%"></div></div><span>16°</span></div>
+                </div>
+                <div class="weather-stats">
+                    <div class="ws-box"><span>Humidity</span><strong>88%</strong></div>
+                    <div class="ws-box"><span>Wind</span><strong>14 km/h</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="camera-app" class="screen app-screen" style="background:#000;">
+            <div class="camera-top-bar">
+                <span class="back-btn" data-back="home-screen" style="color:#fff;">←</span>
+                <span>⚡</span>
+                <span>HDR</span>
+                <span>⚙️</span>
+            </div>
+            <div class="camera-viewfinder">
+                <div class="camera-focus-box"></div>
+                <div class="camera-error-msg">
+                    <span class="warning-dot"></span>
+                    <p>CAMERA IN USE</p>
+                    <span>Process: ECHOSVC</span>
+                </div>
+            </div>
+            <div class="camera-bottom-bar">
+                <div class="camera-thumb"></div>
+                <div class="camera-shutter"></div>
+                <div class="camera-flip">🔄</div>
+            </div>
+        </div>
+
+        <div id="music-app" class="screen app-screen">
+            <div class="app-header"><button class="back-btn" data-back="home-screen" onclick="stopMusic()">←</button><h2>Music</h2></div>
+            <div style="flex-grow:1; display:flex; flex-direction:column; align-items:center; padding:40px 24px; background:linear-gradient(180deg, #110022, #000);">
+                <div id="music-cover" style="width:240px; height:240px; background:linear-gradient(45deg, #ff00cc, #333399); border-radius:16px; margin-bottom:40px; box-shadow:0 10px 40px rgba(255,0,204,0.3);"></div>
+                <h2 id="music-title" style="font-size:24px; margin-bottom:8px;">Late Night Drive</h2>
+                <p id="music-artist" style="font-size:18px; color:#888; margin-bottom:60px;">Dark Synthwave</p>
+                <div style="display:flex; align-items:center; gap:40px; font-size:32px;">
+                    <span onclick="prevTrack()" style="cursor:pointer;">⏮</span>
+                    <span id="music-play-btn" onclick="toggleMusic()" style="font-size:56px; color:var(--accent-color); cursor:pointer;">▶</span>
+                    <span onclick="nextTrack()" style="cursor:pointer;">⏭</span>
+                </div>
+                <div id="music-progress-bg" onclick="seekMusic(event)" style="width:100%; height:4px; background:#333; border-radius:2px; margin-top:40px; cursor:pointer;">
+                    <div id="music-progress-bar" style="width:0%; height:100%; background:var(--accent-color); border-radius:2px; pointer-events:none;"></div>
+                </div>
+            </div>
+            <audio id="music-audio-element"></audio>
+        </div>
+        
+        <!-- End Act 1 Overlay (Corrupted Video) -->
+        <div id="act1-ending" class="screen">
+            <div class="video-container">
+                <div class="glitch-overlay"></div>
+                <div class="video-text">"If you're watching this... it already knows about you."</div>
+            </div>
+        </div>
+
+        <!-- Cracked Screen Overlay -->
+        <div class="cracked-screen"></div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

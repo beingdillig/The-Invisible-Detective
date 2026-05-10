@@ -22,19 +22,20 @@
             <div class="status-bar">
                 <span class="time">00:00</span>
                 <span class="icons">
-                    <span class="signal-weak">.||</span>
-                    <div class="battery"><div class="battery-level" style="width: 18%;"></div></div>
+                    <svg class="signal-icon" viewBox="0 0 24 18" width="20" height="14" fill="white"><rect x="0" y="10" width="4" height="8" rx="1" opacity="0.3"/><rect x="5" y="7" width="4" height="11" rx="1" opacity="0.5"/><rect x="10" y="4" width="4" height="14" rx="1" opacity="0.8"/><rect x="15" y="1" width="4" height="17" rx="1"/></svg>
+                    <span class="wifi-icon">&#8776;</span>
+                    <div class="battery-wrap"><div class="battery"><div class="battery-level" style="width:18%"></div></div><span class="batt-num">18%</span></div>
                 </span>
             </div>
             
             <div class="lock-time-huge time">00:00</div>
             <div class="lock-date">Monday, Nov 12</div>
 
-            <div class="notification-container" id="notification-container">
-                <!-- Scripted notifications go here -->
-            </div>
+            <div class="notification-container" id="notification-container"></div>
 
+            <!-- Swipe to unlock area -->
             <div class="unlock-area" id="unlock-trigger">
+                <div class="swipe-hint">Swipe up to unlock</div>
                 <div class="swipe-indicator"></div>
             </div>
         </div>
@@ -44,8 +45,9 @@
             <div class="status-bar">
                 <span class="time">00:00</span>
                 <span class="icons">
-                    <span class="signal-weak">.||</span>
-                    <div class="battery"><div class="battery-level" style="width: 18%;"></div></div>
+                    <svg class="signal-icon" viewBox="0 0 24 18" width="20" height="14" fill="white"><rect x="0" y="10" width="4" height="8" rx="1" opacity="0.3"/><rect x="5" y="7" width="4" height="11" rx="1" opacity="0.5"/><rect x="10" y="4" width="4" height="14" rx="1" opacity="0.8"/><rect x="15" y="1" width="4" height="17" rx="1"/></svg>
+                    <span class="wifi-icon">&#8776;</span>
+                    <div class="battery-wrap"><div class="battery"><div class="battery-level" style="width:18%"></div></div><span class="batt-num">18%</span></div>
                 </span>
             </div>
             <div class="passcode-container">
@@ -67,8 +69,9 @@
             <div class="status-bar">
                 <span class="time">00:00</span>
                 <span class="icons">
-                    <span class="signal-weak">.||</span>
-                    <div class="battery"><div class="battery-level" style="width: 18%;"></div><span id="batt-pct">18%</span></div>
+                    <svg class="signal-icon" viewBox="0 0 24 18" width="20" height="14" fill="white"><rect x="0" y="10" width="4" height="8" rx="1" opacity="0.3"/><rect x="5" y="7" width="4" height="11" rx="1" opacity="0.5"/><rect x="10" y="4" width="4" height="14" rx="1" opacity="0.8"/><rect x="15" y="1" width="4" height="17" rx="1"/></svg>
+                    <span class="wifi-icon">&#8776;</span>
+                    <div class="battery-wrap"><div class="battery"><div class="battery-level" style="width:18%"></div></div><span class="batt-num" id="batt-pct">18%</span></div>
                 </span>
             </div>
 
@@ -156,10 +159,18 @@
             <div class="gallery-grid" id="gallery-grid"></div>
         </div>
 
+        <!-- Full Screen Image Viewer with swipe support -->
         <div id="image-view" class="screen app-screen fullscreen-image">
-             <button class="back-btn overlay-btn" data-back="album-view">←</button>
-             <img id="full-image" src="" alt="Full image">
-             <div class="image-metadata" id="image-metadata"></div>
+            <button class="back-btn overlay-btn" data-back="album-view" id="img-back-btn">←</button>
+            <div class="img-swipe-container" id="img-swipe-container">
+                <img id="full-image" src="" alt="Full image">
+            </div>
+            <div class="image-nav">
+                <button class="img-nav-btn" id="img-prev-btn" onclick="navigateImage(-1)">‹</button>
+                <button class="img-nav-btn" id="img-next-btn" onclick="navigateImage(1)">›</button>
+            </div>
+            <div class="image-metadata" id="image-metadata"></div>
+            <div class="image-counter" id="image-counter">1 / 1</div>
         </div>
 
         <!-- Hidden Folder Password Modal -->
@@ -257,6 +268,10 @@
             </div>
         </div>
 
+        <div id="browser-page-view" class="screen app-screen">
+            <!-- Content populated by JS -->
+        </div>
+
         <!-- APP: Voice Recorder -->
         <div id="voice-app" class="screen app-screen">
             <div class="app-header">
@@ -300,7 +315,7 @@
             </div>
             <div class="map-controls" style="z-index:20;">
                 <div class="map-btn" onclick="map.setZoom(map.getZoom() + 1)">+</div>
-                <div class="map-btn" onclick="map.setZoom(map.getZoom() - 1)">-</div>
+                <div class="map-btn" onclick="map.setZoom(map.getZoom() - 1)">−</div>
             </div>
         </div>
 
@@ -328,7 +343,7 @@
             <div class="detail-content" id="event-detail-body"></div>
         </div>
 
-        <!-- Static Shell Apps (Bank, Email, Calls, Music, Camera) -->
+        <!-- Static Shell Apps -->
         <div id="phone-app" class="screen app-screen">
             <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Recents</h2></div>
             <div class="scroll-container"><div class="nx-list-group" id="calls-list"></div></div>
@@ -416,11 +431,15 @@
             <audio id="music-audio-element"></audio>
         </div>
         
-        <!-- End Act 1 Overlay (Corrupted Video) -->
+        <!-- End Act 1 Overlay (Corrupted Screen) -->
         <div id="act1-ending" class="screen">
-            <div class="video-container">
-                <div class="glitch-overlay"></div>
-                <div class="video-text">"If you're watching this... it already knows about you."</div>
+            <div class="act1-ending-bg">
+                <div class="glitch-lines"></div>
+                <div class="act1-content">
+                    <div class="act1-logo">ECHO</div>
+                    <div class="act1-text">"If you're watching this...<br>it already knows about you."</div>
+                    <div class="act1-subtext">— Aarav Mehta, Oct 12</div>
+                </div>
             </div>
         </div>
 

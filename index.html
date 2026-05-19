@@ -17,23 +17,28 @@
         <!-- Black Screen (End Act 1 / Dead Battery) -->
         <div id="black-screen" class="screen"></div>
 
+
+        <!-- PRELUDE SCREEN -->
+        <div id="prelude-screen" class="screen active">
+            <div class="prelude-container" id="prelude-container">
+                <div class="prelude-text" id="prelude-text"></div>
+                <div class="prelude-tap-hint" id="prelude-tap-hint">tap to continue</div>
+            </div>
+        </div>
+
         <!-- Lock Screen -->
-        <div id="lock-screen" class="screen active">
+        <div id="lock-screen" class="screen">
             <div class="status-bar">
                 <span class="time">00:00</span>
                 <span class="icons">
                     <svg class="signal-icon" viewBox="0 0 24 18" width="20" height="14" fill="white"><rect x="0" y="10" width="4" height="8" rx="1" opacity="0.3"/><rect x="5" y="7" width="4" height="11" rx="1" opacity="0.5"/><rect x="10" y="4" width="4" height="14" rx="1" opacity="0.8"/><rect x="15" y="1" width="4" height="17" rx="1"/></svg>
                     <span class="wifi-icon">&#8776;</span>
-                    <div class="battery-wrap"><div class="battery"><div class="battery-level" style="width:18%"></div></div><span class="batt-num">18%</span></div>
+                    <div class="battery-wrap"><div class="battery"><div class="battery-level" style="width:18%"></div></div><span class="batt-pct">18%</span></div>
                 </span>
             </div>
-            
             <div class="lock-time-huge time">00:00</div>
             <div class="lock-date">Monday, Nov 12</div>
-
             <div class="notification-container" id="notification-container"></div>
-
-            <!-- Swipe to unlock area -->
             <div class="unlock-area" id="unlock-trigger">
                 <div class="swipe-hint">Swipe up to unlock</div>
                 <div class="swipe-indicator"></div>
@@ -44,11 +49,10 @@
         <div id="passcode-screen" class="screen">
             <div class="status-bar">
                 <span class="time">00:00</span>
-                <span class="icons">
-                    <svg class="signal-icon" viewBox="0 0 24 18" width="20" height="14" fill="white"><rect x="0" y="10" width="4" height="8" rx="1" opacity="0.3"/><rect x="5" y="7" width="4" height="11" rx="1" opacity="0.5"/><rect x="10" y="4" width="4" height="14" rx="1" opacity="0.8"/><rect x="15" y="1" width="4" height="17" rx="1"/></svg>
-                    <span class="wifi-icon">&#8776;</span>
-                    <div class="battery-wrap"><div class="battery"><div class="battery-level" style="width:18%"></div></div><span class="batt-num">18%</span></div>
-                </span>
+                <div class="status-right">
+                    <div class="network-sign"><div class="network-bar"></div><div class="network-bar"></div><div class="network-bar"></div><div class="network-bar"></div></div>
+                    <div class="battery-container"><span class="batt-pct">18%</span><div class="battery-icon"><div class="battery-level" style="width:18%"></div></div></div>
+                </div>
             </div>
             <div class="passcode-container">
                 <h2>Enter Passcode</h2>
@@ -68,13 +72,11 @@
         <div id="home-screen" class="screen">
             <div class="status-bar">
                 <span class="time">00:00</span>
-                <span class="icons">
-                    <svg class="signal-icon" viewBox="0 0 24 18" width="20" height="14" fill="white"><rect x="0" y="10" width="4" height="8" rx="1" opacity="0.3"/><rect x="5" y="7" width="4" height="11" rx="1" opacity="0.5"/><rect x="10" y="4" width="4" height="14" rx="1" opacity="0.8"/><rect x="15" y="1" width="4" height="17" rx="1"/></svg>
-                    <span class="wifi-icon">&#8776;</span>
-                    <div class="battery-wrap"><div class="battery"><div class="battery-level" style="width:18%"></div></div><span class="batt-num" id="batt-pct">18%</span></div>
-                </span>
+                <div class="status-right">
+                    <div class="network-sign"><div class="network-bar"></div><div class="network-bar"></div><div class="network-bar"></div><div class="network-bar"></div></div>
+                    <div class="battery-container"><span class="batt-pct">18%</span><div class="battery-icon"><div class="battery-level" style="width:18%"></div></div></div>
+                </div>
             </div>
-
             <div class="app-grid">
                 <div class="app-icon" data-target="messages-app"><div class="icon msg-icon"></div><span>Messages</span></div>
                 <div class="app-icon" data-target="gallery-app"><div class="icon gallery-icon"></div><span>Gallery</span></div>
@@ -88,7 +90,6 @@
                 <div class="app-icon" data-target="bank-app"><div class="icon bank-icon"></div><span>Banking</span></div>
                 <div class="app-icon" data-target="voice-app"><div class="icon voice-icon"></div><span>Recorder</span></div>
             </div>
-            
             <div class="dock">
                 <div class="app-icon" data-target="phone-app"><div class="icon phone-icon"></div></div>
                 <div class="app-icon" data-target="email-app"><div class="icon email-icon"></div></div>
@@ -98,10 +99,7 @@
 
         <!-- APP: Messages -->
         <div id="messages-app" class="screen app-screen">
-            <div class="app-header">
-                <button class="back-btn" data-back="home-screen">←</button>
-                <h2>Messages</h2>
-            </div>
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Messages</h2></div>
             <div class="scroll-container" id="chat-list-container">
                 <div class="nx-list-group" id="chat-list"></div>
             </div>
@@ -124,10 +122,7 @@
 
         <!-- APP: Gallery -->
         <div id="gallery-app" class="screen app-screen">
-            <div class="app-header">
-                <button class="back-btn" data-back="home-screen">←</button>
-                <h2>Albums</h2>
-            </div>
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Albums</h2></div>
             <div class="scroll-container">
                 <div class="gallery-albums">
                     <div class="album-card" onclick="openAlbum('camera')">
@@ -152,14 +147,11 @@
         </div>
 
         <div id="album-view" class="screen app-screen">
-            <div class="app-header app-header-small">
-                <button class="back-btn" data-back="gallery-app">←</button>
-                <h2 id="album-title">Album</h2>
-            </div>
+            <div class="app-header app-header-small"><button class="back-btn" data-back="gallery-app">←</button><h2 id="album-title">Album</h2></div>
             <div class="gallery-grid" id="gallery-grid"></div>
         </div>
 
-        <!-- Full Screen Image Viewer with swipe support -->
+        <!-- Full Screen Image Viewer -->
         <div id="image-view" class="screen app-screen fullscreen-image">
             <button class="back-btn overlay-btn" data-back="album-view" id="img-back-btn">←</button>
             <div class="img-swipe-container" id="img-swipe-container">
@@ -203,90 +195,102 @@
 
         <!-- APP: Settings -->
         <div id="settings-app" class="screen app-screen">
-            <div class="app-header">
-                <button class="back-btn" data-back="home-screen">←</button>
-                <h2>Settings</h2>
-            </div>
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Settings</h2></div>
             <div class="scroll-container" id="settings-list"></div>
         </div>
-        
         <div id="settings-detail" class="screen app-screen">
-            <div class="app-header app-header-small">
-                <button class="back-btn" data-back="settings-app">←</button>
-                <h2 id="settings-detail-title">Detail</h2>
-            </div>
+            <div class="app-header app-header-small"><button class="back-btn" data-back="settings-app">←</button><h2 id="settings-detail-title">Detail</h2></div>
             <div class="detail-content" id="settings-detail-body"></div>
         </div>
 
         <!-- APP: Notes -->
         <div id="notes-app" class="screen app-screen">
-            <div class="app-header">
-                <button class="back-btn" data-back="home-screen">←</button>
-                <h2>Notes</h2>
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Notes</h2></div>
+            <div class="scroll-container"><div class="notes-grid" id="notes-list"></div></div>
+        </div>
+        <div id="note-view" class="screen app-screen">
+            <div class="app-header app-header-small"><button class="back-btn" data-back="notes-app">←</button><h2>Note</h2></div>
+            <div class="note-content-area"><h2 id="note-title">Title</h2><div id="note-body">Body</div></div>
+        </div>
+
+        <!-- APP: Browser Home -->
+        <div id="browser-app" class="screen app-screen">
+            <div class="browser-top">
+                <div class="browser-nav-row">
+                    <button class="browser-back-home" onclick="showScreen('home-screen')">← Home</button>
+                    <div class="browser-tabs">
+                        <span class="b-tab active" onclick="renderBrowserHome()">Home</span>
+                        <span class="b-tab" onclick="showBrowserHistory()">History</span>
+                    </div>
+                </div>
+                <div class="browser-addr-bar">
+                    <span class="b-lock">🔒</span>
+                    <input type="text" id="browser-url-input" value="nx-search.com" onkeypress="if(event.key==='Enter') performBrowserSearch(this.value)" />
+                </div>
             </div>
-            <div class="scroll-container">
-                <div class="notes-grid" id="notes-list"></div>
+            <div class="browser-content" id="browser-home-content"></div>
+            <div class="browser-bottom">
+                <span class="b-btn" onclick="renderBrowserHome()">←</span>
+                <span class="b-btn" style="opacity:0.4">→</span>
+                <span class="b-btn" onclick="renderBrowserHome()">⌂</span>
+                <span class="b-btn" onclick="showBrowserHistory()">🕒</span>
+                <span class="b-btn" onclick="showScreen('home-screen')">✕</span>
             </div>
         </div>
 
-        <div id="note-view" class="screen app-screen">
-            <div class="app-header app-header-small">
-                <button class="back-btn" data-back="notes-app">←</button>
-                <h2>Note</h2>
-            </div>
-            <div class="note-content-area">
-                <h2 id="note-title">Title</h2>
-                <div id="note-body">Body</div>
-            </div>
-        </div>
-        
-        <!-- APP: Browser -->
-        <div id="browser-app" class="screen app-screen">
-            <div class="browser-top">
-                <input type="text" class="browser-address" id="browser-url-input" value="nx-search.com" onkeypress="if(event.key==='Enter') performBrowserSearch(this.value)" />
-            </div>
-            <div class="scroll-container" id="browser-list" style="padding-top:20px;"></div>
-            <div class="browser-bottom">
-                <span>←</span><span>→</span><span>⎘</span><span>🔖</span><span>◫</span>
-            </div>
-        </div>
-        
+        <!-- Browser: Search Results -->
         <div id="search-results" class="screen app-screen">
             <div class="browser-top">
-                <div class="browser-address">🔒 nx-search.com/search</div>
+                <div class="browser-nav-row"><button class="browser-back-home" onclick="showScreen('home-screen')">← Home</button></div>
+                <div class="browser-addr-bar">
+                    <span class="b-lock">🔒</span>
+                    <input type="text" id="search-query-text" style="color:#000; font-size:14px; border:none; outline:none; width:100%; background:transparent;" onkeypress="if(event.key==='Enter') performBrowserSearch(this.value)">
+                </div>
             </div>
             <div class="browser-content">
-                <div style="padding:16px 24px; border-bottom:1px solid #eee; background:#f8f9fa;">
-                    <div style="background:#fff; border:1px solid #ddd; padding:10px 16px; border-radius:24px; display:flex; align-items:center;">
-                        <input type="text" style="color:#000; font-size:16px; border:none; outline:none; width:100%;" id="search-query-text" onkeypress="if(event.key==='Enter') performBrowserSearch(this.value)">
-                    </div>
-                </div>
+                <div class="search-top-bar"><span id="search-result-count" style="font-size:12px;color:#70757a;"></span></div>
                 <div class="search-results-list" id="search-results-list"></div>
             </div>
             <div class="browser-bottom">
-                <span onclick="showScreen('browser-app')" style="cursor:pointer;">←</span><span style="opacity:0.5">→</span><span>⎘</span><span>🔖</span><span>◫</span>
+                <span class="b-btn" onclick="renderBrowserHome()">←</span>
+                <span class="b-btn" style="opacity:0.4">→</span>
+                <span class="b-btn" onclick="renderBrowserHome()">⌂</span>
+                <span class="b-btn" onclick="showBrowserHistory()">🕒</span>
+                <span class="b-btn" onclick="showScreen('home-screen')">✕</span>
             </div>
         </div>
 
-        <div id="browser-page-view" class="screen app-screen">
-            <!-- Content populated by JS -->
+        <!-- Browser: History Screen -->
+        <div id="browser-history-screen" class="screen app-screen">
+            <div class="browser-top">
+                <div class="browser-nav-row"><button class="browser-back-home" onclick="showScreen('home-screen')">← Home</button></div>
+                <div class="browser-addr-bar" style="background:#f1f3f4;">
+                    <span class="b-lock">🕒</span>
+                    <span style="font-size:14px;color:#3c4043;font-weight:500;">Browsing History</span>
+                </div>
+            </div>
+            <div class="browser-content" id="browser-history-content"></div>
+            <div class="browser-bottom">
+                <span class="b-btn" onclick="renderBrowserHome()">←</span>
+                <span class="b-btn" style="opacity:0.4">→</span>
+                <span class="b-btn" onclick="renderBrowserHome()">⌂</span>
+                <span class="b-btn active-tab-btn">🕒</span>
+                <span class="b-btn" onclick="showScreen('home-screen')">✕</span>
+            </div>
         </div>
+
+        <!-- Browser: Page View -->
+        <div id="browser-page-view" class="screen app-screen"></div>
 
         <!-- APP: Voice Recorder -->
         <div id="voice-app" class="screen app-screen">
-            <div class="app-header">
-                <button class="back-btn" data-back="home-screen">←</button>
-                <h2>Voice Memos</h2>
-            </div>
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Voice Memos</h2></div>
             <div class="record-ui-top">
                 <div class="record-btn" id="mic-record-btn" onclick="toggleRecording()"><div class="record-btn-inner" id="mic-record-inner"></div></div>
                 <div class="record-time" id="mic-record-time">00:00.00</div>
             </div>
-            <div class="scroll-container">
-                <div class="nx-list-group" id="voice-list"></div>
-            </div>
+            <div class="scroll-container"><div class="nx-list-group" id="voice-list"></div></div>
         </div>
-        
         <div id="audio-player" class="screen app-screen">
             <div class="app-header app-header-small">
                 <button class="back-btn" data-back="voice-app" onclick="stopVoicePlayer()">←</button>
@@ -300,8 +304,14 @@
                 </div>
                 <div class="audio-transcript" id="audio-transcript"></div>
                 <div style="display:flex; align-items:center; gap:40px; font-size:32px;">
-                    <span>⏮</span> <span id="voice-play-btn" onclick="toggleVoicePlayback()" style="font-size:48px; color:var(--danger-color); cursor:pointer;">▶</span> <span>⏭</span>
+                    <span>⏮</span>
+                    <span id="voice-play-btn" onclick="toggleVoicePlayback()" style="font-size:48px; color:var(--danger-color); cursor:pointer;">▶</span>
+                    <span>⏭</span>
                 </div>
+                <!-- Act 3: Audio Analyzer button (hidden until act3) -->
+                <button id="analyzer-launch-btn" onclick="openAudioAnalyzer()" style="display:none;margin-top:24px;background:#1a1a1a;border:1px solid #333;color:#00cc44;font-family:'Share Tech Mono',monospace;font-size:13px;padding:12px 24px;border-radius:8px;cursor:pointer;">
+                    📊 Analyze Frequencies
+                </button>
             </div>
             <audio id="voice-audio-element"></audio>
         </div>
@@ -321,10 +331,7 @@
 
         <!-- APP: Calendar -->
         <div id="calendar-app" class="screen app-screen">
-            <div class="app-header">
-                <button class="back-btn" data-back="home-screen">←</button>
-                <h2>October</h2>
-            </div>
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>October</h2></div>
             <div class="cal-week-view">
                 <div class="cal-day"><span class="cal-day-name">Mon</span><span class="cal-day-num">10</span></div>
                 <div class="cal-day"><span class="cal-day-name">Tue</span><span class="cal-day-num">11</span></div>
@@ -334,12 +341,8 @@
             </div>
             <div class="cal-agenda" id="calendar-list"></div>
         </div>
-        
         <div id="event-detail" class="screen app-screen">
-            <div class="app-header app-header-small">
-                <button class="back-btn" data-back="calendar-app">←</button>
-                <h2>Event</h2>
-            </div>
+            <div class="app-header app-header-small"><button class="back-btn" data-back="calendar-app">←</button><h2>Event</h2></div>
             <div class="detail-content" id="event-detail-body"></div>
         </div>
 
@@ -364,13 +367,12 @@
         <!-- APP: Weather -->
         <div id="weather-app" class="screen app-screen">
             <div class="weather-view">
-                <button class="back-btn overlay-btn" data-back="home-screen" style="border:none;">←</button>
-                <div class="weather-main">
-                    <h2>Metro Station Area</h2>
-                    <h1>18°</h1>
-                    <h3>Raining</h3>
-                    <p>H:21° L:15°</p>
+                <div class="weather-top-bar">
+                    <button class="weather-back-btn back-btn" data-back="home-screen">←</button>
+                    <span class="weather-location">Metro Station Area</span>
+                    <span style="width:40px"></span>
                 </div>
+                <div class="weather-main"><h1>18°</h1><h3>Raining</h3><p>H:21° L:15°</p></div>
                 <div class="weather-hourly">
                     <div class="wh-item"><span>Now</span><span style="font-size:24px;">🌧️</span><span>18°</span></div>
                     <div class="wh-item"><span>3 PM</span><span style="font-size:24px;">🌧️</span><span>18°</span></div>
@@ -393,14 +395,13 @@
 
         <div id="camera-app" class="screen app-screen" style="background:#000;">
             <div class="camera-top-bar">
-                <span class="back-btn" data-back="home-screen" style="color:#fff;">←</span>
-                <span>⚡</span>
-                <span>HDR</span>
-                <span>⚙️</span>
+                <button class="back-btn" data-back="home-screen" style="color:#fff; background:none; border:none; cursor:pointer; font-size:26px; margin:0; padding:0; display:inline-flex; align-items:center; justify-content:center; height:32px;">←</button>
+                <span>⚡</span><span>HDR</span><span>⚙️</span>
             </div>
-            <div class="camera-viewfinder">
-                <div class="camera-focus-box"></div>
-                <div class="camera-error-msg">
+            <div class="camera-viewfinder" id="camera-viewfinder">
+                <video id="camera-feed" autoplay playsinline style="width:100%;height:100%;object-fit:cover;display:none;position:absolute;top:0;left:0;z-index:1;"></video>
+                <div class="camera-focus-box" style="z-index:2;position:relative;"></div>
+                <div class="camera-error-msg" id="camera-error-msg" style="z-index:3;position:relative;">
                     <span class="warning-dot"></span>
                     <p>CAMERA IN USE</p>
                     <span>Process: ECHOSVC</span>
@@ -430,8 +431,8 @@
             </div>
             <audio id="music-audio-element"></audio>
         </div>
-        
-        <!-- End Act 1 Overlay (Corrupted Screen) -->
+
+        <!-- Act 1 Ending -->
         <div id="act1-ending" class="screen">
             <div class="act1-ending-bg">
                 <div class="glitch-lines"></div>
@@ -443,11 +444,347 @@
             </div>
         </div>
 
-        <!-- Cracked Screen Overlay -->
         <div class="cracked-screen"></div>
 
-    </div>
+        <!-- ══════════════════════════════════════ -->
+        <!-- ACT 2 SCREENS                         -->
+        <!-- ══════════════════════════════════════ -->
+
+        <div id="act2-boot" class="screen">
+            <div class="boot-screen">
+                <div class="boot-logo">NX_OS</div>
+                <div class="boot-sub">Recovery Layer v3.1</div>
+                <div class="boot-terminal" id="boot-terminal-text"></div>
+                <div class="boot-bar-wrap"><div class="boot-bar" id="boot-bar"></div></div>
+            </div>
+        </div>
+
+        <div id="act2-lock" class="screen">
+            <div class="act2-lock-bg" id="act2-lock-bg">
+                <div class="act2-lock-overlay"></div>
+                <div class="status-bar act2-status">
+                    <span class="time" id="act2-time">00:00</span>
+                    <span class="icons">
+                        <svg viewBox="0 0 24 18" width="18" height="13" fill="white" opacity="0.4"><rect x="0" y="10" width="4" height="8" rx="1"/><rect x="5" y="7" width="4" height="11" rx="1"/></svg>
+                        <div class="battery-wrap"><div class="battery danger"><div class="battery-level" style="width:3%"></div></div><span class="batt-num" style="color:#ff453a">3%</span></div>
+                    </span>
+                </div>
+                <div class="act2-lock-date">
+                    <div class="act2-date-text">Wednesday, Oct 13</div>
+                    <div class="act2-time-big" id="act2-time-big">00:00</div>
+                </div>
+                <div class="act2-temp-warn"><span>🌡️</span> Background processes detected.</div>
+                <div class="act2-unlock-hint" onclick="enterAct2Home()">
+                    <div class="act2-unlock-bar"></div>
+                    <span>Swipe up to continue</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="files-app" class="screen app-screen">
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Files</h2></div>
+            <div class="scroll-container">
+                <div class="files-folder" onclick="openMirrorFolder()">
+                    <div class="folder-icon">📁</div>
+                    <div class="folder-info"><div class="folder-name">/SYS/MIRROR/</div><div class="folder-sub">3 items — System Protected</div></div>
+                    <div class="folder-chevron">›</div>
+                </div>
+                <div class="files-folder" style="opacity:0.4; pointer-events:none;">
+                    <div class="folder-icon">📁</div>
+                    <div class="folder-info"><div class="folder-name">/USER/DOWNLOADS/</div><div class="folder-sub">Access Restricted</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mirror-folder" class="screen app-screen">
+            <div class="app-header"><button class="back-btn" data-back="files-app">←</button><h2>/SYS/MIRROR/</h2></div>
+            <div class="scroll-container">
+                <div class="files-folder" onclick="showScreen('behavioral-report')">
+                    <div class="folder-icon">📊</div>
+                    <div class="folder-info"><div class="folder-name">behavioral_reports.dat</div><div class="folder-sub">Readable — 14.2 KB</div></div>
+                    <div class="folder-chevron">›</div>
+                </div>
+                <div class="files-folder" onclick="showScreen('voice-corrupted')">
+                    <div class="folder-icon">🔉</div>
+                    <div class="folder-info"><div class="folder-name">voice_clips_corrupted/</div><div class="folder-sub">3 files — Audio degraded</div></div>
+                    <div class="folder-chevron">›</div>
+                </div>
+                <div class="files-folder" onclick="showScreen('recovered-video'); playRecoveredVideo();">
+                    <div class="folder-icon">🎬</div>
+                    <div class="folder-info"><div class="folder-name">VID_009_RECOVERED.mp4</div><div class="folder-sub">12.4 MB — Glitched</div></div>
+                    <div class="folder-chevron">›</div>
+                </div>
+                <div class="files-folder" id="echo-logs-folder" onclick="tryOpenEchoLogs()">
+                    <div class="folder-icon">🔒</div>
+                    <div class="folder-info"><div class="folder-name">echo_logs/</div><div class="folder-sub" id="echo-logs-status">Encrypted — Requires key</div></div>
+                    <div class="folder-chevron">›</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="behavioral-report" class="screen app-screen">
+            <div class="app-header app-header-small"><button class="back-btn" data-back="mirror-folder">←</button><h2>behavioral_reports.dat</h2></div>
+            <div class="terminal-view" id="behavioral-content">
+                <div class="terminal-line dim">ECHO BEHAVIORAL PROFILING SYSTEM v4.2</div>
+                <div class="terminal-line dim">══════════════════════════════════════</div>
+                <div class="terminal-line">SUBJECT ID: AARAV_MEHTA_0094</div>
+                <div class="terminal-line">PERIOD: OCT 01 — OCT 12</div>
+                <div class="terminal-line dim">──────────────────────────────────────</div>
+                <div class="terminal-line warn">SLEEP_CYCLE: DISRUPTED (avg 3.2 hrs)</div>
+                <div class="terminal-line warn">EMOTIONAL_VOLATILITY: 8.4 / 10</div>
+                <div class="terminal-line">RESPONSE_LATENCY: +340ms above baseline</div>
+                <div class="terminal-line warn">CURIOSITY_INDEX: 94th percentile ↑</div>
+                <div class="terminal-line">SOCIAL_ISOLATION_INDEX: 7.1 / 10</div>
+                <div class="terminal-line dim">──────────────────────────────────────</div>
+                <div class="terminal-line dim">RECOMMENDATION:</div>
+                <div class="terminal-line">Continue passive observation.</div>
+                <div class="terminal-line warn">Subject approaching awareness threshold.</div>
+                <div class="terminal-line dim">──────────────────────────────────────</div>
+                <div class="terminal-line glitch-text">OBSERVER_CONFIDENCE: 97.3%</div>
+            </div>
+        </div>
+
+        <div id="voice-corrupted" class="screen app-screen">
+            <div class="app-header app-header-small"><button class="back-btn" data-back="mirror-folder">←</button><h2>voice_clips_corrupted/</h2></div>
+            <div class="terminal-view">
+                <div class="terminal-line dim">ATTEMPTING AUDIO RECONSTRUCTION...</div>
+                <div class="terminal-line warn">CLIP_01.dat — [IRRECOVERABLE]</div>
+                <div class="terminal-line warn">CLIP_02.dat — [IRRECOVERABLE]</div>
+                <div class="terminal-line">CLIP_03.dat — [PARTIAL]</div>
+                <div class="terminal-line dim">──────────────────────────</div>
+                <div class="terminal-line">RECONSTRUCTED FRAGMENT:</div>
+                <div class="terminal-line" style="color:#fff; font-style:italic;">"...it was never about the data. It was about the pattern. The pattern IS the person..."</div>
+                <div class="terminal-line dim">— Speaker unidentified. Est. DATE: Oct 09</div>
+            </div>
+        </div>
+
+        <div id="recovered-video" class="screen app-screen">
+            <div class="app-header app-header-small" style="background:#000;">
+                <button class="back-btn" data-back="mirror-folder" style="color:#fff;">←</button>
+                <h2 style="color:#fff;">VID_009_RECOVERED</h2>
+            </div>
+            <div class="video-container" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:#000;">
+                <div id="vid-frame" style="width:100%;aspect-ratio:16/9;background:#111;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                    <div id="vid-content" style="padding:20px;text-align:center;font-family:monospace;color:#ddd;width:100%;">
+                        <p id="vid-text" style="font-size:16px;opacity:0.5;margin-bottom:30px;">[CORRUPTED VIDEO STREAM]</p>
+                        <p id="vid-transcript" style="font-size:15px;color:#fff;font-style:italic;height:40px;text-shadow: 0 0 5px rgba(255,255,255,0.5);"></p>
+                    </div>
+                    <div id="vid-buffer" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:60px;display:none;filter:drop-shadow(0 0 10px #ff453a);">👁️</div>
+                </div>
+                <div style="width:100%;padding:20px;">
+                    <div style="width:100%;height:4px;background:#333;border-radius:2px;overflow:hidden;margin-bottom:10px;">
+                        <div id="vid-progress" style="width:0%;height:100%;background:#ff453a;transition:width 0.1s linear;"></div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;color:#888;font-size:12px;font-family:monospace;">
+                        <span id="vid-time">00:00</span><span>00:15</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="echo-terminal" class="screen app-screen">
+            <div class="app-header app-header-small" style="background:#000; border-color:#1a1a1a;">
+                <button class="back-btn" data-back="mirror-folder" onclick="onEchoTerminalExit()" style="color:#0f0;">←</button>
+                <h2 style="color:#0f0; font-family:'Share Tech Mono',monospace;">ECHO_LOGS — CLASSIFIED</h2>
+            </div>
+            <div class="terminal-view echo-terminal-style" id="echo-terminal-content"></div>
+        </div>
+
+        <div id="video-player" class="screen app-screen">
+            <div class="app-header app-header-small"><button class="back-btn" data-back="voice-app">←</button><h2>VID_009_RECOVERED</h2></div>
+            <div class="video-view">
+                <div class="video-frame" id="video-frame">
+                    <div class="video-noise"></div>
+                    <div class="video-buffer" id="video-buffer"><div class="spinner" id="vid-spinner"></div></div>
+                </div>
+                <div class="video-transcript" id="video-transcript"></div>
+                <div class="video-timeline">
+                    <span>00:00</span>
+                    <div class="vid-bar"><div class="vid-progress" id="vid-progress-bar"></div></div>
+                    <span>00:47</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="call-active" class="screen app-screen">
+            <div class="call-screen">
+                <div class="call-status" id="call-status-text">Connecting...</div>
+                <div class="call-contact">+91 ██████████</div>
+                <div class="call-duration" id="call-duration">00:00</div>
+                <div class="call-wave" id="call-wave">
+                    <div class="cw-bar"></div><div class="cw-bar"></div><div class="cw-bar"></div>
+                    <div class="cw-bar"></div><div class="cw-bar"></div><div class="cw-bar"></div>
+                    <div class="cw-bar"></div><div class="cw-bar"></div>
+                </div>
+                <div class="call-actions">
+                    <div class="call-btn" onclick="endActiveCall()"><div class="call-btn-icon end">📵</div><span>End</span></div>
+                    <div class="call-btn"><div class="call-btn-icon">🔇</div><span>Mute</span></div>
+                    <div class="call-btn"><div class="call-btn-icon">🔊</div><span>Speaker</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="observer-app" class="screen app-screen">
+            <div class="app-header app-header-small" style="background:#0a000a; border-color:#330033;">
+                <button class="back-btn" data-back="home-screen" style="color:#ff453a;">←</button>
+                <h2 style="color:#ff453a; font-family:'Share Tech Mono',monospace;">👁 OBSERVER</h2>
+            </div>
+            <div class="terminal-view observer-style" id="observer-content"></div>
+        </div>
+
+        <div class="modal-overlay" id="warehouse-modal">
+            <div class="modal-box">
+                <h3>⚠ WAREHOUSE 12</h3>
+                <p>Security Terminal — Enter Access Code</p>
+                <div style="font-size:11px; color:#888; margin-bottom:16px; font-family:'Share Tech Mono',monospace;">Clue: Calendar timestamp + ECHO terminal</div>
+                <input type="text" id="warehouse-code" placeholder="_ _ _ _" maxlength="4" style="letter-spacing:8px;">
+                <div style="color:#ff453a; font-size:13px; display:none; margin-bottom:16px;" id="warehouse-error">ACCESS DENIED — INCORRECT CODE</div>
+                <div class="modal-actions">
+                    <button onclick="closeWarehouseModal()">Cancel</button>
+                    <button onclick="checkWarehouseCode()">UNLOCK</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="act2-ending" class="screen">
+            <div class="cctv-view">
+                <div class="cctv-header">
+                    <span>◉ REC</span>
+                    <span>WAREHOUSE 12 — CAM 03</span>
+                    <span id="cctv-timestamp">OCT 13  23:47:02</span>
+                </div>
+                <div class="cctv-feed" id="cctv-feed">
+                    <div class="cctv-noise"></div>
+                    <div class="cctv-figure" id="cctv-figure"></div>
+                    <div class="cctv-figure-2" id="cctv-figure-2" style="opacity:0;"></div>
+                    <div class="cctv-glitch" id="cctv-glitch" style="opacity:0;"></div>
+                </div>
+                <div class="cctv-text" id="cctv-text" style="opacity:0;"></div>
+            </div>
+            <video id="final-camera-flash" autoplay playsinline style="position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:9999;display:none;"></video>
+        </div>
+
+        <div id="overheat-overlay" style="position:absolute;inset:0;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.5s;background:radial-gradient(ellipse at center, transparent 40%, rgba(255,50,0,0.25) 100%);"></div>
+        <div id="airplane-banner" style="position:absolute;top:0;left:0;right:0;background:#1a1a1a;color:#fff;text-align:center;padding:8px;font-size:13px;z-index:150;display:none;border-bottom:1px solid #333;">✈ Airplane Mode Active</div>
+
+        <!-- ══════════════════════════════════════ -->
+        <!-- ACT 3 SCREENS                         -->
+        <!-- ══════════════════════════════════════ -->
+
+        <!-- Act 3 Boot -->
+        <div id="act3-boot" class="screen">
+            <div class="act3-boot-screen">
+                <div class="act3-boot-logo">ECHO</div>
+                <div class="act3-boot-sub">Phase 3 — Cognitive Layer</div>
+                <div class="act3-boot-terminal" id="act3-boot-terminal"></div>
+                <div class="act3-boot-bar-wrap"><div class="act3-boot-bar" id="act3-boot-bar"></div></div>
+            </div>
+        </div>
+
+        <!-- Act 3 Lock Screen -->
+        <div id="act3-lock" class="screen">
+            <div class="act3-lock-bg">
+                <div class="status-bar" style="position:relative;z-index:2;width:100%;padding-top:16px;">
+                    <span class="time">00:00</span>
+                    <div class="battery-wrap" style="margin-left:auto;">
+                        <div class="battery"><div class="battery-level" style="width:100%;background:#34c759;"></div></div>
+                        <span class="batt-pct" style="color:#34c759;">100%</span>
+                    </div>
+                </div>
+                <div style="position:relative;z-index:2;text-align:center;">
+                    <div class="act3-lock-date-text">Thursday, Oct 14</div>
+                    <div class="act3-lock-time time">00:00</div>
+                </div>
+                <div class="act3-lock-msg" id="act3-lock-msg"></div>
+                <div class="act3-unlock-hint" onclick="enterAct3Home()">
+                    <div class="act3-unlock-bar"></div>
+                    <span>Continue</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Name Modal -->
+        <div id="act3-name-modal" class="modal-overlay">
+            <div class="modal-box" style="border:1px solid rgba(180,79,222,0.4);background:#0a0016;">
+                <h3 style="color:#b44fde;">🪞 ECHO Initialization</h3>
+                <p style="color:#888;">ECHO requires subject identification.<br>Enter your name to proceed.</p>
+                <input type="text" id="act3-name-input" placeholder="Your name..." style="font-size:18px;letter-spacing:2px;border-color:rgba(180,79,222,0.4);" maxlength="24">
+                <div class="modal-actions">
+                    <button onclick="act3State.playerName='Anonymous'; document.getElementById('act3-name-modal').classList.remove('active');" style="background:#1a0030;border:1px solid #4a1a5c;color:#888;">Skip</button>
+                    <button onclick="submitPlayerName()" style="background:#b44fde;color:#fff;">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MIRROR App -->
+        <div id="mirror-app" class="screen app-screen">
+            <div class="mirror-header">
+                <button class="back-btn" data-back="home-screen" style="color:#b44fde;">←</button>
+                <h2>🪞 MIRROR</h2>
+            </div>
+            <div class="mirror-terminal" id="mirror-report-content">
+                <div class="terminal-line dim">Tap to generate your behavioral profile...</div>
+            </div>
+            <div style="padding:16px;background:#050005;border-top:1px solid rgba(180,79,222,0.2);">
+                <button onclick="generateMirrorReport()" style="width:100%;background:rgba(180,79,222,0.1);border:1px solid rgba(180,79,222,0.4);color:#b44fde;font-family:'Share Tech Mono',monospace;font-size:14px;padding:14px;border-radius:8px;cursor:pointer;">
+                    ANALYZE SUBJECT
+                </button>
+            </div>
+        </div>
+
+        <!-- Audio Analyzer -->
+        <div id="audio-analyzer" class="screen app-screen">
+            <div class="analyzer-header">
+                <button class="back-btn" data-back="audio-player" style="color:#00cc44;">←</button>
+                <h2>Audio Frequency Analyzer</h2>
+            </div>
+            <div class="analyzer-body">
+                <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#555;margin-bottom:8px;">SPECTROGRAM — Metro_Rain.m4a</div>
+                <canvas id="spectrogram-canvas"></canvas>
+                <div style="font-size:13px;color:#666;font-family:'Share Tech Mono',monospace;line-height:1.6;">
+                    Suspected steganographic content in frequency band 18–22kHz. Tap ANALYZE to extract.
+                </div>
+                <button class="analyzer-btn" onclick="analyzeAudio()">🔍 ANALYZE FREQUENCIES</button>
+                <div class="terminal-view" id="analyzer-result" style="min-height:80px;background:#050505;border:1px solid #1a1a1a;border-radius:8px;padding:12px;">
+                    <div class="terminal-line dim">Awaiting analysis...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Root System Archive -->
+        <div id="root-archive" class="screen app-screen">
+            <div class="root-archive-header">
+                <button class="back-btn" data-back="home-screen" style="color:#ff453a;">←</button>
+                <h2>ROOT SYSTEM ARCHIVE</h2>
+            </div>
+            <div class="root-archive-terminal" id="root-archive-content">
+                <div class="terminal-line dim">Initializing...</div>
+            </div>
+        </div>
+
+        <!-- Act 3 Ending -->
+        <div id="act3-ending" class="screen">
+            <div id="act3-ending-content" style="width:100%;height:100%;"></div>
+        </div>
+
+        <!-- Echo Key Modal (Act 2 fix — moved here so it doesn't conflict) -->
+        <div id="echo-key-modal" class="modal-overlay">
+            <div class="modal-box">
+                <h3>🔒 echo_logs/</h3>
+                <p>This folder is encrypted.<br>Enter decryption key to proceed.</p>
+                <input type="text" id="echo-key-input" placeholder="Enter key..." style="letter-spacing:2px;">
+                <div style="color:#ff453a;font-size:13px;display:none;margin-bottom:16px;" id="echo-key-error">INVALID KEY</div>
+                <div class="modal-actions">
+                    <button onclick="document.getElementById('echo-key-modal').classList.remove('active')">Cancel</button>
+                    <button onclick="checkEchoKey()">DECRYPT</button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- end #phone-container -->
 
     <script src="script.js"></script>
+    <script src="script_patch.js"></script>
+    <script src="act3.js"></script>
 </body>
 </html>

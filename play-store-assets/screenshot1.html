@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, 'SF Pro Display', 'Inter', sans-serif; }
+  html, body { width: 390px; height: 844px; overflow: hidden; background: #000; }
+
+  .phone {
+    width: 390px; height: 844px;
+    background: linear-gradient(180deg, #0d1117 0%, #050508 100%);
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px 0;
+    height: 44px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .status-time { font-size: 16px; font-weight: 600; }
+  .status-icons { display: flex; align-items: center; gap: 6px; }
+  .battery {
+    width: 25px; height: 12px;
+    border: 1.5px solid rgba(255,255,255,0.5);
+    border-radius: 3px;
+    padding: 2px;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .battery::after {
+    content: '';
+    position: absolute;
+    right: -4px; top: 3px;
+    width: 2px; height: 5px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 0 1px 1px 0;
+  }
+  .battery-fill { width: 75%; height: 100%; background: #fff; border-radius: 1px; }
+
+  /* Lock time */
+  .lock-time {
+    text-align: center;
+    margin-top: 60px;
+  }
+  .time-big {
+    font-size: 80px;
+    font-weight: 100;
+    letter-spacing: -3px;
+    line-height: 1;
+    color: #fff;
+  }
+  .date-text {
+    font-size: 20px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 8px;
+    font-weight: 400;
+  }
+
+  /* Notification */
+  .notifications { padding: 30px 20px 0; }
+  .notif {
+    background: rgba(28,28,30,0.85);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    animation: slideIn 0.5s ease forwards;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .notif-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .notif-app {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .notif-icon {
+    width: 16px; height: 16px;
+    border-radius: 4px;
+    background: #00e5ff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+  }
+  .notif-time { font-size: 12px; color: rgba(255,255,255,0.4); }
+  .notif-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .notif-body {
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.4;
+  }
+
+  /* Bottom swipe hint */
+  .bottom-area {
+    position: absolute;
+    bottom: 40px;
+    left: 0; right: 0;
+    text-align: center;
+  }
+  .swipe-text {
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+  .home-indicator {
+    width: 134px;
+    height: 5px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 3px;
+    margin: 0 auto;
+  }
+
+  /* Atmospheric glow */
+  .bg-glow {
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,229,255,0.04) 0%, transparent 70%);
+    top: 20%; left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  /* Store badge */
+  .store-badge {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.3);
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #00e5ff;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="bg-glow"></div>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span class="status-time">11:47</span>
+    <div class="status-icons">
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="white" opacity="0.8">
+        <rect x="0" y="8" width="3" height="4" rx="0.5"/>
+        <rect x="4.5" y="5" width="3" height="7" rx="0.5"/>
+        <rect x="9" y="2" width="3" height="10" rx="0.5"/>
+        <rect x="13.5" y="0" width="2.5" height="12" rx="0.5"/>
+      </svg>
+      <svg width="16" height="12" viewBox="0 0 24 16" fill="white" opacity="0.8">
+        <path d="M12 4C16.4 4 20.2 6.1 22.5 9.4L24 8C21.4 4.2 17 2 12 2C7 2 2.6 4.2 0 8L1.5 9.4C3.8 6.1 7.6 4 12 4z"/>
+        <path d="M12 8C15.2 8 18 9.6 19.8 12L21.3 10.6C19.1 7.7 15.8 6 12 6C8.2 6 4.9 7.7 2.7 10.6L4.2 12C6 9.6 8.8 8 12 8z"/>
+        <circle cx="12" cy="15" r="2.5"/>
+      </svg>
+      <div class="battery"><div class="battery-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- Lock time -->
+  <div class="lock-time">
+    <div class="time-big">11:47</div>
+    <div class="date-text">Saturday, January 18</div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="notifications">
+    <div class="notif" style="animation-delay:0s">
+      <div class="notif-header">
+        <div class="notif-app">
+          <div class="notif-icon">🔍</div>
+          The Invisible Detective
+        </div>
+        <span class="notif-time">now</span>
+      </div>
+      <div class="notif-title">Marcus Cole is dead.</div>
+      <div class="notif-body">His phone just unlocked. You have 24 hours before the trail goes cold.</div>
+    </div>
+
+    <div class="notif" style="animation-delay:0.15s">
+      <div class="notif-header">
+        <div class="notif-app">
+          <div class="notif-icon" style="background:#ff453a">📱</div>
+          Messages
+        </div>
+        <span class="notif-time">2m ago</span>
+      </div>
+      <div class="notif-title">Unknown: "Don't dig too deep."</div>
+      <div class="notif-body">You don't know this number.</div>
+    </div>
+
+    <div class="notif" style="animation-delay:0.3s">
+      <div class="notif-header">
+        <div class="notif-app">
+          <div class="notif-icon" style="background:#34c759">📋</div>
+          Case File
+        </div>
+        <span class="notif-time">1h ago</span>
+      </div>
+      <div class="notif-title">New clue found</div>
+      <div class="notif-body">A deleted voicemail — partially recovered. Someone was watching him.</div>
+    </div>
+  </div>
+
+  <!-- Store label -->
+  <div class="store-badge">🔍 START INVESTIGATING</div>
+
+  <!-- Bottom -->
+  <div class="bottom-area">
+    <div class="swipe-text">Swipe up to investigate</div>
+    <div class="home-indicator"></div>
+  </div>
+</div>
+</body>
+</html>

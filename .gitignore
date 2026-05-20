@@ -10,3 +10,7 @@ play-store-key.json
 android/app/build/
 android/.gradle/
 android/local.properties
+
+# Releases folder — AABs are tracked intentionally
+!releases/
+!releases/*.aab

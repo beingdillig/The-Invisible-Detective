@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1024px; height: 500px;
+    overflow: hidden;
+    background: #000;
+    font-family: -apple-system, 'SF Pro Display', 'Georgia', serif;
+  }
+
+  .banner {
+    width: 1024px; height: 500px;
+    background: #000;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 80px 0 72px;
+  }
+
+  /* Radial glow background */
+  .glow-bg {
+    position: absolute;
+    top: 50%; left: 38%;
+    transform: translate(-50%, -50%);
+    width: 700px; height: 700px;
+    background: radial-gradient(ellipse at center,
+      rgba(0,229,255,0.08) 0%,
+      rgba(0,229,255,0.04) 35%,
+      transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Scanline texture */
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.18) 3px,
+      rgba(0,0,0,0.18) 4px
+    );
+    pointer-events: none;
+  }
+
+  /* Vignette */
+  .vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center,
+      transparent 40%,
+      rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+  }
+
+  /* Corner brackets */
+  .bracket {
+    position: absolute;
+    width: 28px; height: 28px;
+    border-color: rgba(0,229,255,0.35);
+    border-style: solid;
+  }
+  .bracket-tl { top: 18px; left: 18px; border-width: 2px 0 0 2px; }
+  .bracket-tr { top: 18px; right: 18px; border-width: 2px 2px 0 0; }
+  .bracket-bl { bottom: 18px; left: 18px; border-width: 0 0 2px 2px; }
+  .bracket-br { bottom: 18px; right: 18px; border-width: 0 2px 2px 0; }
+
+  /* Left — icon area */
+  .left-panel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .icon-ring {
+    width: 200px; height: 200px;
+    border-radius: 44px;
+    background: rgba(0,229,255,0.06);
+    border: 1.5px solid rgba(0,229,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow:
+      0 0 40px rgba(0,229,255,0.12),
+      inset 0 0 30px rgba(0,229,255,0.05);
+  }
+
+  /* Magnifying glass SVG wrapper */
+  .mag-wrap {
+    position: relative;
+    width: 120px; height: 120px;
+  }
+
+  /* Right — text panel */
+  .right-panel {
+    flex: 1;
+    padding-left: 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .eyebrow {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(0,229,255,0.6);
+    margin-bottom: 14px;
+  }
+
+  .title {
+    font-size: 68px;
+    font-weight: 800;
+    line-height: 1;
+    color: #fff;
+    letter-spacing: -1px;
+    text-shadow: 0 0 60px rgba(0,229,255,0.15);
+  }
+  .title .word-invisible {
+    display: block;
+    font-style: italic;
+    color: #fff;
+  }
+  .title .word-detective {
+    display: block;
+    color: #00e5ff;
+  }
+
+  .tagline {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #8e8e93;
+    letter-spacing: 0.5px;
+    font-style: italic;
+  }
+
+  .divider {
+    width: 48px; height: 2px;
+    background: linear-gradient(to right, #00e5ff, transparent);
+    margin: 20px 0;
+  }
+
+  .genre-tags {
+    display: flex;
+    gap: 10px;
+  }
+  .tag {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(0,229,255,0.7);
+    border: 1px solid rgba(0,229,255,0.25);
+    border-radius: 20px;
+    padding: 5px 14px;
+    background: rgba(0,229,255,0.06);
+  }
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="glow-bg"></div>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <!-- Corner brackets -->
+  <div class="bracket bracket-tl"></div>
+  <div class="bracket bracket-tr"></div>
+  <div class="bracket bracket-bl"></div>
+  <div class="bracket bracket-br"></div>
+
+  <!-- Left: icon -->
+  <div class="left-panel">
+    <div class="icon-ring">
+      <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Magnifying glass circle -->
+        <circle cx="46" cy="46" r="30" stroke="#00e5ff" stroke-width="7" fill="none"
+          style="filter: drop-shadow(0 0 8px rgba(0,229,255,0.6))"/>
+        <!-- Glass lens fill -->
+        <circle cx="46" cy="46" r="23" fill="rgba(0,229,255,0.07)"/>
+        <!-- Eye inside lens -->
+        <ellipse cx="46" cy="46" rx="11" ry="7" fill="none" stroke="rgba(0,229,255,0.55)" stroke-width="1.5"/>
+        <circle cx="46" cy="46" r="4" fill="#00e5ff"
+          style="filter: drop-shadow(0 0 4px rgba(0,229,255,0.9))"/>
+        <circle cx="47.5" cy="44.5" r="1.2" fill="rgba(255,255,255,0.6)"/>
+        <!-- Handle -->
+        <line x1="68" y1="68" x2="88" y2="88" stroke="#00e5ff" stroke-width="7" stroke-linecap="round"
+          style="filter: drop-shadow(0 0 6px rgba(0,229,255,0.5))"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Right: text -->
+  <div class="right-panel">
+    <div class="eyebrow">A Noir Mystery Game</div>
+    <div class="title">
+      <span class="word-invisible">The Invisible</span>
+      <span class="word-detective">Detective</span>
+    </div>
+    <div class="tagline">Every clue hides a secret. Every witness lies.</div>
+    <div class="divider"></div>
+    <div class="genre-tags">
+      <span class="tag">Mystery</span>
+      <span class="tag">Narrative</span>
+      <span class="tag">Noir</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

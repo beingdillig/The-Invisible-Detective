@@ -557,3 +557,135 @@ body{background-color:#000;color:var(--text-primary);display:flex;justify-conten
     0%,100% { transform: scaleY(0.5); }
     50% { transform: scaleY(1.2); }
 }
+
+/* ══ ACT 4 — THE MIRROR ══ */
+.act4-home{filter:saturate(0.5) brightness(0.85) hue-rotate(-10deg);transition:filter 2s ease;}
+.act4-home::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(255,20,60,0.06) 100%);pointer-events:none;z-index:999;animation:act4Breathe 6s ease-in-out infinite;}
+.act4-breathe{animation:act4IconBreathe 4s ease-in-out infinite!important;}
+.act4-breathe:nth-child(2n){animation-delay:0.5s!important;}
+.act4-breathe:nth-child(3n){animation-delay:1s!important;}
+.act4-home .app-icon{transition:transform 0.6s cubic-bezier(0.2,0.8,0.2,1)!important;}
+
+/* Sync Opening */
+#act4-sync-opening{background:#000;z-index:400;}
+.act4-sync-container{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:40px;position:relative;}
+.act4-silhouette{width:140px;height:220px;background:radial-gradient(ellipse at 50% 30%,rgba(80,20,40,0.6) 0%,rgba(40,10,20,0.3) 40%,transparent 70%);border-radius:50% 50% 45% 45% / 60% 60% 40% 40%;opacity:0;transition:opacity 3s ease;position:relative;filter:blur(3px);}
+.act4-silhouette.distorted{animation:silhouetteDistort 4s ease-in-out infinite;}
+.act4-silhouette::before{content:'';position:absolute;inset:-20px;background:radial-gradient(ellipse,rgba(180,79,222,0.08) 0%,transparent 60%);animation:silhouetteGlow 3s ease-in-out infinite;}
+.act4-sync-text{font-family:'Share Tech Mono',monospace;font-size:16px;color:rgba(255,34,68,0.8);letter-spacing:3px;opacity:0;transition:opacity 2s ease;text-align:center;}
+
+/* Archive App */
+.archive-header{display:flex;align-items:center;padding:10px 20px 12px;background:#080008;border-bottom:1px solid rgba(255,34,68,0.2);padding-top:52px;position:sticky;top:0;z-index:50;}
+.archive-header h2{font-size:22px;font-weight:700;color:#ff2244;flex-grow:1;font-family:'Share Tech Mono',monospace;letter-spacing:2px;}
+#archive-app{background:#040004;}
+#archive-subject-view{background:#040004;}
+.archive-subject-list{padding:16px;}
+.archive-card{display:flex;align-items:center;gap:16px;padding:20px;background:rgba(255,34,68,0.04);border:1px solid rgba(255,34,68,0.15);border-radius:12px;margin-bottom:12px;cursor:pointer;transition:all 0.3s;}
+.archive-card:active{background:rgba(255,34,68,0.1);transform:scale(0.98);}
+.archive-card-icon{font-size:28px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:rgba(255,34,68,0.08);border-radius:12px;flex-shrink:0;}
+.archive-card-info{flex:1;}
+.archive-card-name{font-size:16px;font-weight:600;color:#fff;margin-bottom:2px;}
+.archive-card-role{font-size:13px;color:#888;margin-bottom:6px;}
+.archive-card-status{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:3px 8px;border-radius:4px;display:inline-block;}
+.status-fragmented{color:#ff9500;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);}
+.status-assimilated{color:#34c759;background:rgba(52,199,89,0.1);border:1px solid rgba(52,199,89,0.3);}
+.status-collapsed{color:#ff453a;background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.3);}
+.status-incomplete{color:#b44fde;background:rgba(180,79,222,0.1);border:1px solid rgba(180,79,222,0.3);}
+.status-inprogress{color:#00e5ff;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);animation:statusPulse 2s ease-in-out infinite;}
+.archive-card-chevron{color:#ff2244;font-size:20px;opacity:0.5;}
+
+/* Archive Profile */
+.archive-profile{padding:24px;}
+.archive-profile-header{display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid rgba(255,34,68,0.15);}
+.archive-profile-icon{font-size:40px;width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:rgba(255,34,68,0.06);border-radius:16px;border:1px solid rgba(255,34,68,0.2);}
+.archive-profile-name{font-size:20px;font-weight:700;color:#fff;}
+.archive-profile-role{font-size:13px;color:#888;margin-top:2px;}
+.archive-profile-status{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:4px 10px;border-radius:4px;}
+.archive-section{margin-bottom:20px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,34,68,0.1);border-radius:10px;padding:16px;}
+.archive-section-title{font-family:'Share Tech Mono',monospace;font-size:11px;color:#ff2244;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;}
+.archive-section-text{font-size:14px;color:#aaa;line-height:1.7;}
+.archive-chat-btn{width:100%;background:rgba(255,34,68,0.08);border:1px solid rgba(255,34,68,0.3);color:#ff2244;font-family:'Share Tech Mono',monospace;font-size:13px;padding:14px;border-radius:8px;cursor:pointer;margin-top:16px;letter-spacing:1px;}
+.archive-chat-btn:active{background:rgba(255,34,68,0.2);}
+
+/* Maze */
+.maze-header{display:flex;align-items:center;padding:10px 20px 12px;background:#040004;border-bottom:1px solid rgba(255,34,68,0.2);padding-top:52px;}
+.maze-header h2{font-size:14px;font-weight:600;color:#ff2244;flex-grow:1;font-family:'Share Tech Mono',monospace;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#maze-app{background:#020002;}
+.maze-folder{display:flex;align-items:center;gap:16px;padding:18px 24px;border-bottom:1px solid rgba(255,34,68,0.08);cursor:pointer;transition:background 0.2s;}
+.maze-folder:active{background:rgba(255,34,68,0.06);}
+.maze-folder-icon{font-size:22px;opacity:0.7;}
+.maze-folder-name{flex:1;font-family:'Share Tech Mono',monospace;font-size:14px;color:#ccc;}
+.maze-folder-meta{font-size:11px;color:#555;font-family:'Share Tech Mono',monospace;}
+.maze-folder-chevron{color:#ff2244;font-size:16px;opacity:0.4;}
+.maze-folder.correct{border-left:2px solid rgba(255,34,68,0.4);}
+.maze-folder.decoy{opacity:0.7;}
+.maze-folder.loop{border-left:2px solid rgba(255,149,0,0.3);}
+
+/* ECHO Root */
+#echo-root{background:#000;z-index:350;}
+.echo-root-container{width:100%;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:60px 24px 40px;}
+.echo-root-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;justify-content:flex-end;gap:24px;padding-bottom:20px;}
+.echo-root-msg{font-family:'Share Tech Mono',monospace;font-size:16px;color:rgba(255,255,255,0.8);line-height:1.8;opacity:0;animation:echoRootFadeIn 2s ease forwards;}
+.echo-root-msg.echo-speaker{color:rgba(255,255,255,0.6);}
+.echo-root-choices{display:flex;flex-direction:column;gap:12px;padding:20px 0;}
+.echo-root-choice{background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);font-family:'Share Tech Mono',monospace;font-size:14px;padding:16px 20px;border-radius:4px;cursor:pointer;text-align:left;letter-spacing:1px;transition:all 0.3s;}
+.echo-root-choice:hover,.echo-root-choice:active{border-color:rgba(255,255,255,0.4);color:#fff;background:rgba(255,255,255,0.03);}
+.echo-root-choice.purge{border-color:rgba(255,69,58,0.4);color:#ff453a;}
+.echo-root-choice.purge:active{background:rgba(255,69,58,0.1);}
+.echo-root-choice.sync{border-color:rgba(0,229,255,0.4);color:#00e5ff;}
+.echo-root-choice.sync:active{background:rgba(0,229,255,0.1);}
+.echo-root-choice.release{border-color:rgba(255,149,0,0.4);color:#ff9500;}
+.echo-root-choice.release:active{background:rgba(255,149,0,0.1);}
+
+/* Act 4 Ending */
+#act4-ending{background:#000;z-index:500;}
+.act4-end-bg{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:30px;padding:40px;text-align:center;}
+.act4-end-text{font-family:'Share Tech Mono',monospace;font-size:18px;color:#fff;line-height:1.8;white-space:pre-line;opacity:0;animation:echoRootFadeIn 2s ease forwards;}
+.act4-end-sub{font-family:'Share Tech Mono',monospace;font-size:14px;color:rgba(255,255,255,0.3);opacity:0;animation:echoRootFadeIn 2s ease 1s forwards;}
+.act4-end-final{font-family:'Share Tech Mono',monospace;font-size:11px;color:#333;letter-spacing:3px;text-transform:uppercase;margin-top:40px;opacity:0;animation:echoRootFadeIn 2s ease 2s forwards;}
+.act4-final-notif{position:absolute;bottom:80px;left:20px;right:20px;background:rgba(28,28,30,0.9);backdrop-filter:blur(20px);border-radius:16px;padding:16px 20px;opacity:0;animation:act4NotifSlide 0.6s ease forwards;border:1px solid rgba(255,255,255,0.1);}
+.act4-final-notif-app{font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.act4-final-notif-text{font-size:16px;color:#fff;font-weight:500;}
+
+/* Purge-specific destabilize */
+.act4-purge-destabilize{animation:purgeDestabilize 3s ease-in-out infinite!important;}
+
+/* Act 4 Animations */
+@keyframes act4Breathe{0%,100%{opacity:0.3}50%{opacity:0.8}}
+@keyframes act4IconBreathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.03);opacity:0.85}}
+@keyframes silhouetteDistort{0%,100%{transform:scale(1) skewX(0deg);filter:blur(3px);}25%{transform:scale(1.02) skewX(-1deg);filter:blur(5px);}50%{transform:scale(0.98) skewX(1deg);filter:blur(2px);}75%{transform:scale(1.01) skewX(-0.5deg);filter:blur(4px);}}
+@keyframes silhouetteGlow{0%,100%{opacity:0.3}50%{opacity:0.8}}
+@keyframes statusPulse{0%,100%{opacity:0.6}50%{opacity:1}}
+@keyframes echoRootFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes act4NotifSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes purgeDestabilize{0%{transform:translate(0) skewX(0)}10%{transform:translate(-3px,2px) skewX(-1deg)}20%{transform:translate(2px,-1px) skewX(0.5deg)}30%{transform:translate(-1px,1px)}40%{transform:translate(3px,-2px) skewX(-0.5deg)}50%{transform:translate(0)}60%{transform:translate(-2px,3px) skewX(1deg)}70%{transform:translate(1px,-1px)}80%{transform:translate(-3px,1px) skewX(-0.5deg)}90%{transform:translate(2px,-2px)}100%{transform:translate(0) skewX(0)}}
+
+/* -- P1: Lock Screen Owner Hint ----------------------- */
+.lock-owner-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 1px;
+    text-align: center;
+    margin-top: 6px;
+    margin-bottom: 8px;
+}
+
+/* -- P1: Passcode Wrong-Attempt Hint ------------------ */
+.passcode-attempt-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: rgba(255,149,0,0.85);
+    text-align: center;
+    min-height: 20px;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+    transition: opacity 0.5s;
+}
+
+/* -- P5: Credits fade-in animation -------------------- */
+@keyframes fadeInSlow {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

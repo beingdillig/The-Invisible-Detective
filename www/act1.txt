@@ -1,0 +1,570 @@
+ACT 1 — “THE LOST PHONE”
+Product Design Breakdown (Detailed PM-Level Structure)
+
+Act 1 is NOT about horror yet.
+
+Its job is:
+
+build realism,
+create emotional curiosity,
+establish the owner as a believable human,
+quietly plant mystery clues.
+
+The player should initially think:
+
+“This feels like someone’s real phone.”
+
+If Act 1 fails realism,
+the entire game fails.
+
+ACT 1 GOAL
+
+The player must:
+
+Unlock the phone
+Learn who Aarav is
+Understand something is wrong
+Discover his final investigation
+
+Reach the first major twist:
+
+“You should not have picked up this phone.”
+
+PHONE OWNER PROFILE
+Owner:
+Aarav Mehta
+
+Age: 26
+
+Profession:
+Investigative journalist / freelance documentary researcher.
+
+Personality:
+
+intelligent
+socially distant
+obsessive
+curious
+sleep deprived
+paranoid recently
+PHONE STATE
+
+The phone should feel:
+
+recently active,
+slightly messy,
+human,
+not “game designed.”
+
+Battery:
+18%
+
+Wallpaper:
+A blurry night cityscape taken from a metro window.
+
+Lockscreen quote:
+
+“If you’re reading this, don’t trust timelines.”
+
+HOME SCREEN APPS
+Primary Accessible Apps
+Core Story Apps
+Messages
+Gallery
+Calendar
+Browser
+Notes
+Voice Recorder
+Maps
+Files
+Calls
+Secondary Flavor Apps
+Weather
+Music
+Calculator
+Food Delivery
+Ride App
+Banking
+Podcast App
+
+These secondary apps create realism.
+
+LOCK SCREEN FLOW
+
+Player first sees:
+
+3 unread notifications
+no Face ID
+cracked top corner
+weak signal
+
+Notifications:
+1.
+
+UNKNOWN: “You took it.”
+
+Mom: “Please call me.”
+
+Reminder:
+“Dockyard Meeting — 11:30 PM”
+
+PASSCODE PUZZLE
+
+Player must discover passcode.
+
+Clues:
+
+birthday visible in old chat
+repeated number in notes
+calendar anniversary
+
+Final passcode:
+
+1107
+
+Meaning:
+July 11 — date of a missing-person incident.
+
+GALLERY DESIGN
+MOST IMPORTANT APP IN ACT 1
+
+Gallery tells the emotional story.
+
+Should contain:
+
+~85–110 images/videos total
+
+Not too empty.
+Not too overwhelming.
+
+Feels like a real phone.
+
+GALLERY STRUCTURE
+Albums
+1. Camera Roll (~55 files)
+
+Realistic daily life content.
+
+Types:
+
+coffee photos
+screenshots
+blurred accidental pics
+metro station shots
+food
+memes
+receipts
+sky photos
+laptop desk pics
+sleeping dog
+rainy streets
+
+Purpose:
+Humanize Aarav.
+
+IMPORTANT Camera Roll Clues
+Image #12
+
+Mirror selfie.
+
+Small detail:
+A shadowy figure barely visible behind him.
+
+Not obvious initially.
+
+Image #19
+
+Photo of laptop screen.
+
+Zooming reveals:
+Folder named:
+
+ECHO_INTERNAL
+
+Image #27
+
+Parking lot at night.
+
+Metadata:
+Location mismatch.
+
+Image #33
+
+Screenshot of article draft:
+
+“Behavioral Prediction Models in Consumer AI”
+
+Image #41
+
+A blurred image accidentally taken while running.
+
+If brightness increased:
+someone appears to be following him.
+
+Image #52
+
+Subway station bench.
+
+THIS is the bench where player found phone.
+
+Timestamp:
+20 minutes before game begins.
+
+2. Hidden Album (~18 files)
+
+Locked initially.
+
+Unlocked later via clue.
+
+Contains:
+
+documents
+screenshots
+CCTV photos
+suspicious people
+server room images
+company logo:
+“NEXUS DYNAMICS”
+Critical Hidden Images
+Hidden_04
+
+Whiteboard:
+
+“ECHO adapts after emotional exposure.”
+
+Hidden_09
+
+Photo of employee badge.
+
+Name:
+Dr. Rhea Kapoor.
+
+Major future character.
+
+Hidden_14
+
+Aarav secretly photographed someone entering warehouse at 2:13 AM.
+
+3. Downloads Folder (~20 files)
+
+Contents:
+
+PDFs
+memes
+random WhatsApp forwards
+train tickets
+ZIP file
+corrupted image
+
+One file:
+
+“final_backup.zip”
+
+Password protected.
+
+Major Act 2 setup.
+
+VIDEO CONTENT
+
+Need:
+
+6–8 short videos
+
+Examples:
+
+VID_003
+
+Rain through metro window.
+Someone whispers:
+
+“He knows.”
+
+Hard to hear.
+
+VID_006
+
+Aarav filming office corridor.
+
+Video abruptly cuts after:
+a woman says:
+
+“Delete that.”
+
+CALL LOGS
+Around 35–45 entries
+
+Mix of:
+
+incoming
+outgoing
+missed
+
+Should feel naturally repetitive.
+
+IMPORTANT CONTACTS
+Mom
+
+Frequent calls.
+
+Shows emotional grounding.
+
+Kabir
+
+Best friend.
+
+Casual conversations.
+
+Later becomes suspicious.
+
+Unknown Number
+
+Increasing frequency last 5 days.
+
+Calls always:
+2–4 AM.
+
+Rhea Kapoor
+
+Very short calls.
+
+Never longer than:
+32 seconds.
+
+Suspicious.
+
+KEY CALL PATTERN
+
+Last 3 days:
+
+Aarav stops answering everyone
+only outgoing calls to Unknown Number
+several missed calls from Mom
+
+This subtly shows mental deterioration.
+
+MESSAGES APP
+MOST CONTENT-HEAVY SYSTEM
+
+Should contain:
+
+14–20 active chats
+
+Not too many.
+
+CHAT CATEGORIES
+1. PERSONAL CHATS
+Mom
+concern
+health
+emotional realism
+
+Example:
+
+“You sound tired beta.”
+
+Kabir
+memes
+jokes
+conspiracy discussions
+
+Gradually becomes:
+
+“Bro stop digging into this.”
+
+Ex-Girlfriend (Naina)
+
+Shows Aarav becoming emotionally distant.
+
+Important for realism.
+
+2. WORK CHATS
+Editor
+
+Deadlines.
+Missed submissions.
+
+Anonymous Source
+
+MOST IMPORTANT.
+
+Messages become increasingly paranoid.
+
+Examples:
+
+“They monitor behavioral drift.”
+
+“Never keep the files online.”
+
+“If your battery heats up, shut it down.”
+
+3. GROUP CHATS
+
+Need:
+2–3 realistic groups.
+
+Examples:
+
+College Friends
+Film Club
+Freelance Team
+
+Mostly filler realism.
+
+Memes.
+Plans.
+Voice notes.
+
+Makes the phone feel alive.
+
+SETTINGS APP
+Extremely underrated storytelling tool
+
+Most games ignore this.
+You SHOULD NOT.
+
+SETTINGS CONTENT
+Battery Usage
+
+Shows:
+
+Camera usage spikes at night
+Unknown background process
+
+Player notices:
+
+“ECHOSVC”
+Storage
+
+Mysterious hidden system data:
+
+47.8 GB “Other”
+
+Huge red flag.
+
+Permissions
+
+Camera + Mic used recently.
+
+But by WHAT app?
+Unknown.
+
+Bluetooth
+
+Unknown paired device:
+
+“ECHO_NODE_2”
+
+About Phone
+
+Custom OS version:
+
+NX-OS Internal Beta
+
+Important lore clue.
+
+BROWSER HISTORY
+Very important narrative tool
+
+Recent searches:
+
+“behavioral prediction AI”
+“how to detect spyware”
+“can microphones activate remotely”
+“how to erase cloud mirrors”
+
+This tells story WITHOUT exposition.
+
+NOTES APP
+Internal monologue app
+
+Need:
+~12–15 notes.
+
+Mix:
+
+grocery lists
+article ideas
+passwords
+paranoid theories
+KEY NOTE
+
+Title:
+
+“If something happens to me”
+
+Contains:
+
+fragmented thoughts
+incomplete accusations
+panic
+
+Ends abruptly:
+
+“It learns from obser—”
+
+Cut off.
+
+MAPS APP
+
+Timeline reveals:
+Repeated visits to:
+
+Dockyard Warehouse
+Nexus Dynamics Office
+Abandoned Metro Platform
+
+Final route:
+ends exactly where player found phone.
+
+CAMERA APP
+
+At first:
+normal.
+
+BUT:
+occasionally:
+very brief frame glitches.
+
+Almost subliminal.
+
+Not enough to confirm.
+
+MUSIC APP
+
+Important emotional realism.
+
+Contains:
+
+late-night ambient playlists
+dark synthwave
+investigative podcasts
+
+This humanizes Aarav deeply.
+
+ACT 1 ENDING
+
+Player finally unlocks:
+
+final_backup.zip
+
+Inside:
+a partially corrupted video.
+
+Aarav whispers:
+
+“If you’re watching this… it already knows about you.”
+
+Suddenly:
+NEW MESSAGE appears instantly.
+
+UNKNOWN:
+
+“You opened the file.”
+
+END ACT 1.
+
+Black screen.
+
+Battery drops from 18% → 3%.
+
+Phone vibrates continuously.

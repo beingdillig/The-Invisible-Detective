@@ -1,0 +1,8 @@
+{
+  "appId": "com.beingdillig.invisibledetective",
+  "appName": "The Invisible Detective",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

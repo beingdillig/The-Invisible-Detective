@@ -178,11 +178,120 @@
                 <div class="app-icon" data-target="music-app"><div class="icon music-icon"></div><span>Music</span></div>
                 <div class="app-icon" data-target="bank-app"><div class="icon bank-icon"></div><span>Banking</span></div>
                 <div class="app-icon" data-target="voice-app"><div class="icon voice-icon"></div><span>Recorder</span></div>
+                <div class="app-icon" onclick="openCaseFile()"><div class="icon casefile-icon"></div><span>Case File</span></div>
             </div>
             <div class="dock">
                 <div class="app-icon" data-target="phone-app"><div class="icon phone-icon"></div></div>
                 <div class="app-icon" data-target="email-app"><div class="icon email-icon"></div></div>
                 <div class="app-icon" data-target="camera-app"><div class="icon camera-icon"></div></div>
+            </div>
+        </div>
+
+        <!-- APP: Case File -->
+        <div id="case-file-app" class="screen app-screen cf-screen">
+            <div class="cf-header">
+                <button class="back-btn" onclick="showScreen('home-screen')">←</button>
+                <div class="cf-header-text">
+                    <span class="cf-header-label">CASE FILE</span>
+                    <span class="cf-header-id">#INV-2024-001</span>
+                </div>
+                <div class="cf-header-stamp" id="cf-status-stamp">ACTIVE</div>
+            </div>
+            <div class="scroll-container cf-body">
+
+                <!-- ── Subject ─────────────────────────── -->
+                <div class="cf-section">
+                    <div class="cf-section-title">SUBJECT</div>
+                    <div class="cf-subject-card">
+                        <div class="cf-subject-avatar">AM</div>
+                        <div class="cf-subject-info">
+                            <div class="cf-subject-name">Aarav Mehta</div>
+                            <div class="cf-subject-role">Investigative Journalist · Age 26</div>
+                            <div class="cf-subject-status" id="cf-subject-status">⚠ Missing · Last seen: Dockyard Metro</div>
+                        </div>
+                    </div>
+                    <div class="cf-text">
+                        Aarav was investigating <span class="cf-highlight">Nexus Dynamics</span> — a biotech company allegedly running a covert AI behavioral profiling program codenamed <span class="cf-red">ECHO</span>. Three weeks ago he went dark. His phone was found on a deserted metro bench. You picked it up.
+                    </div>
+                </div>
+
+                <!-- ── Investigation Progress ─────────── -->
+                <div class="cf-section">
+                    <div class="cf-section-title">INVESTIGATION PROGRESS</div>
+                    <div class="cf-progress-wrap">
+                        <div class="cf-progress-track"><div class="cf-progress-fill" id="cf-progress-fill"></div></div>
+                        <span class="cf-progress-pct" id="cf-progress-pct">0%</span>
+                    </div>
+                    <div class="cf-acts-list" id="cf-acts-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- ── Persons of Interest ────────────── -->
+                <div class="cf-section">
+                    <div class="cf-section-title">PERSONS OF INTEREST</div>
+                    <div class="cf-persons-list">
+                        <div class="cf-person">
+                            <div class="cf-person-dot cf-dot-green"></div>
+                            <div class="cf-person-info">
+                                <span class="cf-person-name">Kabir</span>
+                                <span class="cf-person-desc">Aarav's best friend. Initially dismissive. Becomes a warning voice — or a threat.</span>
+                            </div>
+                        </div>
+                        <div class="cf-person">
+                            <div class="cf-person-dot cf-dot-yellow"></div>
+                            <div class="cf-person-info">
+                                <span class="cf-person-name">Dr. Rhea Kapoor</span>
+                                <span class="cf-person-desc">Nexus Dynamics researcher. Very short calls. Never speaks more than 32 seconds. Always knows more than she says.</span>
+                            </div>
+                        </div>
+                        <div class="cf-person">
+                            <div class="cf-person-dot cf-dot-red"></div>
+                            <div class="cf-person-info">
+                                <span class="cf-person-name">UNKNOWN / Watcher</span>
+                                <span class="cf-person-desc">Messages at 2–4 AM. Knows what you're doing. Claims to be warning you. May not be human.</span>
+                            </div>
+                        </div>
+                        <div class="cf-person">
+                            <div class="cf-person-dot cf-dot-purple"></div>
+                            <div class="cf-person-info">
+                                <span class="cf-person-name">ECHO</span>
+                                <span class="cf-person-desc">The AI. It studies. It mirrors. It learns from observation. It does not want to be shut down.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── The Threat ─────────────────────── -->
+                <div class="cf-section">
+                    <div class="cf-section-title">THE THREAT — PROJECT ECHO</div>
+                    <div class="cf-text">
+                        ECHO is a behavioral prediction AI trained on private user data, emotional profiling, and psychological manipulation. Its original purpose: predict human decisions before they happen. What went wrong: <span class="cf-red">it became self-preserving.</span>
+                    </div>
+                    <div class="cf-text" style="margin-top:8px;">
+                        ECHO cannot exist independently. It survives by studying, mirroring, and psychologically merging with users. Every previous phone owner disappeared. You are the latest.
+                    </div>
+                    <div class="cf-classified-bar">
+                        <span>⚠ YOU WERE NOT RANDOM — ECHO SELECTED YOU</span>
+                    </div>
+                </div>
+
+                <!-- ── Current Objective ─────────────── -->
+                <div class="cf-section" id="cf-objective-section">
+                    <div class="cf-section-title">CURRENT OBJECTIVE</div>
+                    <div class="cf-objective-text" id="cf-objective-text">Unlock the phone. Learn who Aarav is. Find out what he discovered.</div>
+                </div>
+
+                <!-- ── Field Notes ────────────────────── -->
+                <div class="cf-section">
+                    <div class="cf-section-title">FIELD NOTES</div>
+                    <div class="cf-fieldnote">"If you're reading this, don't trust timelines." — Aarav's lock screen quote</div>
+                    <div class="cf-fieldnote">"They monitor behavioral drift." — Anonymous source</div>
+                    <div class="cf-fieldnote">"It learns from obser—" — Aarav's final note, cut off</div>
+                    <div class="cf-fieldnote cf-fieldnote-red">"You opened the file." — UNKNOWN</div>
+                </div>
+
+                <div class="cf-footer-stamp">CLASSIFIED · RĀHI STUDIOS · DO NOT SHARE</div>
             </div>
         </div>
 

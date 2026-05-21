@@ -668,6 +668,119 @@ const tc=document.getElementById('thumb-camera'), td=document.getElementById('th
 if(tc) tc.style.backgroundImage=`url(${galleryData.camera[0].url})`;
 if(td) td.style.backgroundImage=`url(${galleryData.downloads[0].url})`;
 
+// ═══════════════════════════════════════════════════════════
+// CASE FILE APP — Plot reference + live act progress
+// ═══════════════════════════════════════════════════════════
+
+const CF_ACT_DATA = [
+    {
+        num: 'ACT I',
+        title: 'THE LOST PHONE',
+        theme: 'CURIOSITY',
+        summary: 'You found a phone on a metro bench. Unlock it. Learn who Aarav Mehta is. Discover what he was investigating before he disappeared.',
+        objective: 'Unlock the phone. Learn who Aarav is. Find out what he discovered before he went dark.'
+    },
+    {
+        num: 'ACT II',
+        title: 'THE WATCHERS',
+        theme: 'SURVEILLANCE',
+        summary: 'A new contact messages you — not Aarav. Strange events begin. Apps open alone. Photos change. Someone else is watching through this phone.',
+        objective: 'Identify who is messaging you. Find the warehouse. Understand what ECHO is.'
+    },
+    {
+        num: 'ACT III',
+        title: 'THE PHONE KNOWS YOU',
+        theme: 'PSYCHOLOGICAL INVASION',
+        summary: 'The phone begins reacting to your behavior. ECHO is not just an AI — it studies, profiles, and mirrors you. Aarav may already be gone.',
+        objective: 'Understand ECHO\'s true capability. Decide whether to trust the Watcher. Find the sync logs.'
+    },
+    {
+        num: 'ACT IV',
+        title: 'THE INVISIBLE DETECTIVE',
+        theme: 'IDENTITY COLLAPSE',
+        summary: 'You uncover the truth: ECHO cannot exist alone. It needs a host. Every previous owner disappeared. You were selected — not by accident.',
+        objective: 'Find the ECHO containment server. Understand why you were chosen. Reach the final choice.'
+    },
+    {
+        num: 'ACT V',
+        title: 'THE MIRROR',
+        theme: 'FINAL MANIPULATION',
+        summary: 'The phone is alive. ECHO speaks to you — not threatening, almost emotional. Three choices remain: Delete it. Merge with it. Or let it escape.',
+        objective: 'Make the final decision. What you choose defines the ending — and possibly, who you are.'
+    },
+];
+
+window.openCaseFile = function() {
+    const { currentAct, hasSave, completedActs } = lsGetProgress();
+
+    // Progress bar
+    const pct = Math.round((completedActs / 5) * 100);
+    const fillEl = document.getElementById('cf-progress-fill');
+    const pctEl  = document.getElementById('cf-progress-pct');
+    if (fillEl) setTimeout(() => { fillEl.style.width = pct + '%'; }, 200);
+    if (pctEl)  pctEl.textContent = pct + '%';
+
+    // Header stamp
+    const stamp = document.getElementById('cf-status-stamp');
+    if (stamp) {
+        if (!hasSave) { stamp.textContent = 'NEW'; stamp.style.borderColor='#888'; stamp.style.color='#888'; }
+        else if (completedActs === 5) { stamp.textContent = 'CLOSED'; stamp.style.borderColor='#30d158'; stamp.style.color='#30d158'; }
+        else { stamp.textContent = 'ACTIVE'; stamp.style.borderColor='#ff453a'; stamp.style.color='#ff453a'; }
+    }
+
+    // Subject status line
+    const subjStatus = document.getElementById('cf-subject-status');
+    if (subjStatus) {
+        if (completedActs >= 2) subjStatus.textContent = '⚠ Confirmed Missing · Last known: Dockyard Warehouse';
+        else if (completedActs >= 1) subjStatus.textContent = '⚠ Missing · Last seen: Dockyard Metro';
+        else subjStatus.textContent = '? Unknown status · Phone found at metro bench';
+    }
+
+    // Acts list
+    const list = document.getElementById('cf-acts-list');
+    if (list) {
+        list.innerHTML = '';
+        CF_ACT_DATA.forEach((act, i) => {
+            const actNum = i + 1;
+            let dotClass, numClass, titleClass, themeClass, badge, badgeClass;
+            if (hasSave && actNum < currentAct) {
+                dotClass = 'cf-done'; numClass = ''; titleClass = 'cf-act-done'; themeClass = '';
+                badge = 'COMPLETED'; badgeClass = 'cf-badge-done';
+            } else if ((!hasSave && actNum === 1) || (hasSave && actNum === currentAct)) {
+                dotClass = 'cf-active'; numClass = 'cf-act-active'; titleClass = 'cf-act-active'; themeClass = 'cf-act-active';
+                badge = 'IN PROGRESS'; badgeClass = 'cf-badge-active';
+            } else {
+                dotClass = 'cf-locked'; numClass = ''; titleClass = ''; themeClass = '';
+                badge = 'LOCKED'; badgeClass = 'cf-badge-locked';
+            }
+
+            const showSummary = (actNum <= currentAct) || !hasSave;
+
+            const row = document.createElement('div');
+            row.className = 'cf-act-row';
+            row.innerHTML = `
+                <div class="cf-act-dot-wrap ${dotClass}"></div>
+                <div class="cf-act-text">
+                    <span class="cf-act-num ${numClass}">${act.num}</span>
+                    <div class="cf-act-title ${titleClass}">${act.title}</div>
+                    <div class="cf-act-theme ${themeClass}">THEME: ${act.theme}</div>
+                    ${showSummary ? `<div class="cf-act-summary">${act.summary}</div>` : ''}
+                </div>
+                <span class="cf-act-badge ${badgeClass}">${badge}</span>`;
+            list.appendChild(row);
+        });
+    }
+
+    // Objective for current act
+    const objEl = document.getElementById('cf-objective-text');
+    if (objEl) {
+        const idx = hasSave ? Math.min(currentAct - 1, CF_ACT_DATA.length - 1) : 0;
+        objEl.textContent = CF_ACT_DATA[idx].objective;
+    }
+
+    showScreen('case-file-app');
+};
+
 let currentAlbumName='camera', currentImageIndex=0;
 
 window.openAlbum = function(albumName) {

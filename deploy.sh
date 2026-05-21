@@ -19,6 +19,11 @@ export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# ── Run test suite before every build ───────────────────────────────────────
+echo "🧪  Running test suite ..."
+npm run test:ci
+echo "✅  All tests passed"
+
 # ── Sync web assets before every build ───────────────────────────────────────
 echo "🔄  Syncing web assets → www/ ..."
 mkdir -p www

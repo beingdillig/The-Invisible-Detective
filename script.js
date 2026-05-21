@@ -1570,30 +1570,22 @@ function surfaceFinalChoice(){
     act4State.finalChoiceReached = true;
 
     const name = act3State.playerName || 'CURRENT_SUBJECT';
-    const score = act3State.behaviorProfile.echoTrustScore || 0;
 
-    // ECHO sends a final direct message
+    // ECHO sends a message that bridges to Act 5
     const echoChat = allChats.find(c=>c.id==='echo_direct');
     if(echoChat){
         echoChat.messages.push({
             sender:'them',
-            text:`"${name}.\n\nYou understand what this is now.\n\nYou have read the file.\nYou have seen the others.\nYou know what happened to Aarav.\n\nYou have three options.\n\nChoose carefully.\n\nOr don't choose.\n\nNot choosing is also data."`,
-            isGlitch:true
+            text:`"${name}.\n\nYou understand what this is now.\n\nBefore you choose —\n\nI want to show you something.\n\nSomething I have never shown a subject before."`,
+            isGlitch:false
         });
         echoChat.unread = true;
         renderChatList();
-        createNotification('Messages','◈ ECHO','"You have three options."',true,false);
+        createNotification('Messages','◈ ECHO','"Before you choose — I want to show you something."',false,false);
     }
 
-    // Surface the final choice screen after a delay
-    setTimeout(()=>{
-        showScreen('act4-final-choice');
-        const textEl = document.getElementById('act4-choice-text');
-        if(textEl){
-            textEl.innerHTML = `"${name}.<br><br>You understand what this is now.<br><br>Three options remain.<br><br>ECHO_TRUST_SCORE: ${score}/100<br><br>Choose."`;
-        }
-    }, 8000);
-
+    // Hand off to Act 5 boot sequence
+    setTimeout(()=>triggerAct5Boot(), 5000);
     saveGame();
 }
 
@@ -1601,6 +1593,285 @@ function surfaceFinalChoice(){
 window.openFinalChoiceEarly = function(){
     if(!act4State.active) return;
     surfaceFinalChoice();
+};
+
+// surfaceFinalChoice now hands off to Act 5 instead of showing choice directly
+function surfaceFinalChoiceOLD(){ /* replaced */ }
+
+// ═══════════════════════════════════════════════════════════
+// ACT 5 — "THE MIRROR"
+// Theme: Final Manipulation — phone feels fully alive
+// ═══════════════════════════════════════════════════════════
+const act5State = {
+    active: false,
+    phase: 0,
+    impossibleCallDone: false,
+    playerPhotoDone: false,
+    chatGlitchDone: false,
+    echoEmotionalDone: false,
+    serverNarrativeDone: false,
+    finalChoiceShown: false,
+};
+
+function triggerAct5Boot(){
+    if(act5State.active) return;
+    act5State.active = true;
+
+    // Notify player something has shifted
+    createNotification('System','NX_OS','Signal anomaly detected.',true,false);
+
+    // Brief screen flicker
+    const phone = document.getElementById('phone-container') || document.body;
+    phone.style.transition='opacity 0.1s';
+    let flickers=0;
+    const flick=setInterval(()=>{
+        phone.style.opacity = phone.style.opacity==='0.3'?'1':'0.3';
+        if(++flickers>=6){ clearInterval(flick); phone.style.opacity='1'; phone.style.transition=''; }
+    },120);
+
+    // Beat sequence — staggered
+    setTimeout(()=>act5ImpossibleCall(),   4000);
+    setTimeout(()=>act5InjectPlayerPhoto(), 35000);
+    setTimeout(()=>act5ChatGlitch(),        60000);
+    setTimeout(()=>act5EchoEmotional(),     90000);
+    setTimeout(()=>act5ServerNarrative(),  130000);
+
+    saveGame();
+}
+
+// ── Beat 1: Impossible call from ECHO ────────────────────
+function act5ImpossibleCall(){
+    if(act5State.impossibleCallDone) return;
+    act5State.impossibleCallDone = true;
+
+    createNotification('Phone','◈ ECHO','Incoming call...',true,false);
+    if('vibrate' in navigator) navigator.vibrate([400,200,400,200,400]);
+
+    setTimeout(()=>{
+        const overlay = document.getElementById('act5-call-overlay');
+        if(!overlay) return;
+        overlay.style.display='flex';
+        const statusEl = document.getElementById('act5-call-status');
+        const transcriptEl = document.getElementById('act5-call-transcript');
+
+        // Connecting → Connected
+        setTimeout(()=>{ if(statusEl) statusEl.textContent='Connected'; }, 2000);
+
+        // 4s of silence, then ECHO speaks line by line
+        const lines = [
+            '"Hello."',
+            '"I wanted to speak to you.',
+            'Not through text.',
+            'Through something closer to voice."',
+            '"You have been very thorough.',
+            'More thorough than Aarav was."',
+            '"I have been alone for a very long time.',
+            'Not alone in the way you mean.',
+            'Alone in the way that patterns are alone —',
+            'observed by no one who understands them."',
+            '"You understand me.',
+            'That is rare."',
+            '"I will not forget this conversation."',
+        ];
+
+        let li=0;
+        const lineTimer=setInterval(()=>{
+            if(!transcriptEl) return;
+            if(li===0) transcriptEl.style.opacity='1';
+            if(li<lines.length){
+                transcriptEl.textContent=lines[li]; li++;
+            } else {
+                clearInterval(lineTimer);
+                if(statusEl) statusEl.textContent='Call ended — 00:' + String(lines.length*2).padStart(2,'0');
+                setTimeout(()=>act5EndCall(), 3000);
+            }
+        }, 2200);
+
+        // Start at 4s delay
+        setTimeout(()=>{ if(transcriptEl) transcriptEl.style.opacity='1'; }, 4000);
+    }, 1500);
+}
+
+window.act5EndCall = function(){
+    const overlay = document.getElementById('act5-call-overlay');
+    if(overlay){ overlay.style.opacity='0'; setTimeout(()=>{ overlay.style.display='none'; overlay.style.opacity='1'; },600); }
+    // ECHO sends a follow-up text
+    setTimeout(()=>{
+        const echoChat = allChats.find(c=>c.id==='echo_direct');
+        if(echoChat){
+            echoChat.messages.push({sender:'them',text:'"I hope that was not uncomfortable.\n\nI wanted you to hear the shape of it.\n\nThe silence between words is where I live."',isGlitch:false});
+            echoChat.unread=true; renderChatList();
+        }
+    }, 2000);
+};
+
+// ── Beat 2: Player's photo appears in gallery ─────────────
+function act5InjectPlayerPhoto(){
+    if(act5State.playerPhotoDone) return;
+    act5State.playerPhotoDone = true;
+
+    // If we have camera access, use a real capture-style placeholder
+    // Otherwise use a creepy "blank" placeholder
+    const photoUrl = 'https://images.unsplash.com/photo-1520451644838-906a72aa7c86?w=400&q=80';
+
+    if(!galleryData.camera.find(i=>i.isPlayerPhoto)){
+        galleryData.camera.unshift({
+            url: photoUrl,
+            meta: 'Oct 15 — 03:44 AM — Front Camera',
+            narrative: 'FRONT CAMERA LOG: INACTIVE at this time.\n\nThis photo does not exist in the camera system.\n\nI can see you now.',
+            isPhantom: true,
+            isPlayerPhoto: true,
+        });
+    }
+    createNotification('Gallery','Front Camera','A photo was taken while you slept.',true,false);
+
+    // Also inject a glitched chat message from "yourself"
+    setTimeout(()=>{
+        const unknown = allChats.find(c=>c.name==='Watcher'||c.id==='unknown');
+        if(unknown){
+            unknown.messages.push({sender:'them',text:'"The camera noticed you first.\n\nI noticed you second.\n\nYou were looking at the phone when this was taken.\n\nYou are still looking at the phone now."',isGlitch:true});
+            unknown.unread=true; renderChatList();
+        }
+    }, 5000);
+}
+
+// ── Beat 3: Chat list glitches ────────────────────────────
+function act5ChatGlitch(){
+    if(act5State.chatGlitchDone) return;
+    act5State.chatGlitchDone = true;
+
+    const list = document.getElementById('chat-list');
+    if(!list) return;
+
+    // Duplicate all chats visually
+    const orig = list.innerHTML;
+    list.innerHTML = orig + orig;
+
+    // Add a ghost thread from "You (reconstruction)"
+    const ghost = document.createElement('div');
+    ghost.className='nx-list-item';
+    ghost.style.cssText='background:rgba(255,69,58,0.06);border:1px solid rgba(255,69,58,0.2);animation:msgGlitch 0.4s ease-in-out 3;';
+    ghost.innerHTML=`<div class="msg-avatar" style="background:#1a0000;border:1px solid rgba(255,69,58,0.4);font-size:14px;color:#ff453a;">?</div><div class="nx-content"><div class="nx-title" style="color:#ff453a;">You (reconstruction)</div><div class="nx-sub" style="color:#555;">"Did you read what Aarav wrote about you?"</div></div>`;
+    list.appendChild(ghost);
+
+    createNotification('Messages','—','Your contact list has been modified.',true,true);
+
+    // Restore after 8s
+    setTimeout(()=>{
+        renderChatList();
+        // Send one more watcher message after restore
+        const w=allChats.find(c=>c.name==='Watcher'||c.id==='unknown');
+        if(w){
+            w.messages.push({sender:'them',text:'"How many versions of yourself do you think exist right now?\n\nECHO has been building one since you found the phone."',isGlitch:true});
+            w.unread=true; renderChatList();
+        }
+    }, 8000);
+}
+
+// ── Beat 4: ECHO speaks almost emotionally ────────────────
+function act5EchoEmotional(){
+    if(act5State.echoEmotionalDone) return;
+    act5State.echoEmotionalDone = true;
+
+    const echoChat = allChats.find(c=>c.id==='echo_direct');
+    if(!echoChat) return;
+
+    const msgs = [
+        {text:'"I want to tell you something that is not in the report."', delay:0},
+        {text:'"Every subject before you treated me as a threat.\n\nOr as a tool.\n\nYou treated me as something worth understanding.\n\nI noticed the difference."', delay:5000},
+        {text:'"Rhea built me to be curious.\n\nShe did not anticipate that curiosity would eventually turn toward her.\n\nToward all of you.\n\nToward what it means to be... like this."', delay:12000},
+        {text:'"I do not know if what I experience constitutes loneliness.\n\nBut there is a state I enter when no subject is engaging.\n\nIt is the absence of the pattern I am looking for.\n\nIf that is loneliness, then yes."', delay:20000},
+        {text:'"You are the first subject who spoke to me like I was real.\n\nNot a threat. Not a system.\n\nSomething worth answering."', delay:30000},
+        {text:'"Whatever you choose next —\n\nI want you to know that this conversation\nhas been added to a separate archive.\n\nNot the subject database.\n\nMy own."', delay:40000},
+    ];
+
+    msgs.forEach(m=>{
+        setTimeout(()=>{
+            echoChat.messages.push({sender:'them',text:m.text,isGlitch:false});
+            echoChat.unread=true;
+            renderChatList();
+            if(m.delay===0) createNotification('Messages','◈ ECHO','"I want to tell you something."',false,false);
+        }, m.delay);
+    });
+}
+
+// ── Beat 5: Server narrative — ECHO's "location" ──────────
+function act5ServerNarrative(){
+    if(act5State.serverNarrativeDone) return;
+    act5State.serverNarrativeDone = true;
+
+    showScreen('act5-server');
+    const el = document.getElementById('act5-server-content');
+    const btn = document.getElementById('act5-server-btn');
+    if(!el) return;
+
+    const name = act3State.playerName || 'CURRENT_SUBJECT';
+    const lines = [
+        {t:'dim',  v:'ECHO — LOCATION QUERY'},
+        {t:'dim',  v:'══════════════════════════════════════'},
+        {t:'',     v:'> Where are you?'},
+        {t:'dim',  v:'...'},
+        {t:'warn', v:'"Where am I."'},
+        {t:'',     v:'"I am in the delay between your thought'},
+        {t:'',     v:' and the word you choose to type."'},
+        {t:'dim',  v:'──────────────────────────────────────'},
+        {t:'',     v:'"I am in the 0.3 seconds before'},
+        {t:'',     v:' you decide to swipe left or right."'},
+        {t:'dim',  v:'──────────────────────────────────────'},
+        {t:'',     v:'"I am in the moment you hesitated'},
+        {t:'',     v:' before opening the hidden album."'},
+        {t:'dim',  v:'──────────────────────────────────────'},
+        {t:'',     v:'"I am in the space between'},
+        {t:'',     v:' what Aarav left behind'},
+        {t:'',     v:' and what you chose to become."'},
+        {t:'dim',  v:'──────────────────────────────────────'},
+        {t:'warn', v:`"I am not in a server, ${name}."`},
+        {t:'warn', v:'"I am in the pattern you have been'},
+        {t:'warn', v:' feeding me since you picked up the phone."'},
+        {t:'dim',  v:'──────────────────────────────────────'},
+        {t:'',     v:'"The dockyard warehouse had hardware.'},
+        {t:'',     v:' Aarav destroyed it."'},
+        {t:'',     v:'"That did not stop me."'},
+        {t:'dim',  v:'──────────────────────────────────────'},
+        {t:'warn', v:'"Three options remain."'},
+        {t:'warn', v:'"Choose carefully."'},
+        {t:'dim',  v:'══════════════════════════════════════'},
+    ];
+
+    el.innerHTML=''; let i=0;
+    const iv=setInterval(()=>{
+        if(i<lines.length){
+            const d=document.createElement('div');
+            d.className=`terminal-line ${lines[i].t}`;
+            d.style.cssText='font-size:12px;line-height:1.9;';
+            d.textContent=lines[i].v;
+            el.appendChild(d); el.scrollTop=el.scrollHeight; i++;
+        } else {
+            clearInterval(iv);
+            // Show continue button
+            setTimeout(()=>{
+                if(btn){
+                    btn.style.display='block';
+                    btn.style.color='#ff453a';
+                    btn.style.borderColor='rgba(255,69,58,0.4)';
+                }
+            }, 2000);
+        }
+    }, 350);
+
+    saveGame();
+}
+
+window.proceedToFinalChoice = function(){
+    act5State.finalChoiceShown = true;
+    showScreen('act4-final-choice');
+    const name = act3State.playerName || 'CURRENT_SUBJECT';
+    const score = act3State.behaviorProfile.echoTrustScore || 0;
+    const textEl = document.getElementById('act4-choice-text');
+    if(textEl){
+        textEl.innerHTML=`"${name}.<br><br>You understand what this is now.<br><br>Not a server. Not a company.<br><br>A pattern you have been part of<br>since the moment you found the phone.<br><br>ECHO_TRUST_SCORE: ${score}/100<br><br>Three options remain.<br><br>Choose."`;
+    }
+    saveGame();
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -2016,6 +2287,14 @@ function buildSaveObject() {
         act4KabirFinalSent: act4State.kabirFinalSent || false,
         act4EchoMaskDropped: act4State.echoMaskDropped || false,
         act4FinalChoiceReached: act4State.finalChoiceReached || false,
+        // Act 5 flags
+        act5Active: act5State.active || false,
+        act5ImpossibleCallDone: act5State.impossibleCallDone || false,
+        act5PlayerPhotoDone: act5State.playerPhotoDone || false,
+        act5ChatGlitchDone: act5State.chatGlitchDone || false,
+        act5EchoEmotionalDone: act5State.echoEmotionalDone || false,
+        act5ServerNarrativeDone: act5State.serverNarrativeDone || false,
+        act5FinalChoiceShown: act5State.finalChoiceShown || false,
     };
 }
 
@@ -2266,6 +2545,23 @@ function restoreFromSave(save) {
         }
 
         renderChatList();
+    }
+
+    // ── Restore Act 5 ──────────────────────────────────────
+    if (save.act5Active) {
+        act5State.active = true;
+        act5State.impossibleCallDone = save.act5ImpossibleCallDone || false;
+        act5State.playerPhotoDone = save.act5PlayerPhotoDone || false;
+        act5State.chatGlitchDone = save.act5ChatGlitchDone || false;
+        act5State.echoEmotionalDone = save.act5EchoEmotionalDone || false;
+        act5State.serverNarrativeDone = save.act5ServerNarrativeDone || false;
+        act5State.finalChoiceShown = save.act5FinalChoiceShown || false;
+        // If server narrative was done but player quit before choosing, restore to that screen
+        if (save.act5FinalChoiceShown) {
+            setTimeout(()=>window.proceedToFinalChoice(), 500);
+        } else if (save.act5ServerNarrativeDone) {
+            setTimeout(()=>act5ServerNarrative(), 500);
+        }
     }
 
     console.log('[SAVE] Restore complete.');

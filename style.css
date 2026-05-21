@@ -658,3 +658,55 @@ body{background-color:#000;color:var(--text-primary);display:flex;justify-conten
     font-size: 10px; letter-spacing: 4px;
     color: #222;
 }
+
+/* ═══════════════════════════════════════════════════════════ */
+/* ACT 5 — "THE MIRROR"                                       */
+/* ═══════════════════════════════════════════════════════════ */
+
+/* Impossible call overlay pulse */
+@keyframes act5CallPulse {
+    0%,100% {
+        box-shadow: 0 0 0 0 rgba(180,79,222,0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 20px rgba(180,79,222,0);
+    }
+}
+
+/* Chat glitch animation */
+@keyframes msgGlitch {
+    0%   { transform: translate(0); opacity:1; }
+    25%  { transform: translate(-4px,1px); opacity:0.7; }
+    50%  { transform: translate(4px,-1px); opacity:1; }
+    75%  { transform: translate(-2px,2px); opacity:0.8; }
+    100% { transform: translate(0); opacity:1; }
+}
+
+/* Act 5 server screen terminal lines */
+#act5-server-content .terminal-line {
+    font-size: 12px;
+    line-height: 1.9;
+}
+
+/* Incoming call ripple rings */
+#act5-call-overlay::before {
+    content: '';
+    position: absolute;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    border: 1px solid rgba(180,79,222,0.15);
+    animation: act5RingPulse 2s ease-out infinite;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -120px);
+}
+@keyframes act5RingPulse {
+    0%   { transform: translate(-50%,-120px) scale(1); opacity:0.5; }
+    100% { transform: translate(-50%,-120px) scale(2.5); opacity:0; }
+}
+
+/* Act 5 server continue button */
+#act5-server-btn:hover, #act5-server-btn:active {
+    background: rgba(255,69,58,0.1);
+    border-color: #ff453a;
+    color: #ff453a;
+}

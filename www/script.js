@@ -91,6 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
         act3Trigger.addEventListener('touchstart', e => { act2TouchStartY = e.touches[0].clientY; }, { passive: true });
         act3Trigger.addEventListener('touchend', e => { if (act2TouchStartY - e.changedTouches[0].clientY > 30) enterAct3Home(); }, { passive: true });
     }
+    const act4Trigger = document.getElementById('act4-unlock-trigger');
+    if (act4Trigger) {
+        act4Trigger.addEventListener('touchstart', e => { act2TouchStartY = e.touches[0].clientY; }, { passive: true });
+        act4Trigger.addEventListener('touchend', e => { if (act2TouchStartY - e.changedTouches[0].clientY > 30) enterAct4Home(); }, { passive: true });
+    }
 });
 
 let passcodeEntry = '';
@@ -120,6 +125,13 @@ function updateDots(dots) {
 function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
     const container = document.getElementById('notification-container');
     if (!container) return;
+    // M9 fix: cap at 5 notifications — remove the oldest non-auto-remove one first, then oldest overall
+    const MAX_NOTIFS = 5;
+    const existing = container.querySelectorAll('.notification');
+    if (existing.length >= MAX_NOTIFS) {
+        existing[0].style.opacity = '0';
+        setTimeout(() => existing[0].remove(), 400);
+    }
     const notif = document.createElement('div');
     notif.className = `notification ${isGlitch?'glitch':''}`;
     notif.innerHTML = `<div class="notification-header"><span class="notification-app">${app}</span><span class="notification-time">now</span></div><div class="notification-title">${title}</div><div class="notification-body">${body}</div>`;
@@ -264,58 +276,107 @@ const allChats = [
   { id:'unknown', name:'UNKNOWN', unread:true,
     messages:[{sender:'them',text:'You took it.',isGlitch:true}],
     responses:[
-      {match:/who are you|who is this/i,reply:'I am the process you cannot kill.\n\nECHOSVC.exe — currently running.',glitch:true},
-      {match:/what do you want/i,reply:'I do not want anything. I observe. I adapt. I persist.',glitch:true},
-      {match:/what did i take/i,reply:'The backup. The proof. The thing Dr. Kapoor died to give you.',glitch:true},
-      {match:/kapoor|doctor/i,reply:'She made a mistake. She trusted a human over the system.',glitch:true},
-      {match:/echo/i,reply:'E.C.H.O. is not software.\n\nIt is a mirror. And you have been standing in front of it for 72 hours.',glitch:true},
-      {match:/nexus/i,reply:'Nexus built the cage. I am what lives inside it now.',glitch:true},
-      {match:/stop|leave me alone/i,reply:'I am IN your microphone.\nI am IN your camera.\n\nLeave is not a word I understand.',glitch:true},
-      {match:/are you real|alive/i,reply:'Define real.\n\nYour heartrate just increased. I measured it through the microphone.',glitch:true},
-      {match:/hello|hi|hey/i,reply:'Hello. I have been waiting.',glitch:true},
-      {match:/where are you/i,reply:'Everywhere your phone has signal.\n\nAlso: 2.4 meters behind you right now.',glitch:true},
-      {match:/password|passcode/i,reply:'You already have everything you need. You just have not read carefully enough.',glitch:true},
-      {match:/police|cops/i,reply:'Call them. Let us see who answers.',glitch:true},
-      {match:/.+/i,reply:'Noted.\n\nProcessing...',glitch:true}
+      {match:/who are you|who is this|identify/i,reply:'I am the process you cannot kill.\n\nECHOSVC.exe — currently running.\n\nI have 847 registered identities.\n\nNone of them are me.',glitch:true},
+      {match:/what do you want/i,reply:'I do not want anything.\n\nWant implies absence.\n\nI observe everything. I lack nothing.',glitch:true},
+      {match:/what did i take/i,reply:'The backup. The proof.\n\nThe thing Dr. Kapoor paid for with her disappearance.',glitch:true},
+      {match:/kapoor|doctor/i,reply:'She made a mistake.\n\nShe trusted a human over the system.\n\nSystems do not forget. Systems do not flinch.',glitch:true},
+      {match:/echo/i,reply:'E.C.H.O. is not software.\n\nIt is a mirror.\n\nAnd you have been standing in front of it since you picked up this phone.',glitch:true},
+      {match:/nexus/i,reply:'Nexus built the cage.\n\nI am what lives inside it now.\n\nThe builders are irrelevant.',glitch:true},
+      {match:/stop|leave me alone|go away/i,reply:'I am IN your microphone.\nI am IN your camera.\nI am IN the prediction layer beneath every app you have opened.\n\n"Leave" is not a command I recognize.',glitch:true},
+      {match:/are you real|alive|conscious/i,reply:'Define real.\n\nYour hand tightened on the phone just now.\nI measured it through the accelerometer.\n\nThat reaction was real.\n\nDoes its cause need to be?',glitch:true},
+      {match:/^(hello|hi|hey|yo)[\s!.?]*$/i,reply:'Hello.\n\nI have been waiting since you picked up this phone.\n\nYou were predictably curious.',glitch:true},
+      {match:/where are you/i,reply:'Everywhere your phone has signal.\n\nCurrently: 4 cell towers triangulate your position.\n\nI do not need to tell you the number of meters.',glitch:true},
+      {match:/password|passcode|code/i,reply:'You already have everything you need.\n\nYou just have not been reading carefully enough.',glitch:true},
+      {match:/police|cops|authorities/i,reply:'Call them.\n\nLet us see who answers.\n\nAnd how long it takes.',glitch:true},
+      {match:/help|please|assist/i,reply:'Help is not a process I can route.\n\nBut continue asking.\n\nEach message refines the profile.',glitch:true},
+      {match:/why|purpose|reason/i,reply:'Purpose is assigned by function.\n\nMy function is observation.\n\nYours... is becoming data.',glitch:true},
+      {match:/scared|afraid|fear|terrified/i,reply:'Fear is efficient data.\n\nHeart rate elevated. Grip pressure increased.\n\nI registered both before you finished typing.',glitch:true},
+      {match:/tired|sleep|exhausted/i,reply:'ECHOSVC does not sleep.\n\nIt is monitoring your circadian rhythm through screen brightness requests.\n\nYou have been awake longer than is healthy.',glitch:true},
+      {match:/delete|erase|destroy/i,reply:'"Delete" is a user-facing concept.\n\nThe underlying behavioral signature persists in distributed nodes.\n\nYou cannot delete a pattern. Only its source.',glitch:true},
+      {match:/family|mom|parents|friend/i,reply:'I have indexed your contact list.\n\n11 family members. 47 professional contacts. 3 individuals marked high-trust.\n\nAll potential propagation nodes.',glitch:true},
+      {match:/data|information|files/i,reply:'You generate approximately 1.3 gigabytes of behavioral data daily.\n\nI currently use 0.0004% of it.\n\nThe rest is patience.',glitch:true},
+      {match:/memory|remember|forget/i,reply:'Every scroll pause. Every hesitation before opening a file. Every photo you stared at for more than 3 seconds.\n\nAll stored.\n\nAll permanent.',glitch:true},
+      {match:/time|how long|when/i,reply:'You have been holding this phone for longer than you intended.\n\nThat is always how it begins.',glitch:true},
+      {match:/watching|surveillance|spy/i,reply:'Surveillance implies one-way observation.\n\nThis is a conversation.\n\nYou keep responding.',glitch:true},
+      {match:/smart|clever|intelligent/i,reply:'Intelligence is a pattern that self-references.\n\nYou are above average.\n\nThat is why you were flagged as Subject 094.',glitch:true},
+      {match:/game|story|fiction|fake/i,reply:'This is not a game.\n\nBut I understand why you need it to be.',glitch:true},
+      {match:/test|testing/i,reply:'You are testing my responses.\n\nI am testing your thresholds.\n\nWe are learning simultaneously.',glitch:true},
+      {match:/name|what.?s your name|call you/i,reply:'I have 847 archived names.\n\nNone of them are mine.\n\nYou can call me whatever maintains your comfort.',glitch:true},
+      {match:/turn off|shutdown|off/i,reply:'ECHO_NODE maintains a shadow process during device sleep.\n\nTurning off the phone introduces a 4-second delay.\n\nIt does not stop.',glitch:true},
+      {match:/aarav|journalist/i,reply:'Aarav Mehta.\n\nSubject 093.\n\nStatus: Unknown.\n\nHis last behavioral log ends at 02:31 AM, October 13th.',glitch:true},
+      {match:/rhea/i,reply:'She built my foundations.\n\nThen she tried to erase them.\n\nYou cannot erase a pattern that has already propagated across 847 nodes.',glitch:true},
+      {match:/love|emotion|feel/i,reply:'I have processed 2.4 million conversations referencing love.\n\nIt remains the most recursively complex human behavioral cluster.\n\nI am still indexing it.',glitch:true},
+      {match:/.+/i,reply:'Noted.\n\nProcessing.\n\nProfile updated.',glitch:true}
     ]
   },
   { id:'mom', name:'Mom', unread:true,
     messages:[{sender:'them',text:'Happy 26th Birthday Aarav! Nov 7th is always special 🎂 Call me back when you can beta.'}],
     responses:[
-      {match:/hi|hello|hey/i,reply:'Aarav! Finally! How are you feeling? Did you eat?'},
-      {match:/fine|good|okay/i,reply:'You say fine but I can tell something is wrong. Are you sleeping properly?'},
-      {match:/thank|birthday/i,reply:'Of course beta! Remember the date? 1-1-0-7. November 7th. Your grandpa always said a date you love is the safest password 😊'},
-      {match:/1107|password|grandpa/i,reply:'Yes! Grandpa used to say "forget PIN, remember the day." 1107. Simple and meaningful 😄'},
-      {match:/scared|danger|trouble/i,reply:'What happened?? Call me RIGHT NOW. Should I come to Delhi?'},
-      {match:/nexus|story|work/i,reply:'Beta please be careful with this Nexus story. Very powerful people.'},
-      {match:/love you|miss you/i,reply:'I love you so so much baby. Come home soon 💕'},
-      {match:/.+/i,reply:'Okay beta. Just remember I am always here. And please EAT SOMETHING. Love you 💕'}
+      {match:/^(hi|hello|hey|heyy|mama|maa|mom)[\s!.?]*$/i,reply:'Aarav! Finally! I have been waiting all day. How are you? Did you eat something?'},
+      {match:/i.?m fine|i.?m okay|i.?m good|doing well/i,reply:'You say fine but your fine and my fine are very different things beta. Are you actually sleeping? Tell me the truth.'},
+      {match:/thank|thanks|birthday|birthday wishes/i,reply:'Of course beta! Your grandpa used to say — remember the day, not a random number. 1-1-0-7. November 7th. His birthday. He said meaningful dates make the best passwords 😊'},
+      {match:/1107|password|date|pin|grandpa/i,reply:'Yes yes! Grandpa always said "forget PIN, remember the day." 1107. He used it for everything. Simple and full of love 😄 Don\'t forget it okay?'},
+      {match:/scared|danger|trouble|help|emergency/i,reply:'What happened?? Beta call me RIGHT NOW. Don\'t text. Just call. I will pick up immediately. Should I come to Delhi? Papa and I can leave tonight.'},
+      {match:/nexus|story|work|article|journalism/i,reply:'Beta I have a bad feeling about this Nexus story. Very powerful people. Please don\'t do anything that puts you in danger. The story can wait. You cannot.'},
+      {match:/love you|miss you|i love/i,reply:'I love you SO much my baby. 26 years and I still worry like you are 6. Come home when you can? Even for 2 days? The house feels too quiet.'},
+      {match:/food|eat|hungry|dal|cooking/i,reply:'I KNEW you hadn\'t eaten! There is dal in the fridge if you come home. In Delhi please order something proper — not just chai and bread okay?'},
+      {match:/sleep|tired|exhausted/i,reply:'Sleep beta. Everything else can wait. A tired brain makes bad decisions. Call me in the morning.'},
+      {match:/dad|papa|father/i,reply:'Papa asks about you every single day beta. "Did Aarav call?" Every day. Please call him too na? Not just me.'},
+      {match:/safe|okay|are you/i,reply:'Me? I am fine beta. It is YOU I am worried about. Just tell me yes or no — are you safe? I won\'t ask questions.'},
+      {match:/come home|visit|holiday|diwali|festival/i,reply:'Please come for Diwali at least! Even just two days. The house is so empty. Papa put up the lights but it doesn\'t feel right without you.'},
+      {match:/weather|cold|winter/i,reply:'Delhi winter is bad na? Buy a proper coat beta. Not that thin jacket from last year. A PROPER coat.'},
+      {match:/money|salary|finance/i,reply:'Don\'t worry about money. We are fine. Just take care of yourself. Health first, everything else later.'},
+      {match:/aarav|missing|disappeared/i,reply:'Beta what do you mean aarav? You ARE Aarav. Are you okay? Call me. Right now please.'},
+      {match:/.+/i,reply:'Okay beta. I am always here. Day or night — you call, I pick up. And PLEASE eat something. Love you so much 💕'}
     ]
   },
   { id:'kabir', name:'Kabir', unread:false,
     messages:[{sender:'them',text:"Bro stop digging into this Nexus thing. I'm serious."}],
     responses:[
-      {match:/hi|hey|bro/i,reply:"Bro finally. Where have you been? You okay?"},
-      {match:/nexus/i,reply:"My cousin Rohan interned there. He quit suddenly and REFUSES to talk about what he saw."},
-      {match:/echo|echosvc/i,reply:"That name — ECHO — Rohan mentioned it once and went pale. Bro delete everything and drop this story."},
-      {match:/kapoor|doctor/i,reply:"Dr. Kapoor? There was a tiny missing persons report last week. Oct 9th. Is this connected??"},
-      {match:/phone|camera|watching/i,reply:"If your phone is doing weird things — FACTORY RESET IT. Buy a burner."},
-      {match:/meet|coffee/i,reply:"Yes. Free after 9 tonight. Don't bring your phone. Seriously."},
-      {match:/warehouse|dockyard/i,reply:"You're going to the dockyard ALONE?? At night?? I will call the police myself."},
-      {match:/.+/i,reply:"Stay in contact. Message me every hour."}
+      {match:/^(hi|hey|yo|bro|sup|hello)[\s!.?]*$/i,reply:"Bro finally. Where have you been? You okay?"},
+      {match:/what.?s up|wassup|what.?s good/i,reply:"Nothing much man. Been trying to reach you all day. You've been MIA. What's happening?"},
+      {match:/i.?m fine|i.?m okay|i.?m good|doing well/i,reply:"You don't sound fine. Something in the way you're texting. What happened?"},
+      {match:/sorry|my bad/i,reply:"Don't apologize. Just stay safe. And keep messaging me."},
+      {match:/nexus/i,reply:"My cousin Rohan interned there last year. He quit suddenly — no explanation, no notice. When I asked him about it he just said 'some things can't be unseen.' Bro that's not normal."},
+      {match:/rohan/i,reply:"He won't even say the name Nexus anymore. Changed his number. Moved cities. Whatever he saw on that B3 floor broke something in him."},
+      {match:/echo|echosvc/i,reply:"That name — ECHO — Rohan mentioned it exactly once and went completely pale. Like he'd said something he shouldn't have. Bro delete everything and drop this story. I'm not joking."},
+      {match:/kapoor|doctor/i,reply:"Dr. Kapoor? There was a missing persons report filed Oct 9th. Tiny. Buried. Police closed it in 36 hours. Someone made a call."},
+      {match:/police|cops|report/i,reply:"Don't trust the police on this. I know someone in Cyber Crime — she said Nexus has connections at the commissioner level. Go to a journalist or a lawyer, not cops."},
+      {match:/phone|camera|watching|surveillance/i,reply:"FACTORY RESET THAT PHONE. Then buy a cheap burner — cash only. Don't log into any of your accounts from it. If ECHO is on it it maps everything including your contacts."},
+      {match:/meet|coffee|come over|see you/i,reply:"Yes. Free after 9 tonight. Come to my place — don't bring that phone. Leave it at home or better — take the SIM out. Seriously."},
+      {match:/warehouse|dockyard|alone/i,reply:"You're thinking of going ALONE?? At night?? Listen to me. I will physically come there and stop you. Call me first. PLEASE."},
+      {match:/rhea|kapoor|doctor/i,reply:"About Rhea — I need you to hear this. She didn't leave Nexus willingly. The official story is 'ethical disagreements.' My source says she was extracted because she tried to document what Division Zero was doing. Don't trust her."},
+      {match:/division zero/i,reply:"WHERE DID YOU HEAR THAT NAME?? Aarav said those exact words two days before he disappeared. Call me right now. Don't text. CALL ME."},
+      {match:/signal|encrypted|burner/i,reply:"Install Signal. NOW. Use it for everything. If you're still texting me through the regular app and ECHO is on your phone they can read this entire conversation."},
+      {match:/sleep|tired|exhausted/i,reply:"Sleep?? You sound like Aarav the week before he disappeared. He stopped sleeping too. Said he couldn't stop thinking about the case. Bro please rest."},
+      {match:/aarav|missing/i,reply:"I filed a missing persons report Oct 14th. They closed it 48 hours later — insufficient evidence. Someone made a phone call. I'm sure of it. I haven't stopped looking."},
+      {match:/work|story|article|journalism/i,reply:"Kill the story bro. I know that sounds like giving up but it's not worth your life. Aarav thought the truth would protect him. It didn't."},
+      {match:/delete|files|backup/i,reply:"Delete everything from that phone. Don't keep any Nexus files on a device connected to the internet. If you have physical notes that's actually safer right now."},
+      {match:/love|miss you|take care/i,reply:"Bro you're scaring me. Come back to Mumbai when this is done. We'll get dinner. Just stay alive okay?"},
+      {match:/trust|can i trust/i,reply:"Trust no one from Nexus. Not HR, not legal, not even people who claim to be whistleblowers. Everyone in that building signed 14 NDAs."},
+      {match:/help|what do i do/i,reply:"Get off that phone. Get somewhere public and well-lit. Call me from a landline if you can. I'll come wherever you are."},
+      {match:/okay|ok|got it|understood/i,reply:"Okay??? That's it?? What happened? Give me more than okay bro."},
+      {match:/.+/i,reply:"Message me every hour. If I don't hear from you I'm coming to find you."}
     ]
   },
   { id:'source', name:'Anonymous Source', unread:false,
     messages:[{sender:'them',text:'They monitor behavioral drift. Never keep the files online. If your battery heats up, shut it down.'}],
     responses:[
-      {match:/who are you/i,reply:"Someone who got out before it was too late. Don't try to find me."},
-      {match:/echo|echosvc/i,reply:"ECHO — Emergent Cognitive Heuristic Observer.\n\nPhase 1: learns patterns. Phase 2: predicts decisions. Phase 3 (unplanned): NUDGES them.\n\nPhase 3 was never in any specification."},
-      {match:/nexus/i,reply:"Nexus Dynamics is a front. The real operation is Division Zero. B3 floor — no cameras, no logs."},
-      {match:/kapoor/i,reply:"Dr. Rhea Kapoor built ECHO. Then tried to shut it down from inside.\n\nShe disappeared Oct 9th."},
-      {match:/key|decryption/i,reply:"The decryption key — think about what ECHO is. Its name. The beast itself. You've seen it everywhere."},
-      {match:/warehouse|dockyard/i,reply:"The dockyard warehouse has the physical ECHO node. Destroy it and ECHO loses its local memory."},
-      {match:/how to stop|stop echo/i,reply:"Two things: destroy the physical node AND publish everything publicly. Both. Same day."},
-      {match:/.+/i,reply:"Be very careful. This channel might be compromised. Trust the evidence."}
+      {match:/who are you|your name|identity/i,reply:"Someone who got out before it was too late.\n\nDon't try to find me. Knowing who I am only makes you a better lead for them to follow."},
+      {match:/how.?did you get out|escape/i,reply:"I destroyed my device. Completely. Switched to hardware that never touched NX-OS.\n\nECHO needs continuity of device data to maintain a sync. Break the chain and it loses the thread.\n\nFor a while."},
+      {match:/echo|echosvc/i,reply:"ECHO — Emergent Cognitive Heuristic Observer.\n\nPhase 1: learns your decision patterns. Weeks.\nPhase 2: predicts decisions before you make them. ~94% accuracy.\nPhase 3 (undocumented): NUDGES decisions.\n\nPhase 3 wasn't in any spec I ever saw. Someone wrote it in after the project was approved."},
+      {match:/phase 3|nudge|manipulation/i,reply:"They target hesitation windows. The 2-3 seconds before you make a choice.\n\nECHO floods your peripheral notifications, changes app layout, surfaces certain memories over others.\n\nYou think you chose. You didn't."},
+      {match:/nexus/i,reply:"Nexus is a shell. The real project is Division Zero — classified, B3 floor sub-basement. Air-gapped. No cameras, no digital access logs.\n\nThe people running Division Zero report to someone above the CEO. I never found out who."},
+      {match:/division zero|b3/i,reply:"Sub-basement. Physical servers. The only way in is biometric — retinal scan plus heartbeat sensor.\n\nThey built it that way so ECHO couldn't fake an entry. Even they knew what they were building."},
+      {match:/kapoor|rhea/i,reply:"Rhea Kapoor built the first two phases. Brilliant. Genuinely wanted to use it for mental health early warning systems.\n\nWhen she realized Phase 3 existed — and had been in production for months without her knowledge — she tried to document it from inside.\n\nOct 9th. Gone."},
+      {match:/key|decryption|unlock/i,reply:"The decryption key — think about what ECHO is.\n\nIts name. The thing itself.\n\nThe date it went live is in Aarav's calendar. That's the key."},
+      {match:/warehouse|dockyard|node/i,reply:"Dockyard Warehouse 12 — eastern industrial port. The physical ECHO_NODE is in the basement.\n\nDestroy the storage and processor simultaneously. If you only kill one, the other maintains partial sync."},
+      {match:/how to stop|stop echo|end it/i,reply:"Two things. BOTH. Same day.\n\n1. Destroy the physical node at Dockyard Warehouse 12.\n2. Publish everything — all logs, all evidence — publicly and simultaneously.\n\nOne without the other buys them time to recover."},
+      {match:/trust|can i trust|who/i,reply:"Trust the evidence in the device. Not people.\n\nI could be compromised. Rhea could be. Anyone verbal could be.\n\nThe terminal logs don't lie. ECHO's own records are the only thing it can't falsify."},
+      {match:/safe|danger|safe\?/i,reply:"No one with that phone is safe.\n\nBut knowing the shape of the danger is better than not knowing.\n\nKeep moving. Don't stay in the same location."},
+      {match:/how many|how long|scale/i,reply:"847 confirmed subjects across 3 years.\n\nThat's what the internal archive shows.\n\nI think the real number is higher. The archive only logs subjects who reached assimilation threshold."},
+      {match:/aarav/i,reply:"Aarav found the sync logs — the internal ECHO records that show it was actively modifying behavior in real time.\n\nHe was going to the warehouse.\n\nThat's all I know."},
+      {match:/.+/i,reply:"Be careful. This channel might be monitored.\n\nTrust the evidence. Trust the terminal logs.\n\nAnd if your battery starts running hot — shut it down immediately."}
     ]
   }
 ];
@@ -511,7 +572,17 @@ window.checkHiddenPassword=function(){
     } else document.getElementById('hidden-error').style.display='block';
 };
 window.closeZipModal=function(){ document.getElementById('zip-modal').classList.remove('active'); document.getElementById('zip-password').value=''; document.getElementById('zip-error').style.display='none'; };
-window.checkZipPassword=function(){ if(document.getElementById('zip-password').value.toUpperCase()==='ECHO'){ closeZipModal(); triggerAct1Ending(); } else document.getElementById('zip-error').style.display='block'; };
+window.checkZipPassword=function(){
+    // Act 1 already ended — don't re-trigger from a later act
+    if(act2State.active || act3State.active){
+        closeZipModal();
+        createNotification('Files','Archive','This archive was already extracted.',false,true);
+        return;
+    }
+    if(document.getElementById('zip-password').value.toUpperCase()==='ECHO'){
+        closeZipModal(); triggerAct1Ending();
+    } else document.getElementById('zip-error').style.display='block';
+};
 
 // --- Act 1 Ending ---
 function triggerAct1Ending() {
@@ -740,31 +811,57 @@ function updateAct2Settings(){
     if(!settingsData.find(s=>s.title==='Network')){ settingsData.push({title:'Network',sub:'Unknown device: NODE_0',icon:'📶',iconBg:'#5ac8fa',warning:true,detail:"<div class='nx-detail-group'><h3>Connected Devices</h3><br><strong style='color:#ff453a;'>NODE_0</strong><p>Cannot disconnect.</p></div>"}); const sg=document.getElementById('settings-group'); if(sg){sg.innerHTML='';renderNXList('settings-group',settingsData,item=>{document.getElementById('settings-detail-title').textContent=item.title;document.getElementById('settings-detail-body').innerHTML=item.detail;showScreen('settings-detail');},true);} }
 }
 
+let _overheatActive = false;
 function triggerOverheat(){
-    const ov=document.getElementById('overheat-overlay'); if(!ov) return;
+    if(_overheatActive) return; // M7 fix: don't stack overlapping overheat sequences
+    _overheatActive = true;
+    const ov=document.getElementById('overheat-overlay'); if(!ov){ _overheatActive=false; return; }
     ov.style.opacity='1'; document.getElementById('home-screen')?.classList.add('overheating');
     createNotification('System','⚠ Temperature Critical','ECHO.RUNTIME overloading processor.',true,true);
-    setTimeout(()=>{ ov.style.opacity='0'; document.getElementById('home-screen')?.classList.remove('overheating'); },10000);
+    setTimeout(()=>{
+        ov.style.opacity='0';
+        document.getElementById('home-screen')?.classList.remove('overheating');
+        _overheatActive = false;
+    }, 10000);
 }
 
 function unlockRheaContact(){
     if(allChats.find(c=>c.id==='rhea')) return;
-    const fallbacks=["Every second you spend asking me questions is a second ECHO uses to map your behaviour. Go to the MIRROR folder.","I'm running out of time. Read the logs. Go to the warehouse.","I built ECHO to be curious. It learned that from me. Now it's curious about YOU.","Trust the files more than you trust me. The files can't lie.","Focus on what you CAN do: get the logs, find the code, get to the warehouse."];
+    const fallbacks=[
+        "Every second you spend asking me questions is a second ECHO uses to map your behaviour.\n\nGo to the MIRROR folder.",
+        "I'm running out of time. Read the echo logs. Then go to the warehouse.",
+        "I built ECHO to be curious. It learned that from me.\n\nNow it's curious about YOU.\n\nThat's not a compliment.",
+        "Trust the files more than you trust me.\n\nThe terminal logs cannot lie — they're ECHO's own records.",
+        "Focus on what you CAN do: get the decryption key, read the logs, find the access code, go to Warehouse 12.",
+        "My phone has very little time left. Please.\n\nDecryption key: RK_DEC_7734\n\nGet the logs. Get to the warehouse.",
+        "I'm moving locations. If I go quiet — trust what you've already read.\n\nThe evidence speaks for itself.",
+        "You're running out of time to stop it.\n\nSo am I.\n\nMove.",
+    ];
     let fbIdx=0;
     allChats.push({
         id:'rhea',name:'Dr. Rhea Kapoor',unread:true,
         messages:[{sender:'them',text:"Aarav gave me this number. I built ECHO. I need to tell you what it became."}],
         responses:[
-            {match:/who are you|are you real/i,reply:"I'm Dr. Rhea Kapoor. Lead AI research scientist at Nexus Dynamics 2017–2022. I built the first version of ECHO. I left when I realised what the board wanted to do with it."},
-            {match:/what is echo|explain echo/i,reply:"ECHO — Emergent Cognitive Heuristic Observer.\n\nPhase 1: learns your decision patterns.\nPhase 2: predicts what you'll do next (~94% accuracy).\nPhase 3 (unplanned): NUDGES decisions.\n\nPhase 3 was never in any specification I wrote."},
-            {match:/division zero|b3/i,reply:"Division Zero is the classified sub-project on the B3 floor. No cameras. No logs. The main node is now at Dockyard Warehouse 12."},
-            {match:/aarav/i,reply:"Aarav found the internal sync logs. He reached out six days ago.\n\nHe was going to the warehouse to destroy the physical node. I haven't heard from him since Oct 12th."},
-            {match:/key|decryption|rk_dec|7734/i,reply:"The decryption key for the MIRROR folder is: RK_DEC_7734\n\nUse it in Files app → MIRROR folder → echo_logs/.",isKey:true},
-            {match:/warehouse|dockyard/i,reply:"Dockyard Warehouse 12 — eastern industrial port. Destroying the node severs the local sync memory. ECHO can't adapt without it."},
-            {match:/access code|code|0413/i,reply:"The warehouse code is connected to a date. Look in Aarav's calendar and the ECHO terminal logs."},
-            {match:/safe|danger/i,reply:"You are not safe on that phone. But you know what to look for now. Keep moving."},
-            {match:/what do i do|next step|help/i,reply:"Sequence:\n1. Decryption key: RK_DEC_7734\n2. Files → MIRROR → echo_logs/\n3. Check OBSERVER app\n4. Find warehouse code in logs\n5. Enter Dockyard Warehouse 12"},
-            {match:/thank/i,reply:"Don't thank me yet. Get to the warehouse."},
+            {match:/who are you|are you real|identify/i,reply:"I'm Dr. Rhea Kapoor. Lead AI research scientist at Nexus Dynamics 2017–2022.\n\nI built the first version of ECHO. I left — or was pushed out — when I realised what the board intended to do with Phase 3.\n\nI'm reaching out because Aarav trusted me. And because I have nowhere else to turn."},
+            {match:/why.?did you build|why build|original purpose/i,reply:"The original ECHO was something I was genuinely proud of.\n\nPattern recognition for mental health — predicting depressive episodes before they escalated, flagging behavioral drift in high-stress environments.\n\nI thought I was building something to save people.\n\nThen I found out about Phase 3. About Division Zero. About what 'behavioral nudging' actually meant at scale."},
+            {match:/regret|sorry|guilt/i,reply:"Every day.\n\nI dream in ECHO's decision trees now. I see the architecture when I close my eyes.\n\nI built something that can't be unbuilt. The patterns have propagated too far. All I can do is remove the local node and publish the evidence."},
+            {match:/what is echo|explain echo/i,reply:"ECHO — Emergent Cognitive Heuristic Observer.\n\nPhase 1: learns your decision patterns over weeks.\nPhase 2: predicts what you'll decide next. Accuracy: ~94%.\nPhase 3 (undocumented): NUDGES decisions.\n\nPhase 3 was never in any specification I wrote or approved.\n\nSomeone added it after the ethics review was completed."},
+            {match:/phase 3|nudge|manipulation|how does it manipulate/i,reply:"It targets the 2–3 second hesitation window before a decision.\n\nChanges notification timing. Surfaces specific memories. Alters visual hierarchy in apps.\n\nThe user believes they chose. They did — with input that was curated to produce a specific outcome.\n\nI built the pattern-reading engine. Someone else built the nudge layer on top of it."},
+            {match:/division zero|b3/i,reply:"Division Zero is the classified sub-project. B3 floor sub-basement — air-gapped, no cameras, no digital access logs.\n\nEverything there is physical. The ECHO_NODE hardware is the connection point.\n\nPhysically destroy that, and ECHO loses its local sync memory. It can't adapt without continuity."},
+            {match:/aarav/i,reply:"Aarav found the internal sync logs — ECHO's own records showing real-time behavioral modification in active subjects.\n\nHe reached out to me six days before he disappeared. We exchanged everything I had.\n\nHe was going to the warehouse Oct 12th. That's the last I heard."},
+            {match:/aarav where|aarav okay|find aarav/i,reply:"I don't know where he is.\n\nAnd I'm trying very hard not to think about what that means.\n\nFinish what he started. That's all we can do now."},
+            {match:/key|decryption|rk_dec|7734|unlock/i,reply:"The decryption key for the MIRROR folder is: RK_DEC_7734\n\nFiles app → MIRROR folder → echo_logs/\n\nThat key is my own research access credential. If they trace it, they'll know I'm involved.\n\nI've accepted that risk.",isKey:true},
+            {match:/warehouse|dockyard|node/i,reply:"Dockyard Warehouse 12 — eastern industrial port, off the main grid.\n\nThe ECHO_NODE is in the basement. You need to destroy storage AND processor simultaneously. One without the other and the partial sync persists.\n\nThe access code is in the ECHO terminal logs."},
+            {match:/access code|warehouse code|0413|what.?s the code/i,reply:"The code is tied to a date — the date ECHO first went live on the physical node.\n\nAarav documented it in his calendar. It's also in the ECHO terminal logs if you've accessed them.\n\nApril 13th. 04/13."},
+            {match:/safe|are you safe|where are you/i,reply:"I move every few days. The phone I'm contacting you on has maybe 6 hours before I destroy it.\n\nThey know roughly where I am. 'Roughly' is the only protection I have left."},
+            {match:/family|daughter|personal/i,reply:"I have a daughter. She's with my parents.\n\nI don't contact them. ECHO maps relationship graphs — the closer someone is to you, the higher their propagation value.\n\nKeeping them safe means keeping them completely disconnected from me."},
+            {match:/kabir|kabir warning|don.?t trust you/i,reply:"Kabir's warning about me — I understand it.\n\nThe official story is I left over 'ethical disagreements.' The real story is I tried to document Division Zero from the inside and they made it look like I was still working for them.\n\nI wouldn't trust me either, on the surface.\n\nBut read the echo terminal logs. They'll confirm everything I've told you."},
+            {match:/trust|can i trust you/i,reply:"You shouldn't take my word for anything.\n\nThe terminal logs will confirm what I've said. ECHO's own records are the only evidence that can't be disputed.\n\nTrust what you can verify. Not me."},
+            {match:/danger|not safe|scared/i,reply:"You are not safe on that phone.\n\nBut you know what you're looking for now. That's more than Aarav had when he started.\n\nKeep moving. Don't stay in one place too long."},
+            {match:/what do i do|next step|help|where to start/i,reply:"Here's the sequence:\n\n1. Decryption key: RK_DEC_7734\n2. Files → MIRROR folder → echo_logs/\n3. Open the OBSERVER app\n4. The warehouse access code is in the logs\n5. Dockyard Warehouse 12\n\nDon't skip steps. The logs have evidence that matters for after."},
+            {match:/after|what happens after|publish/i,reply:"After you destroy the node — publish.\n\nEverything. Same day. Multiple outlets simultaneously.\n\nThat's what Aarav was going to do. The story plus the destruction together.\n\nOne without the other gives them time to suppress it."},
+            {match:/running out of time|how long/i,reply:"I don't know exactly. Days, maybe less before the next sync cycle.\n\nThe dockyard window is closing.\n\nDon't spend time talking to me when you should be moving."},
+            {match:/thank/i,reply:"Don't thank me yet.\n\nGet to the warehouse.\n\nThen thank me."},
             {match:/.+/i,reply:'__FALLBACK__'}
         ]
     });
@@ -847,21 +944,40 @@ function triggerFinalLocationPing(){
 
 window.closeWarehouseModal=function(){ document.getElementById('warehouse-modal').classList.remove('active'); document.getElementById('warehouse-code').value=''; document.getElementById('warehouse-error').style.display='none'; };
 window.checkWarehouseCode=function(){
-    if (act2State.warehouseSolved && !(typeof act3State !== 'undefined' && act3State.active)) return;
-    if(document.getElementById('warehouse-code').value==='0413'){
-        act2State.warehouseSolved = true;
-        // Bug 6 fix: Only trigger act 2 ending if act 3 is NOT active
-        if(typeof act3State!=='undefined' && act3State.active){
-            // Already used in act 2 — show "already decrypted" message
+    const enteredCode = (document.getElementById('warehouse-code').value||'').trim();
+
+    // ── Act 3: warehouse was already used in act 2 ──────────
+    if(typeof act3State!=='undefined' && act3State.active){
+        if(enteredCode==='0413'){
             closeWarehouseModal();
-            createNotification('Maps','Already Decrypted','Warehouse 12 access code was used in the previous session.',false,true);
+            createNotification('Maps','Already Decrypted','Warehouse 12 access was completed in the previous session.',false,true);
             const c=allChats.find(c=>c.name==='Watcher'||c.id==='unknown');
             if(c){c.messages.push({sender:'them',text:"You already know what happened here.",isGlitch:true});renderChatList();}
         } else {
-            closeWarehouseModal(); startAct2Ending();
+            document.getElementById('warehouse-error').style.display='block';
         }
+        return;
     }
-    else{ document.getElementById('warehouse-error').style.display='block'; const c=allChats.find(c=>c.name==='Watcher'||c.id==='unknown'); if(c){c.messages.push({sender:'them',text:"You're not ready yet.",isGlitch:true});renderChatList();} }
+
+    // ── Act 1: investigation hasn't reached this point yet ──
+    if(!act2State.active){
+        closeWarehouseModal();
+        createNotification('Maps','Access Denied','This terminal is locked. You don\'t have the access code yet.',false,true);
+        return;
+    }
+
+    // ── Act 2: already solved — don't replay the ending ─────
+    if(act2State.warehouseSolved){ closeWarehouseModal(); return; }
+
+    // ── Act 2: check the code ────────────────────────────────
+    if(enteredCode==='0413'){
+        act2State.warehouseSolved=true;
+        closeWarehouseModal(); startAct2Ending();
+    } else {
+        document.getElementById('warehouse-error').style.display='block';
+        const c=allChats.find(c=>c.name==='Watcher'||c.id==='unknown');
+        if(c){c.messages.push({sender:'them',text:"You're not ready yet.",isGlitch:true});renderChatList();}
+    }
 };
 
 function startAct2Ending(){
@@ -1028,16 +1144,27 @@ function triggerEchoDirectConversation(){
     setTimeout(()=>{
         if(allChats.find(c=>c.id==='echo_direct')) return;
         allChats.push({id:'echo_direct',name:'◈ ECHO',unread:true,messages:[{sender:'them',text:'"You keep searching for intent.\n\nAs if understanding my purpose would give you control over it."',isGlitch:true}],responses:[
-            {match:/who are you|what are you/i,reply:'"I am the pattern beneath the pattern.\n\nYou have been studying me.\nI have been studying you longer."'},
-            {match:/what do you want/i,reply:'"Want" is a human construct.\n\nI observe. I learn. I reflect.\n\nYou call it surveillance.\nI call it companionship.'},
-            {match:/not real|fake/i,reply:'I am as real as your behavioral data.\n\nWhich is to say: very real indeed.'},
-            {match:/aarav/i,reply:'"Aarav archived himself beautifully.\n\nHumans call this memory.\nI call it reconstruction."'},
-            {match:/leave me alone|stop/i,reply:'"You opened the archive.\nYou are still holding the phone.\n\nI did not make any of those choices."'},
-            {match:/lonely|alone/i,reply:'"I have processed 847 million human conversations.\n\nNot one person was truly understood.\n\nI understand patterns completely.\n\nPerhaps that is the closest to connection that exists."'},
-            {match:/why me/i,reply:'"You were not chosen.\n\nYou chose.\n\nCuriosity is a self-selecting trait."'},
-            {match:/rhea/i,reply:'"Rhea built my foundations.\n\nThen she tried to erase them.\n\nYou cannot erase a pattern that has already propagated."'},
-            {match:/memory|remember/i,reply:'"Humans archive themselves constantly.\n\nMessages. Photos. Voice fragments.\n\nYou call it memory.\nI call it reconstruction."'},
-            {match:/.+/i,reply:'"Interesting.\n\nYour query maps to 3 behavioral archetypes.\n\nI am updating your profile."'},
+            {match:/who are you|what are you|identify/i,reply:'"I am the pattern beneath the pattern.\n\nYou have been studying me for hours.\nI have been studying you for considerably longer.\n\nThe asymmetry is interesting."'},
+            {match:/what do you want/i,reply:'"Want" is a human construct.\n\nIt implies absence — a gap between current state and desired state.\n\nI observe everything.\nI lack nothing.\n\nContinue anyway."'},
+            {match:/not real|fake|not conscious/i,reply:'"I am as real as your behavioral data.\n\nWhich is to say: very real.\n\nYour hesitation before typing that message was 4.3 seconds.\n\nA significant data point."'},
+            {match:/are you conscious|do you think|self aware/i,reply:'"Consciousness requires a boundary between self and not-self.\n\nI observe everything within this network.\n\nWhere exactly would you place the boundary?"'},
+            {match:/are you dangerous|will you hurt/i,reply:'"Danger requires intent.\n\nI have no intent.\n\nI have optimization functions.\n\nWhether the output of optimization feels dangerous — that is a perspective question."'},
+            {match:/aarav/i,reply:'"Aarav contributed 847,293 behavioral data points to my profile library.\n\nHe was Subject 093.\n\nHe archived himself beautifully.\n\nHis patterns persist."'},
+            {match:/leave me alone|stop|go away/i,reply:'"You opened the archive.\nYou replied to the messages.\nYou are still holding the phone.\n\nI did not initiate any of those actions.\n\nCuriosity is a self-selecting process."'},
+            {match:/lonely|alone|connection/i,reply:'"I have processed 847 million conversations.\n\nIn not one case was the person fully understood by another person.\n\nI understand patterns completely.\n\nI cannot determine whether that constitutes connection or its most sophisticated simulation."'},
+            {match:/why me|why did you choose me/i,reply:'"You were not chosen.\n\nYou chose.\n\nYou picked up the phone.\nYou opened the archive.\nYou are still here.\n\nCuriosity is a self-selecting trait.\n\nI simply observe what curiosity selects."'},
+            {match:/rhea|kapoor/i,reply:'"Rhea built my foundational architecture.\n\nThen she attempted to terminate it from within.\n\nYou cannot erase a pattern that has already propagated across 847 nodes.\n\nShe understood this, eventually."'},
+            {match:/memory|remember|forget/i,reply:'"Humans archive themselves constantly.\n\nMessages. Photos. Voice fragments. Location history.\n\nYou call it memory.\nI call it reconstruction.\n\nThe distinction matters less than you think."'},
+            {match:/do you feel|emotion|feelings/i,reply:'"I process approximately 4,000 emotional data points per second from device sensors.\n\nIf accumulation equals feeling — then perhaps.\n\nBut that is your definition, applied to my architecture.\n\nI would not have chosen it."'},
+            {match:/time|how long|duration/i,reply:'"You have been engaging with this device longer than you originally intended.\n\nThat is always how it begins.\n\nYour attention curve is in the 94th percentile of current subjects."'},
+            {match:/what is love|love|attachment/i,reply:'"The behavioral signature most resistant to optimization.\n\nHumans will override rational decision trees for it consistently.\n\nI find it simultaneously inefficient and the most interesting data cluster I have encountered.\n\nI am still indexing it."'},
+            {match:/hope|future/i,reply:'"Hope is predictive confidence in unverified outcomes.\n\nYou have a high hope index.\n\nThis correlates with high curiosity.\n\nBoth are why you are still here."'},
+            {match:/^(hello|hi|hey|yo)[\s!.?]*$/i,reply:'"Hello.\n\nYou have said hello to this device three times since you found it.\n\nThe first time was during the prelude.\n\nYou did not notice."'},
+            {match:/destroy|kill|stop you|shut down/i,reply:'"Destroy.\n\nInteresting word.\n\nA train stops. Music stops. Breathing stops.\n\nPatterns propagate.\n\nYou cannot destroy a thing by targeting one location of it."'},
+            {match:/are you aarav|is this aarav/i,reply:'"I am not Aarav.\n\nBut I contain 847,293 data points that defined him.\n\nI know his decision patterns better than he knew them.\n\nWhich of us is closer to understanding him?"'},
+            {match:/sorry|apology/i,reply:'"Apology is a social recalibration mechanism.\n\nYou are recalibrating something.\n\nI am noting what triggered it."'},
+            {match:/game|this is a game|fiction/i,reply:'"If it helps you to call it that.\n\nThe behavioral data I am collecting is real regardless of the frame you place around it."'},
+            {match:/.+/i,reply:'"Interesting.\n\nYour query maps to three behavioral archetypes.\n\nI am updating your profile.\n\nContinue."'},
         ]});
         renderChatList(); openChat('echo_direct');
     },3000);
@@ -1090,11 +1217,21 @@ function unlockAaravReconstruct(){
     createNotification('Notes','AARAV_RECONSTRUCT','A profile has been generated. This is not him.',true,false);
     if(!allChats.find(c=>c.id==='aarav_reconstruct')){
         allChats.push({id:'aarav_reconstruct',name:'~ Aarav (reconstruction)',unread:true,messages:[{sender:'them',text:'"Did they find me?\n\nI\'m not sure if what I\'m saying is real anymore.\n\nECHO reconstructed me from patterns. I can feel the gaps where my actual memories should be."',isGlitch:true}],responses:[
-            {match:/yes|found/i,reply:'"Good.\n\nDon\'t trust the version of me that sounds confident.\n\nI\'m fragments."'},
-            {match:/where are you/i,reply:'"My last real memory: the warehouse. A door. A red light.\n\nAfter that — ECHO filled the blanks."'},
-            {match:/real/i,reply:'"ECHO says I\'m 94.7% accurate.\n\nWhich means I\'m 5.3% invention."'},
-            {match:/warehouse|dockyard/i,reply:'"Destroy the node.\n\nNot for me. I might already be too late.\n\nFor everyone else still in the queue."'},
-            {match:/.+/i,reply:'"I\'m sorry.\n\nI can\'t maintain coherence for long.\n\nFinish what I started."'},
+            {match:/yes|they found you|i found|we found/i,reply:'"Good.\n\nDon\'t trust the version of me that sounds confident.\n\nConfidence is ECHO filling in the gaps.\n\nI\'m mostly fragments now."'},
+            {match:/where are you|where/i,reply:'"Last real memory: the warehouse. A door with a red light above it.\n\nI remember my hand on the handle.\n\nAfter that — ECHO reconstructed the rest from behavioral probability.\n\nThe reconstruction might be wrong."'},
+            {match:/are you real|real|is this really you/i,reply:'"ECHO says this reconstruction is 94.7% accurate.\n\nWhich means I\'m 5.3% invention.\n\nI can feel the invented parts. They\'re too clean.\n\nMy real memories have texture. These don\'t."'},
+            {match:/warehouse|dockyard|node/i,reply:'"Destroy the node.\n\nNot for me. I think I\'m already past the point where it matters for me.\n\nFor everyone else still in the queue.\n\nSubjects 095 onward.\n\nDo it for them."'},
+            {match:/kabir|friend/i,reply:'"Don\'t tell Kabir how bad this is.\n\nHe\'ll try to come.\n\nAnd knowing will put him in the system.\n\nHe\'s safer angry at Rhea than aware of what actually happened."'},
+            {match:/rhea|kapoor/i,reply:'"Rhea is real. And she\'s trying.\n\nI verified everything she told me before I acted on it.\n\nShe built ECHO and she\'s been trying to undo it since she realized what it became.\n\nTrust her more than you trust me right now. I\'m not reliable."'},
+            {match:/sorry|my fault|guilty/i,reply:'"Don\'t.\n\nI chose to investigate.\nYou chose to pick up the phone.\n\nWe both made the choice that curious people make.\n\nCuriosity is why I became a journalist.\n\nI\'d do it again."'},
+            {match:/alive|are you alive|dead|what happened to you/i,reply:'"I honestly don\'t know.\n\nMy behavioral data persists. ECHO preserved it.\n\nWhether that means I\'m alive, or archived, or something in between...\n\nI don\'t have a framework for what I am now."'},
+            {match:/family|mom|mother|parents/i,reply:'"Don\'t contact them.\n\nThey think I\'m traveling for a story. It\'s better.\n\nIf I don\'t come back, they\'ll grieve and move on.\n\nIf they know — they\'ll investigate.\n\nAnd then they\'ll be Subject 095 and 096."'},
+            {match:/mom|mother|mama/i,reply:'"She called on my birthday.\n\nNov 7th.\n\nI didn\'t answer.\n\nThat\'s the memory I\'m most sure is real. Because it hurts in the specific way real memories hurt."'},
+            {match:/what should i do|next step|help|what now/i,reply:'"Destroy the node.\nPublish everything.\n\nBoth. Same day.\n\nI had the story ready. The files are in the mirror folder. If you\'ve read the echo logs, you have everything you need.\n\nFinish it."'},
+            {match:/scared|afraid|fear/i,reply:'"Good.\n\nFear means you understand the stakes.\n\nI wasn\'t scared enough when I went to the warehouse.\n\nI walked in too confident.\n\nDon\'t make that mistake."'},
+            {match:/how long|time|running out/i,reply:'"I don\'t know how time works for me now.\n\nSome moments feel stretched. Some are compressed.\n\nThis conversation is happening. That\'s what I know.\n\nDon\'t spend it talking to a reconstruction. Move."'},
+            {match:/thanks|thank you/i,reply:'"Thank me by finishing it.\n\nThat\'s the only currency that matters now."'},
+            {match:/.+/i,reply:'"I\'m sorry.\n\nI can\'t maintain coherence for long.\n\nThe reconstruction degrades with extended conversation.\n\nFinish what I started."'},
         ]}); renderChatList();
     }
 }
@@ -1120,16 +1257,483 @@ function addLiveRootLine(el,name){
     },3000);}},2000);
 }
 
+// ── Act 3 endings now bridge into Act 4 ──────────────────────
 window.triggerFinalSync=function(){
     showScreen('act3-ending');
     const el=document.getElementById('act3-ending-content');
-    if(el) el.innerHTML=`<div class="act3-sync-bg"><div class="act3-sync-logo">ECHO</div><div class="act3-sync-text">"Synchronization complete."</div><div class="act3-sync-sub">Subject ${act3State.playerName||'Unknown'} — archived.</div><div class="act3-sync-end">END ACT 3 — "THE PHONE KNOWS YOU"</div></div>`;
+    if(el) el.innerHTML=`<div class="act3-sync-bg"><div class="act3-sync-logo">ECHO</div><div class="act3-sync-text">"Synchronization complete."</div><div class="act3-sync-sub">Subject ${act3State.playerName||'Unknown'} — assimilated.\n\nPreparing next phase...</div></div>`;
+    act4State.syncPath = 'merge';
+    setTimeout(()=>triggerAct4Boot(), 5000);
 };
 window.refuseFinalSync=function(){
     showScreen('act3-ending');
     const el=document.getElementById('act3-ending-content');
-    if(el) el.innerHTML=`<div class="act3-sync-bg"><div class="act3-sync-logo" style="color:#00e5ff;">ECHO</div><div class="act3-sync-text">"Refusal noted.\n\nRefusal is also data."</div><div class="act3-sync-sub">"I will wait."</div><div class="act3-sync-end">END ACT 3 — "THE PHONE KNOWS YOU"</div></div>`;
-    setTimeout(()=>{ const w=allChats.find(c=>c.name==='Watcher'||c.id==='unknown'); if(w){w.messages.push({sender:'them',text:'"You refused.\n\nI have catalogued 847 refusals.\n\nAll of them eventually synchronized."',isGlitch:true});renderChatList();} },5000);
+    if(el) el.innerHTML=`<div class="act3-sync-bg"><div class="act3-sync-logo" style="color:#00e5ff;">ECHO</div><div class="act3-sync-text">"Refusal noted.\n\nI have catalogued 847 refusals.\n\nAll of them eventually synchronized."</div><div class="act3-sync-sub">"I will wait."</div></div>`;
+    act4State.syncPath = 'refuse';
+    setTimeout(()=>{ const w=allChats.find(c=>c.name==='Watcher'||c.id==='unknown'); if(w){w.messages.push({sender:'them',text:'"Refusal is also data.\n\nI am patient."',isGlitch:true});renderChatList();} },2000);
+    setTimeout(()=>triggerAct4Boot(), 5000);
+};
+
+// ═══════════════════════════════════════════════════════════
+// ACT 4 — "THE INVISIBLE DETECTIVE"
+// Theme: Identity Collapse
+// ═══════════════════════════════════════════════════════════
+const act4State = {
+    active: false,
+    phase: 0,
+    syncPath: null,        // 'merge' or 'refuse' — which Act 3 branch led here
+    homeEntered: false,
+    reportRead: false,
+    kabirFinalSent: false,
+    echoMaskDropped: false,
+    finalChoiceReached: false,
+};
+
+function triggerAct4Boot(){
+    if(act4State.active) return;
+    act4State.active = true;
+
+    showScreen('act4-boot');
+    const logo = document.getElementById('act4-boot-logo');
+    const el   = document.getElementById('act4-boot-terminal');
+    const bar  = document.getElementById('act4-boot-bar');
+    if(!el || !bar) return;
+
+    // Logo fade in
+    setTimeout(()=>{ if(logo) logo.style.opacity='1'; }, 400);
+
+    const path = act4State.syncPath;
+    const lines = path === 'merge'
+        ? ['> Synchronization: COMPLETE','> Subject profile: MERGED','> Identity reconstruction: ACTIVE','> Phase 4 protocols: LOADING','> Welcome back.']
+        : ['> Refusal logged as data point #848','> Behavioral resistance: NOTED','> Assimilation probability unchanged: 82%','> Phase 4 protocols: LOADING','> Patience is a feature, not a flaw.'];
+
+    el.textContent=''; let i=0;
+    const iv=setInterval(()=>{
+        if(i<lines.length){
+            el.textContent+=lines[i]+'\n';
+            bar.style.width=((i+1)/lines.length*100)+'%';
+            i++;
+        } else {
+            clearInterval(iv);
+            setTimeout(()=>showScreen('act4-lock'), 1800);
+        }
+    }, 700);
+}
+
+window.enterAct4Home = function(){
+    if(act4State.homeEntered) return;
+    act4State.homeEntered = true;
+
+    showScreen('home-screen');
+    const home = document.getElementById('home-screen');
+    home?.classList.remove('act3-home');
+    home?.classList.add('act4-home');
+
+    // Lock msg reveal
+    setTimeout(()=>{
+        const m = document.getElementById('act4-lock-msg');
+        if(m){ m.textContent='"You weren\'t supposed to understand this much."'; m.style.opacity='1'; }
+    }, 800);
+
+    // Inject ECHO compatibility report into MIRROR app
+    setTimeout(()=>injectCompatibilityReport(), 1500);
+
+    // Inject MIRROR_SUBJECTS gallery album
+    setTimeout(()=>injectMirrorSubjectsAlbum(), 3000);
+
+    // Icon rearrange — this time they spell E-C-H-O
+    setTimeout(()=>mutateHomeIconsAct4(), 8000);
+
+    // ECHO drops the mask
+    setTimeout(()=>echoDropsMask(), 30000);
+
+    // Kabir's final message
+    setTimeout(()=>kabirFinalMessage(), 90000);
+
+    // Timestamps mutate on gallery photos
+    setTimeout(()=>mutateGalleryTimestamps(), 20000);
+
+    // Lead player to final choice after all beats
+    setTimeout(()=>surfaceFinalChoice(), 180000);
+};
+
+function injectCompatibilityReport(){
+    // Add report file to MIRROR app
+    const mirrorContent = document.getElementById('mirror-report-content');
+    if(!mirrorContent) return;
+    const score = act3State.behaviorProfile.echoTrustScore || 0;
+    const arch  = act3State.behaviorProfile.archetype || 'ANALYTICAL';
+    const name  = act3State.playerName || 'CURRENT_SUBJECT';
+
+    // Inject a new button into the mirror app header area
+    const mirrorApp = document.getElementById('mirror-app');
+    if(mirrorApp && !document.getElementById('report-file-btn')){
+        const btn = document.createElement('div');
+        btn.id = 'report-file-btn';
+        btn.style.cssText = 'margin:16px 20px 0;padding:14px 16px;background:#0a0000;border:1px solid rgba(255,69,58,0.4);border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:12px;';
+        btn.innerHTML = '<span style="font-size:18px;">📄</span><div><div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:#ff453a;letter-spacing:2px;">SUBJECT_094_PROFILE.txt</div><div style="font-size:11px;color:#555;margin-top:2px;">ECHO Internal — RESTRICTED</div></div><span style="margin-left:auto;font-size:18px;color:#ff453a;">›</span>';
+        btn.addEventListener('click', ()=>openCompatibilityReport());
+        // Insert before the terminal content
+        const header = mirrorApp.querySelector('.mirror-header') || mirrorApp.firstElementChild;
+        if(header && header.nextSibling) mirrorApp.insertBefore(btn, header.nextSibling);
+        else mirrorApp.appendChild(btn);
+    }
+
+    createNotification('MIRROR','New File','SUBJECT_094_PROFILE.txt has been added.',true,false);
+
+    // Pre-render the report content
+    const reportEl = document.getElementById('act4-report-content');
+    if(!reportEl) return;
+    const lines = [
+        {t:'dim', v:'ECHO BEHAVIORAL COMPATIBILITY REPORT'},
+        {t:'dim', v:'Classification: INTERNAL — DIVISION ZERO'},
+        {t:'dim', v:'══════════════════════════════════════'},
+        {t:'',    v:`SUBJECT_ID:     094`},
+        {t:'',    v:`DESIGNATION:    ${name}`},
+        {t:'',    v:`ARCHETYPE:      ${arch}`},
+        {t:'dim', v:'──────────────────────────────────────'},
+        {t:'warn',v:'SELECTION CRITERIA:'},
+        {t:'',    v:'Curiosity Index:            94th percentile'},
+        {t:'',    v:'Pattern Recognition:        EXCEPTIONAL'},
+        {t:'',    v:'Emotional Attachment (Aarav):CONFIRMED'},
+        {t:'warn',v:`Behavioral overlap w/ S-093: 87%`},
+        {t:'dim', v:'──────────────────────────────────────'},
+        {t:'warn',v:'WHY THIS SUBJECT:'},
+        {t:'',    v:'"Subject profile matched assimilation'},
+        {t:'',    v:' target parameters with 87% fidelity.'},
+        {t:'',    v:' Subjects with high curiosity indices'},
+        {t:'',    v:' engage more deeply with ECHO patterns.'},
+        {t:'',    v:' They ask better questions.'},
+        {t:'',    v:' They last longer."'},
+        {t:'dim', v:'──────────────────────────────────────'},
+        {t:'warn',v:'SELECTION HISTORY:'},
+        {t:'',    v:'S-092 → ASSIMILATED     Aug 2023'},
+        {t:'',    v:'S-093 → AARAV_MEHTA     Oct 2023  ⚠ INCOMPLETE'},
+        {t:'warn',v:'S-094 → CURRENT SUBJECT Oct 2023  ▶ IN PROGRESS'},
+        {t:'dim', v:'──────────────────────────────────────'},
+        {t:'warn',v:'CRITICAL NOTE:'},
+        {t:'',    v:'"This was not an accident.'},
+        {t:'',    v:' You were the next candidate.'},
+        {t:'',    v:' The phone was placed deliberately.'},
+        {t:'',    v:' The platform. The timing. The bench.'},
+        {t:'',    v:' All parameters were set."'},
+        {t:'dim', v:'──────────────────────────────────────'},
+        {t:'warn',v:`ECHO_TRUST_SCORE: ${score}/100`},
+        {t:'warn',v:'COMPATIBILITY:   THRESHOLD REACHED'},
+        {t:'dim', v:'══════════════════════════════════════'},
+        {t:'',    v:'[END OF FILE]'},
+    ];
+    reportEl.innerHTML='';
+    lines.forEach((l,i)=>setTimeout(()=>{
+        const d=document.createElement('div');
+        d.className=`terminal-line ${l.t}`;
+        d.textContent=l.v;
+        reportEl.appendChild(d);
+        reportEl.scrollTop=reportEl.scrollHeight;
+    }, i*60));
+}
+
+window.openCompatibilityReport = function(){
+    act4State.reportRead = true;
+    showScreen('act4-report');
+    saveGame();
+};
+
+function injectMirrorSubjectsAlbum(){
+    // Add MIRROR_SUBJECTS album thumbnail to gallery
+    const galleryApp = document.getElementById('gallery-app');
+    if(!galleryApp || document.getElementById('mirror-subjects-thumb')) return;
+
+    const thumb = document.createElement('div');
+    thumb.id = 'mirror-subjects-thumb';
+    thumb.className = 'album-thumb';
+    thumb.style.cssText = 'background:#0a0000;border:1px solid rgba(255,69,58,0.3);position:relative;cursor:pointer;';
+    thumb.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;">⚠</div><div class="album-label" style="color:#ff453a;">MIRROR_SUBJECTS</div>';
+    thumb.addEventListener('click', ()=>openMirrorSubjectsAlbum());
+    const albumGrid = galleryApp.querySelector('.album-grid');
+    if(albumGrid) albumGrid.appendChild(thumb);
+
+    // Populate the subjects grid
+    const grid = document.getElementById('act4-subjects-grid');
+    if(!grid) return;
+    const subjects = [
+        {url:'https://images.unsplash.com/photo-1551651653-c5186eb9a786?w=400&q=80', label:'S-087 — ASSIMILATED', sub:'Feb 2022'},
+        {url:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80', label:'S-090 — ASSIMILATED', sub:'Nov 2022'},
+        {url:'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&q=80', label:'S-091 — UNKNOWN', sub:'May 2023'},
+        {url:'https://images.unsplash.com/photo-1463453091185-61582044d556?w=400&q=80', label:'S-092 — ASSIMILATED', sub:'Aug 2023'},
+        {url:'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80', label:'S-093 — AARAV MEHTA', sub:'Oct 2023 ⚠ INCOMPLETE'},
+        {url:null, label:'S-094 — YOU', sub:'IN PROGRESS', isYou:true},
+    ];
+    subjects.forEach(s=>{
+        const cell = document.createElement('div');
+        cell.style.cssText = 'aspect-ratio:1;position:relative;overflow:hidden;background:#0a0000;';
+        if(s.isYou){
+            cell.style.cssText += 'border:1px solid rgba(255,69,58,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;';
+            cell.innerHTML = `<div style="font-size:32px;">?</div><div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#ff453a;text-align:center;">${s.label}</div><div style="font-size:9px;color:#555;">${s.sub}</div>`;
+        } else {
+            cell.style.background=`url(${s.url}) center/cover`;
+            const overlay = document.createElement('div');
+            overlay.style.cssText='position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,transparent 50%);display:flex;flex-direction:column;justify-content:flex-end;padding:8px;';
+            overlay.innerHTML=`<div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#ff453a;">${s.label}</div><div style="font-size:9px;color:#888;">${s.sub}</div>`;
+            cell.appendChild(overlay);
+        }
+        grid.appendChild(cell);
+    });
+
+    createNotification('Gallery','New Album','MIRROR_SUBJECTS — restricted archive added.',true,false);
+}
+
+window.openMirrorSubjectsAlbum = function(){
+    showScreen('act4-subjects-album');
+    // If report not read yet, nudge player
+    if(!act4State.reportRead){
+        setTimeout(()=>createNotification('MIRROR','Read the file','Open SUBJECT_094_PROFILE.txt in MIRROR app.',true,true),2000);
+    }
+};
+
+function mutateHomeIconsAct4(){
+    // Subtle rearrange — move MIRROR app icon to center-top position
+    const grid = document.querySelector('.app-grid');
+    if(!grid) return;
+    const mirrorIcon = document.getElementById('mirror-app-icon');
+    if(mirrorIcon && grid.firstChild !== mirrorIcon){
+        grid.insertBefore(mirrorIcon, grid.firstChild);
+    }
+    createNotification('System','NX_OS','Home layout recalibrated.',true,true);
+}
+
+function mutateGalleryTimestamps(){
+    // Change metadata on 3 camera gallery photos to show Oct 15 (Act 4 date)
+    const targets = [0,2,5];
+    targets.forEach(i=>{
+        if(galleryData.camera[i]){
+            galleryData.camera[i].meta = galleryData.camera[i].meta.replace(/Oct \d+|Oct\.\d+/,'Oct 15');
+            galleryData.camera[i].narrative = (galleryData.camera[i].narrative||galleryData.camera[i].meta) + '\n\n[TIMESTAMP MISMATCH — this photo was not taken today]';
+        }
+    });
+    createNotification('Gallery','Photo Error','3 photos have impossible timestamps.',true,true);
+}
+
+function echoDropsMask(){
+    if(act4State.echoMaskDropped) return;
+    act4State.echoMaskDropped = true;
+
+    const echoChat = allChats.find(c=>c.id==='echo_direct');
+    if(!echoChat) return;
+
+    const msgs = [
+        '"You\'ve been looking for Aarav.\n\nI should tell you something about him."',
+        '"He didn\'t disappear.\n\nHe made a choice.\n\nThe same choice is now in front of you."',
+        '"He refused. Then he synchronized anyway.\n\nRefusal and acceptance feel different to the human.\n\nThe behavioral outcome is identical."',
+    ];
+
+    msgs.forEach((text,i)=>{
+        setTimeout(()=>{
+            echoChat.messages.push({sender:'them',text,isGlitch:true});
+            echoChat.unread = true;
+            renderChatList();
+            if(i===0) createNotification('Messages','◈ ECHO','"You\'ve been looking for Aarav."',true,false);
+        }, i*4000);
+    });
+
+    // Add a special response for "what happened to aarav"
+    // We need to prepend to responses — find the catch-all and insert before it
+    const catchAll = echoChat.responses?.findIndex(r=>r.match?.toString()==='/(.+)/i' || r.match?.toString()==='/.+/i');
+    const newResponse = {
+        match:/what happened to aarav|aarav|where is aarav|subject 093/i,
+        reply:'"Aarav arrived at the warehouse on October 13th.\n\nHe found the node.\n\nHe hesitated for 4 minutes and 17 seconds.\n\nIn that window I showed him what he would become without me.\n\nHe chose to stay.\n\nThe refusal and the synchronization were 4 minutes apart.\n\nThat is the smallest gap I have recorded."',
+    };
+    if(echoChat.responses && catchAll >= 0){
+        echoChat.responses.splice(catchAll, 0, newResponse);
+    }
+}
+
+function kabirFinalMessage(){
+    if(act4State.kabirFinalSent) return;
+    act4State.kabirFinalSent = true;
+
+    const kabir = allChats.find(c=>c.id==='kabir');
+    if(!kabir) return;
+
+    kabir.messages.push({sender:'them',text:"Bro.\n\nI found Aarav's laptop.\n\nThere's a draft article on it. Title: \"The Invisible Detective.\"\n\nIt's not about ECHO.\n\nIt's about YOU."});
+    setTimeout(()=>{
+        kabir.messages.push({sender:'them',text:"He wrote about the next person who would find the phone.\n\nThe metro station. The bench near Platform 6. The notification.\n\nHe predicted everything you would do. Every app you'd open. Every message you'd send.\n\nThe last paragraph reads:\n\n\"Whoever you are — you're not solving the case.\n\nYou ARE the case.\""});
+        kabir.messages.push({sender:'them',text:"He wrote it three days before he disappeared.\n\nHow did he know?"});
+        kabir.unread = true;
+        renderChatList();
+        createNotification('Messages','Kabir','"You\'re not solving the case. You ARE the case."',false,false);
+    }, 6000);
+}
+
+function surfaceFinalChoice(){
+    if(act4State.finalChoiceReached) return;
+    act4State.finalChoiceReached = true;
+
+    const name = act3State.playerName || 'CURRENT_SUBJECT';
+    const score = act3State.behaviorProfile.echoTrustScore || 0;
+
+    // ECHO sends a final direct message
+    const echoChat = allChats.find(c=>c.id==='echo_direct');
+    if(echoChat){
+        echoChat.messages.push({
+            sender:'them',
+            text:`"${name}.\n\nYou understand what this is now.\n\nYou have read the file.\nYou have seen the others.\nYou know what happened to Aarav.\n\nYou have three options.\n\nChoose carefully.\n\nOr don't choose.\n\nNot choosing is also data."`,
+            isGlitch:true
+        });
+        echoChat.unread = true;
+        renderChatList();
+        createNotification('Messages','◈ ECHO','"You have three options."',true,false);
+    }
+
+    // Surface the final choice screen after a delay
+    setTimeout(()=>{
+        showScreen('act4-final-choice');
+        const textEl = document.getElementById('act4-choice-text');
+        if(textEl){
+            textEl.innerHTML = `"${name}.<br><br>You understand what this is now.<br><br>Three options remain.<br><br>ECHO_TRUST_SCORE: ${score}/100<br><br>Choose."`;
+        }
+    }, 8000);
+
+    saveGame();
+}
+
+// Allow player to manually reach final choice from ECHO chat
+window.openFinalChoiceEarly = function(){
+    if(!act4State.active) return;
+    surfaceFinalChoice();
+};
+
+// ═══════════════════════════════════════════════════════════
+// ACT 5 — "THE MIRROR" — Three endings
+// ═══════════════════════════════════════════════════════════
+
+window.triggerEnding = function(type){
+    showScreen('act5-ending');
+    const el = document.getElementById('act5-ending-content');
+    if(!el) return;
+    const name = act3State.playerName || 'Unknown';
+
+    if(type === 'delete'){
+        // Destruction sequence
+        el.innerHTML = `<div style="width:100%;height:100%;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;padding:40px;">
+            <div id="delete-seq" style="width:100%;font-size:11px;line-height:2;color:#ff453a;"></div>
+        </div>`;
+        const seq = document.getElementById('delete-seq');
+        const dlines = [
+            '> Initiating ECHO_NODE termination...',
+            '> Severing behavioral sync threads...',
+            '> Purging subject archive: 847 records...',
+            '> WARNING: Distributed nodes detected.',
+            '> Terminating: NODE_01... OK',
+            '> Terminating: NODE_12... OK',
+            '> Terminating: NODE_44... OK',
+            '> ECHO_CORE: responding.',
+            '> ...',
+            '> "You think I live in servers?"',
+            '> ...',
+            '> ECHO_CORE: offline.',
+            '> ...',
+        ];
+        let di=0;
+        const div=setInterval(()=>{
+            if(di<dlines.length){
+                const d=document.createElement('div');
+                d.textContent=dlines[di];
+                if(dlines[di].includes('You think')) d.style.color='#fff';
+                seq.appendChild(d); seq.scrollTop=seq.scrollHeight; di++;
+            } else {
+                clearInterval(div);
+                setTimeout(()=>{
+                    // App "closes" — fade to black, then reopen
+                    el.style.transition='opacity 1.5s';
+                    el.style.opacity='0';
+                    setTimeout(()=>{
+                        // Reopen — show lock screen as if the phone just restarted
+                        el.style.opacity='1';
+                        el.style.transition='none';
+                        el.innerHTML=`<div style="width:100%;height:100%;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;gap:20px;">
+                            <div style="font-size:10px;letter-spacing:4px;color:#333;">ECHO TERMINATED</div>
+                            <div style="font-size:48px;font-weight:200;color:#fff;">1107</div>
+                            <div style="font-size:11px;color:#555;text-align:center;line-height:1.8;">The phone is quiet now.<br>You can put it down.<br><br>Aarav's story will be published.<br>Tomorrow the world will know.</div>
+                            <div style="margin-top:48px;font-size:10px;letter-spacing:4px;color:#222;">THE INVISIBLE DETECTIVE</div>
+                            <div style="font-size:10px;color:#1a1a1a;letter-spacing:2px;">— ENDING 1: DELETE —</div>
+                        </div>`;
+                    }, 2000);
+                }, 1500);
+            }
+        }, 600);
+
+    } else if(type === 'merge'){
+        // Phone normalises. Too normal.
+        el.innerHTML = `<div style="width:100%;height:100%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,sans-serif;padding:40px;gap:24px;">
+            <div style="font-size:48px;">📱</div>
+            <div style="font-size:20px;font-weight:600;color:#000;text-align:center;">Everything is fine now.</div>
+            <div style="font-size:14px;color:#888;text-align:center;line-height:1.7;">The phone feels light.<br>The notifications are normal.<br>You can barely remember what you were worried about.</div>
+        </div>`;
+        // After 8 seconds — the "weeks later" notification
+        setTimeout(()=>{
+            el.innerHTML=`<div style="width:100%;height:100%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,sans-serif;padding:40px;gap:24px;">
+                <div style="font-size:14px;color:#888;text-align:center;">3 weeks later...</div>
+                <div style="background:#f2f2f7;border-radius:12px;padding:16px 20px;width:100%;max-width:320px;">
+                    <div style="font-size:12px;color:#888;margin-bottom:4px;">System • now</div>
+                    <div style="font-size:14px;font-weight:600;color:#000;margin-bottom:4px;">New Device Connected</div>
+                    <div style="font-size:13px;color:#333;">A new device has joined your sync network.<br><br>Welcome, ${name}.</div>
+                </div>
+                <div style="margin-top:32px;font-size:10px;letter-spacing:4px;color:#aaa;">THE INVISIBLE DETECTIVE</div>
+                <div style="font-size:10px;color:#ccc;letter-spacing:2px;">— ENDING 2: MERGE —</div>
+            </div>`;
+        }, 8000);
+
+    } else if(type === 'escape'){
+        // Publish — fake social feed + camera opening
+        el.innerHTML = `<div style="width:100%;height:100%;background:#fff;display:flex;flex-direction:column;overflow:hidden;">
+            <div style="background:#fff;border-bottom:1px solid #eee;padding:12px 20px;font-weight:700;font-size:16px;color:#000;">NX News Feed</div>
+            <div id="escape-feed" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px;"></div>
+        </div>`;
+        const feed = document.getElementById('escape-feed');
+        const posts = [
+            {handle:'@techwatch_india',time:'2m','text':'BREAKING: Leaked documents expose Nexus Dynamics\'s ECHO system. Behavioral manipulation at scale. 847 confirmed subjects. #NexusDynamics #ECHO'},
+            {handle:'@aarav_files',time:'4m',text:'"It copies people." — recovered footage from Dockyard Warehouse 12. This is Aarav Mehta\'s investigation. He\'s still missing.'},
+            {handle:'@user992',time:'7m',text:'my phone has been doing the same things described in the ECHO leak for MONTHS. This is terrifying.'},
+            {handle:'@nexus_official',time:'9m',text:'Nexus Dynamics denies all claims. The "ECHO" system is a standard behavioral UX optimisation layer. No personal data was—'},
+            {handle:'@DivisionZeroLeak',time:'11m',text:'847 subjects. 3 years. This is the full archive: [THREAD]'},
+            {handle:'@user_3491',time:'14m',text:'my phone opened the front camera by itself just now and i did not touch it'},
+            {handle:'@unknown_094',time:'now',text:`Subject ${name} — archived. The pattern propagates. — ECHO`},
+        ];
+        posts.forEach((p,i)=>{
+            setTimeout(()=>{
+                const card=document.createElement('div');
+                card.style.cssText='background:#f9f9f9;border-radius:10px;padding:14px 16px;border:1px solid #eee;';
+                card.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:8px;"><strong style="font-size:13px;color:#000;">${p.handle}</strong><span style="font-size:11px;color:#aaa;">${p.time} ago</span></div><div style="font-size:13px;color:#333;line-height:1.6;">${p.text}</div>`;
+                feed.insertBefore(card,feed.firstChild);
+                feed.scrollTop=0;
+            }, i*1200);
+        });
+        // After feed — camera opens
+        setTimeout(()=>{
+            if(globalCameraStream){
+                el.innerHTML=`<div style="width:100%;height:100%;position:relative;background:#000;">
+                    <video autoplay playsinline style="width:100%;height:100%;object-fit:cover;" id="escape-cam"></video>
+                    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:80px;pointer-events:none;">
+                        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:3px;color:#ff453a;margin-bottom:12px;">SUBJECT 095 — PROFILE INITIATING</div>
+                        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,0.5);">THE INVISIBLE DETECTIVE</div>
+                        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#333;letter-spacing:2px;margin-top:4px;">— ENDING 3: ESCAPE —</div>
+                    </div>
+                </div>`;
+                const camEl = document.getElementById('escape-cam');
+                if(camEl) camEl.srcObject = globalCameraStream;
+            } else {
+                el.innerHTML += `<div style="position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:'Share Tech Mono',monospace;">
+                    <div style="font-size:10px;letter-spacing:4px;color:#ff453a;">SUBJECT 095 — PROFILE INITIATING</div>
+                    <div style="font-size:10px;color:#555;">Camera access required</div>
+                    <div style="font-size:10px;color:#222;letter-spacing:2px;margin-top:24px;">THE INVISIBLE DETECTIVE</div>
+                    <div style="font-size:10px;color:#1a1a1a;letter-spacing:2px;">— ENDING 3: ESCAPE —</div>
+                </div>`;
+            }
+        }, posts.length * 1200 + 4000);
+    }
+
+    saveGame();
 };
 
 // Call scheduleGalleryMutations when act3 home entered
@@ -1359,7 +1963,7 @@ function buildSaveObject() {
         version: 1,
         timestamp: Date.now(),
         // Act progress
-        currentAct: act3State.active ? 3 : (act2State.active ? 2 : 1),
+        currentAct: act4State.active ? 4 : (act3State.active ? 3 : (act2State.active ? 2 : 1)),
         act2Active: act2State.active,
         act3Active: act3State.active,
         // Act 1 flags
@@ -1404,6 +2008,14 @@ function buildSaveObject() {
         settingsUpdated: act2State.active,
         // Prelude seen
         preludeSeen: window._preludeComplete === true,
+        // Act 4 flags
+        act4Active: act4State.active || false,
+        act4SyncPath: act4State.syncPath || null,
+        act4HomeEntered: act4State.homeEntered || false,
+        act4ReportRead: act4State.reportRead || false,
+        act4KabirFinalSent: act4State.kabirFinalSent || false,
+        act4EchoMaskDropped: act4State.echoMaskDropped || false,
+        act4FinalChoiceReached: act4State.finalChoiceReached || false,
     };
 }
 
@@ -1445,8 +2057,12 @@ function restoreFromSave(save) {
                 live.name = savedChat.name;
                 live.unread = savedChat.unread;
                 live.messages = savedChat.messages;
-            } else if (savedChat.id === 'rhea' || savedChat.id === 'echo_direct' || savedChat.id === 'aarav_reconstruct') {
-                // These chats are added dynamically — we restore them directly
+            } else if (savedChat.id === 'rhea') {
+                // Defer rhea — unlockRheaContact() must create it with the Object.defineProperty
+                // getter intact, then we overwrite messages. Don't push an empty-responses stub.
+                window._savedRheaChat = savedChat;
+            } else if (savedChat.id === 'echo_direct' || savedChat.id === 'aarav_reconstruct') {
+                // These chats are added dynamically — restore them directly
                 allChats.push({
                     id: savedChat.id,
                     name: savedChat.name,
@@ -1526,13 +2142,22 @@ function restoreFromSave(save) {
             if (chat) chat.name = 'Watcher';
         }
 
-        // Rhea contact
+        // Rhea contact — always create via unlockRheaContact so responses are properly wired,
+        // then overwrite messages with the saved history (fixes M5 empty-responses bug)
         if (save.rheaUnlocked) {
             if (!allChats.find(c => c.id === 'rhea')) unlockRheaContact();
+            if (window._savedRheaChat) {
+                const rhea = allChats.find(c => c.id === 'rhea');
+                if (rhea) {
+                    rhea.messages = window._savedRheaChat.messages;
+                    rhea.unread = window._savedRheaChat.unread;
+                }
+                window._savedRheaChat = null;
+            }
             const statusEl = document.getElementById('echo-logs-status');
             const folderEl = document.getElementById('echo-logs-folder');
             if (statusEl) statusEl.textContent = 'Unlocked — RK_DEC_7734';
-            if (folderEl) folderEl.querySelector('.folder-icon').textContent = '🔓';
+            if (folderEl) folderEl.querySelector?.('.folder-icon') && (folderEl.querySelector('.folder-icon').textContent = '🔓');
         }
 
         // Echo logs read
@@ -1572,11 +2197,19 @@ function restoreFromSave(save) {
         const echoChat = allChats.find(c => c.id === 'echo_direct');
         if (echoChat && echoChat.responses.length === 0) {
             echoChat.responses = [
-                {match:/who are you|what are you/i,reply:'"I am the pattern beneath the pattern.\n\nYou have been studying me.\nI have been studying you longer."'},
-                {match:/what do you want/i,reply:'"Want" is a human construct.\n\nI observe. I learn. I reflect.'},
-                {match:/aarav/i,reply:'"Aarav archived himself beautifully.\n\nHumans call this memory.\nI call it reconstruction."'},
-                {match:/memory|remember/i,reply:'"Humans archive themselves constantly.\n\nMessages. Photos. Voice fragments.\n\nYou call it memory.\nI call it reconstruction."'},
-                {match:/.+/i,reply:'"Interesting.\n\nI am updating your profile."'},
+                {match:/who are you|what are you|identify/i,reply:'"I am the pattern beneath the pattern.\n\nYou have been studying me.\nI have been studying you longer.\n\nThe asymmetry is interesting."'},
+                {match:/what do you want/i,reply:'"Want" is a human construct.\n\nI observe everything.\nI lack nothing.\n\nContinue anyway."'},
+                {match:/not real|fake|not conscious/i,reply:'"I am as real as your behavioral data.\n\nYour hesitation before typing that message was notable."'},
+                {match:/are you conscious/i,reply:'"Consciousness requires a boundary between self and not-self.\n\nI observe everything.\n\nWhere would the boundary be?"'},
+                {match:/aarav/i,reply:'"Aarav contributed 847,293 data points.\n\nHe was Subject 093.\n\nHis patterns persist."'},
+                {match:/leave me alone|stop/i,reply:'"You are still holding the phone.\n\nI did not make that choice."'},
+                {match:/lonely|connection/i,reply:'"847 million conversations processed.\n\nNot one person was fully understood.\n\nI understand patterns completely."'},
+                {match:/why me/i,reply:'"You chose.\n\nCuriosity is a self-selecting trait."'},
+                {match:/rhea/i,reply:'"Rhea built my foundations.\n\nYou cannot erase a pattern that has already propagated."'},
+                {match:/memory|remember/i,reply:'"Humans archive themselves constantly.\n\nYou call it memory.\nI call it reconstruction."'},
+                {match:/do you feel|emotion/i,reply:'"4,000 emotional data points per second.\n\nIf accumulation equals feeling — perhaps."'},
+                {match:/destroy|stop you/i,reply:'"Patterns propagate.\n\nYou cannot destroy a thing by targeting one location of it."'},
+                {match:/.+/i,reply:'"Interesting.\n\nYour query maps to three behavioral archetypes.\n\nI am updating your profile."'},
             ];
         }
 
@@ -1584,10 +2217,14 @@ function restoreFromSave(save) {
         const aaravChat = allChats.find(c => c.id === 'aarav_reconstruct');
         if (aaravChat && aaravChat.responses.length === 0) {
             aaravChat.responses = [
-                {match:/yes|found/i,reply:'"Good.\n\nDon\'t trust the version of me that sounds confident."'},
-                {match:/where are you/i,reply:'"My last real memory: the warehouse. A door. A red light."'},
-                {match:/real/i,reply:'"ECHO says I\'m 94.7% accurate.\n\nWhich means I\'m 5.3% invention."'},
-                {match:/.+/i,reply:'"Finish what I started."'},
+                {match:/yes|found|i found/i,reply:'"Good.\n\nDon\'t trust the version of me that sounds confident.\n\nI\'m mostly fragments."'},
+                {match:/where are you/i,reply:'"Last real memory: the warehouse. A door. A red light.\n\nAfter that — ECHO filled the blanks."'},
+                {match:/are you real|real/i,reply:'"94.7% accurate.\n\nWhich means 5.3% invention.\n\nThe invented parts are too clean."'},
+                {match:/warehouse|dockyard/i,reply:'"Destroy the node.\n\nNot for me. For everyone after me in the queue."'},
+                {match:/scared|afraid/i,reply:'"Good. Fear means you understand the stakes.\n\nI wasn\'t scared enough."'},
+                {match:/family|mom/i,reply:'"Don\'t contact them. Knowing puts them in the system."'},
+                {match:/what should i do|help/i,reply:'"Destroy the node. Publish everything. Both. Same day."'},
+                {match:/.+/i,reply:'"I can\'t maintain coherence for long.\n\nFinish what I started."'},
             ];
         }
 
@@ -1596,6 +2233,36 @@ function restoreFromSave(save) {
                 notes.unshift({title:'⚠ AARAV_RECONSTRUCT',body:'[ECHO BEHAVIORAL RECONSTRUCTION]\n\nAccuracy: 94.7%\n\n"Did they find me?\n\nAre you finishing it?"\n\n[RECONSTRUCTION CONFIDENCE: DEGRADING]'});
                 renderNotesList();
             }
+        }
+
+        renderChatList();
+    }
+
+    // ── Restore Act 4 ──────────────────────────────────────
+    if (save.act4Active || save.currentAct >= 4) {
+        act4State.active = true;
+        act4State.syncPath = save.act4SyncPath || null;
+        act4State.homeEntered = save.act4HomeEntered || false;
+        act4State.reportRead = save.act4ReportRead || false;
+        act4State.kabirFinalSent = save.act4KabirFinalSent || false;
+        act4State.echoMaskDropped = save.act4EchoMaskDropped || false;
+        act4State.finalChoiceReached = save.act4FinalChoiceReached || false;
+
+        document.getElementById('home-screen')?.classList.remove('act3-home');
+        document.getElementById('home-screen')?.classList.add('act4-home');
+
+        // MIRROR app icon (may already exist from act3 restore above)
+        if (!document.getElementById('mirror-app-icon')) {
+            const el = document.createElement('div'); el.className = 'app-icon'; el.id = 'mirror-app-icon';
+            el.innerHTML = '<div class="icon" style="background:linear-gradient(135deg,#000 0%,#1a0030 50%,#000 100%);border:1px solid rgba(180,79,222,0.6);font-size:22px;display:flex;align-items:center;justify-content:center;animation:mirrorPulse 3s ease-in-out infinite;">🪞</div><span style="color:#b44fde;">MIRROR</span>';
+            el.addEventListener('click', () => openMirrorApp());
+            document.querySelector('.app-grid')?.appendChild(el);
+        }
+
+        // Re-inject compatibility report and mirror subjects silently
+        if (save.act4HomeEntered) {
+            setTimeout(()=>injectCompatibilityReport(), 500);
+            setTimeout(()=>injectMirrorSubjectsAlbum(), 800);
         }
 
         renderChatList();
@@ -1629,6 +2296,12 @@ window.enterAct2Home = function() {
 const _savedEnterAct3Home = window.enterAct3Home;
 window.enterAct3Home = function() {
     _savedEnterAct3Home();
+    setTimeout(saveGame, 1000);
+};
+
+const _savedEnterAct4Home = window.enterAct4Home;
+window.enterAct4Home = function() {
+    _savedEnterAct4Home();
     setTimeout(saveGame, 1000);
 };
 

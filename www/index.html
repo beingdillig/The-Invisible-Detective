@@ -762,9 +762,91 @@
             </div>
         </div>
 
-        <!-- Act 3 Ending -->
+        <!-- Act 3 Ending (bridge to Act 4) -->
         <div id="act3-ending" class="screen">
             <div id="act3-ending-content" style="width:100%;height:100%;"></div>
+        </div>
+
+        <!-- ══════════════════════════════════════ -->
+        <!-- ACT 4 SCREENS                         -->
+        <!-- ══════════════════════════════════════ -->
+
+        <!-- Act 4 Boot -->
+        <div id="act4-boot" class="screen">
+            <div style="width:100%;height:100%;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;">
+                <div id="act4-boot-logo" style="font-size:48px;font-weight:900;letter-spacing:12px;color:#ff453a;margin-bottom:24px;opacity:0;transition:opacity 1.5s;">ECHO</div>
+                <div style="font-size:11px;letter-spacing:4px;color:#333;margin-bottom:40px;">PHASE 4 — IDENTITY LAYER</div>
+                <div id="act4-boot-terminal" style="width:80%;max-width:320px;font-size:11px;line-height:1.8;color:#555;"></div>
+                <div style="width:80%;max-width:320px;height:2px;background:#111;margin-top:24px;border-radius:1px;">
+                    <div id="act4-boot-bar" style="height:100%;width:0%;background:#ff453a;border-radius:1px;transition:width 0.4s;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Act 4 Lock Screen -->
+        <div id="act4-lock" class="screen">
+            <div style="width:100%;height:100%;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+                <!-- Glitch scanlines -->
+                <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0px,transparent 2px,rgba(255,69,58,0.03) 2px,rgba(255,69,58,0.03) 3px);pointer-events:none;"></div>
+                <div class="status-bar" style="position:absolute;top:0;left:0;right:0;padding:16px 20px 0;z-index:2;">
+                    <span class="time" style="color:#ff453a;">00:00</span>
+                    <div class="battery-wrap" style="margin-left:auto;">
+                        <div class="battery"><div class="battery-level" style="width:100%;background:#ff453a;"></div></div>
+                        <span class="batt-pct" style="color:#ff453a;">100%</span>
+                    </div>
+                </div>
+                <div style="text-align:center;z-index:2;">
+                    <div style="font-size:13px;letter-spacing:4px;color:#333;margin-bottom:8px;font-family:'Share Tech Mono',monospace;">FRIDAY, OCT 15</div>
+                    <div class="time" style="font-size:72px;font-weight:200;color:#ff453a;letter-spacing:4px;line-height:1;">00:00</div>
+                </div>
+                <div id="act4-lock-msg" style="font-family:'Share Tech Mono',monospace;font-size:13px;color:rgba(255,69,58,0.7);text-align:center;margin-top:32px;padding:0 40px;line-height:1.7;opacity:0;transition:opacity 2s;z-index:2;"></div>
+                <div id="act4-unlock-trigger" onclick="enterAct4Home()" style="position:absolute;bottom:60px;left:0;right:0;text-align:center;cursor:pointer;z-index:2;">
+                    <div style="width:40px;height:3px;background:rgba(255,69,58,0.5);border-radius:2px;margin:0 auto 12px;"></div>
+                    <span style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:3px;color:#ff453a;">CONTINUE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Act 4 Compatibility Report Screen -->
+        <div id="act4-report" class="screen app-screen">
+            <div style="width:100%;height:100%;background:#000;display:flex;flex-direction:column;overflow:hidden;">
+                <div style="padding:20px 20px 12px;border-bottom:1px solid #1a0000;display:flex;align-items:center;gap:12px;">
+                    <button onclick="showScreen('home-screen')" style="background:none;border:none;color:#ff453a;font-size:18px;cursor:pointer;">←</button>
+                    <span style="font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:3px;color:#ff453a;">SUBJECT_094_PROFILE</span>
+                </div>
+                <div id="act4-report-content" style="flex:1;overflow-y:auto;padding:20px;font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.9;"></div>
+            </div>
+        </div>
+
+        <!-- Act 4 Mirror Subjects Album -->
+        <div id="act4-subjects-album" class="screen app-screen">
+            <div style="width:100%;height:100%;background:#0a0000;display:flex;flex-direction:column;overflow:hidden;">
+                <div style="padding:20px 20px 12px;border-bottom:1px solid #1a0000;display:flex;align-items:center;gap:12px;">
+                    <button onclick="showScreen('gallery-app')" style="background:none;border:none;color:#ff453a;font-size:18px;cursor:pointer;">←</button>
+                    <span style="font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:3px;color:#ff453a;">MIRROR_SUBJECTS</span>
+                    <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#333;margin-left:auto;">⚠ RESTRICTED</span>
+                </div>
+                <div id="act4-subjects-grid" style="flex:1;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;"></div>
+            </div>
+        </div>
+
+        <!-- Act 4 Final Choice -->
+        <div id="act4-final-choice" class="screen">
+            <div style="width:100%;height:100%;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;font-family:'Share Tech Mono',monospace;overflow-y:auto;">
+                <div style="font-size:10px;letter-spacing:4px;color:#333;margin-bottom:32px;">ECHO v4.2 — FINAL PROTOCOL</div>
+                <div id="act4-choice-text" style="font-size:14px;line-height:2;color:#fff;text-align:center;margin-bottom:48px;"></div>
+                <div style="width:100%;display:flex;flex-direction:column;gap:16px;">
+                    <button onclick="triggerEnding('delete')" style="width:100%;padding:18px;background:#ff453a;border:none;color:#000;font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;letter-spacing:3px;cursor:pointer;border-radius:4px;">DELETE ECHO</button>
+                    <button onclick="triggerEnding('merge')" style="width:100%;padding:18px;background:transparent;border:2px solid #b44fde;color:#b44fde;font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;letter-spacing:3px;cursor:pointer;border-radius:4px;">MERGE</button>
+                    <button onclick="triggerEnding('escape')" style="width:100%;padding:18px;background:transparent;border:2px solid #00e5ff;color:#00e5ff;font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;letter-spacing:3px;cursor:pointer;border-radius:4px;">PUBLISH &amp; ESCAPE</button>
+                </div>
+                <div style="margin-top:32px;font-size:10px;color:#222;letter-spacing:2px;text-align:center;line-height:1.8;">"You think discovery changes reality.<br>But observation only deepens participation."</div>
+            </div>
+        </div>
+
+        <!-- Act 5 Ending Screen -->
+        <div id="act5-ending" class="screen">
+            <div id="act5-ending-content" style="width:100%;height:100%;"></div>
         </div>
 
         <!-- Echo Key Modal (Act 2 fix — moved here so it doesn't conflict) -->

@@ -474,7 +474,7 @@
                     <div class="act2-time-big" id="act2-time-big">00:00</div>
                 </div>
                 <div class="act2-temp-warn"><span>🌡️</span> Background processes detected.</div>
-                <div class="act2-unlock-hint" onclick="enterAct2Home()">
+                <div class="act2-unlock-hint" id="act2-unlock-trigger" onclick="enterAct2Home()">
                     <div class="act2-unlock-bar"></div>
                     <span>Swipe up to continue</span>
                 </div>
@@ -695,8 +695,8 @@
                     <div class="act3-lock-date-text">Thursday, Oct 14</div>
                     <div class="act3-lock-time time">00:00</div>
                 </div>
-                <div class="act3-lock-msg" id="act3-lock-msg"></div>
-                <div class="act3-unlock-hint" onclick="enterAct3Home()">
+                <div class="act3-lock-msg" id="act3-lock-msg" style="opacity:0;"></div>
+                <div class="act3-unlock-hint" id="act3-unlock-trigger" onclick="enterAct3Home()">
                     <div class="act3-unlock-bar"></div>
                     <span>Continue</span>
                 </div>
@@ -784,7 +784,5 @@
     </div><!-- end #phone-container -->
 
     <script src="script.js"></script>
-    <script src="script_patch.js"></script>
-    <script src="act3.js"></script>
 </body>
 </html>

@@ -30,12 +30,19 @@ echo "🔄  Running: npx cap sync android ..."
 npx cap sync android
 
 # ── Version helpers ──────────────────────────────────────────────────────────
-# Pull versionName from android/app/build.gradle
+# versionCode = git commit count (auto-increments with every commit)
+VERSION_CODE=$(git rev-list --count HEAD)
+# versionName from build.gradle
 VERSION=$(grep 'versionName' android/app/build.gradle | head -1 | sed 's/.*"\(.*\)".*/\1/')
 TRACK="${1:-build}"
 TIMESTAMP=$(date '+%Y%m%d-%H%M')
 AAB_SRC="android/app/build/outputs/bundle/release/app-release.aab"
-AAB_DEST="releases/v${VERSION}-${TRACK}-${TIMESTAMP}.aab"
+# Filename format: v{name}-vc{code}-{track}-{timestamp}.aab
+AAB_DEST="releases/v${VERSION}-vc${VERSION_CODE}-${TRACK}-${TIMESTAMP}.aab"
+
+# Patch versionCode in build.gradle before every build
+echo "🔢  Version: name=${VERSION}  code=${VERSION_CODE}"
+sed -i '' "s/versionCode [0-9]*/versionCode ${VERSION_CODE}/" android/app/build.gradle
 
 copy_aab_to_releases() {
   mkdir -p releases
@@ -50,14 +57,12 @@ case "$LANE" in
   build)
     echo "🏗️   Building signed AAB ..."
     fastlane android build
-    AAB_DEST="releases/v${VERSION}-build-${TIMESTAMP}.aab"
     copy_aab_to_releases
     echo "✅  AAB → $AAB_DEST"
     ;;
   internal)
     echo "🚀  Building & deploying to Internal Testing ..."
     fastlane android deploy_internal
-    AAB_DEST="releases/v${VERSION}-internal-${TIMESTAMP}.aab"
     copy_aab_to_releases
     echo "✅  Uploaded to Play Store → Internal Testing"
     ;;

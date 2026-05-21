@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1080px; height: 1920px;
+    overflow: hidden;
+    background: #000;
+    font-family: -apple-system, 'Georgia', 'Times New Roman', serif;
+  }
+
+  .splash {
+    width: 1080px; height: 1920px;
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 42%,
+      #0a1a1f 0%,
+      #050d10 50%,
+      #000 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Scanlines */
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.15) 3px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Vignette */
+  .vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center,
+      transparent 35%,
+      rgba(0,0,0,0.7) 100%);
+    z-index: 9;
+    pointer-events: none;
+  }
+
+  /* Corner brackets */
+  .bracket {
+    position: absolute;
+    width: 60px; height: 60px;
+    border-color: rgba(0,229,255,0.3);
+    border-style: solid;
+    z-index: 11;
+  }
+  .tl { top: 48px; left: 48px; border-width: 3px 0 0 3px; }
+  .tr { top: 48px; right: 48px; border-width: 3px 3px 0 0; }
+  .bl { bottom: 48px; left: 48px; border-width: 0 0 3px 3px; }
+  .br { bottom: 48px; right: 48px; border-width: 0 3px 3px 0; }
+
+  /* Center content */
+  .content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    position: relative;
+    margin-top: -60px;
+  }
+
+  /* Icon */
+  .icon-wrap {
+    width: 320px; height: 320px;
+    position: relative;
+    margin-bottom: 60px;
+  }
+
+  /* Title block */
+  .title-block {
+    text-align: center;
+  }
+
+  .title-the {
+    font-size: 36px;
+    font-weight: 400;
+    letter-spacing: 14px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 8px;
+  }
+
+  .title-invisible {
+    font-size: 80px;
+    font-weight: 800;
+    font-style: italic;
+    color: #fff;
+    letter-spacing: -2px;
+    line-height: 1;
+    text-shadow: 0 0 80px rgba(0,229,255,0.2);
+    margin-bottom: 4px;
+  }
+
+  .title-detective {
+    font-size: 80px;
+    font-weight: 800;
+    color: #00e5ff;
+    letter-spacing: -2px;
+    line-height: 1;
+    text-shadow: 0 0 60px rgba(0,229,255,0.5);
+  }
+
+  /* Divider */
+  .divider {
+    width: 120px; height: 1px;
+    background: linear-gradient(to right, transparent, rgba(0,229,255,0.5), transparent);
+    margin: 48px auto;
+  }
+
+  /* Studio name at bottom */
+  .studio-wrap {
+    position: absolute;
+    bottom: 120px;
+    left: 0; right: 0;
+    text-align: center;
+    z-index: 5;
+  }
+
+  .studio-label {
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: rgba(0,229,255,0.5);
+    margin-bottom: 8px;
+  }
+
+  .studio-name {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #00e5ff;
+    text-shadow: 0 0 30px rgba(0,229,255,0.4);
+  }
+</style>
+</head>
+<body>
+<div class="splash">
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+  <div class="bracket tl"></div>
+  <div class="bracket tr"></div>
+  <div class="bracket bl"></div>
+  <div class="bracket br"></div>
+
+  <div class="content">
+    <!-- Magnifying glass icon (same SVG as icon.html, scaled) -->
+    <div class="icon-wrap">
+      <svg width="320" height="320" viewBox="0 0 512 512" fill="none"
+           xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="lensGlow" cx="42%" cy="38%" r="52%">
+            <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.18"/>
+            <stop offset="50%" stop-color="#00e5ff" stop-opacity="0.06"/>
+            <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="bgGlow" cx="44%" cy="40%" r="50%">
+            <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="handleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00e5ff"/>
+            <stop offset="100%" stop-color="rgba(0,229,255,0.3)"/>
+          </linearGradient>
+          <radialGradient id="irisGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#00e5ff"/>
+            <stop offset="60%" stop-color="#00b8cc"/>
+            <stop offset="100%" stop-color="#004d55"/>
+          </radialGradient>
+          <radialGradient id="pupilGrad" cx="38%" cy="35%" r="60%">
+            <stop offset="0%" stop-color="#1a1a2e"/>
+            <stop offset="100%" stop-color="#000"/>
+          </radialGradient>
+          <filter id="outerGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="10" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="highlight" cx="32%" cy="28%" r="40%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </radialGradient>
+        </defs>
+
+        <g transform="translate(86, 87) scale(0.65)">
+          <ellipse cx="220" cy="215" rx="210" ry="210" fill="url(#bgGlow)"/>
+          <line x1="352" y1="352" x2="492" y2="492"
+                stroke="rgba(0,229,255,0.15)" stroke-width="32" stroke-linecap="round"/>
+          <line x1="352" y1="352" x2="492" y2="492"
+                stroke="url(#handleGrad)" stroke-width="22" stroke-linecap="round"
+                filter="url(#outerGlow)"/>
+          <line x1="374" y1="388" x2="388" y2="374"
+                stroke="rgba(0,229,255,0.35)" stroke-width="3" stroke-linecap="round"/>
+          <line x1="398" y1="412" x2="412" y2="398"
+                stroke="rgba(0,229,255,0.35)" stroke-width="3" stroke-linecap="round"/>
+          <line x1="422" y1="436" x2="436" y2="422"
+                stroke="rgba(0,229,255,0.25)" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="200" cy="195" r="178" fill="url(#lensGlow)"/>
+          <circle cx="200" cy="195" r="178" fill="url(#highlight)"/>
+          <circle cx="200" cy="195" r="178"
+                  stroke="rgba(0,229,255,0.25)" stroke-width="18" fill="none"/>
+          <circle cx="200" cy="195" r="178"
+                  stroke="#00e5ff" stroke-width="10" fill="none"
+                  filter="url(#outerGlow)"/>
+          <circle cx="200" cy="195" r="168"
+                  stroke="rgba(0,229,255,0.15)" stroke-width="2" fill="none"/>
+          <ellipse cx="200" cy="195" rx="98" ry="60"
+                   fill="rgba(0,229,255,0.04)" stroke="rgba(0,229,255,0.3)" stroke-width="1.5"/>
+          <circle cx="200" cy="195" r="42" fill="url(#irisGrad)"
+                  filter="url(#outerGlow)"/>
+          <circle cx="200" cy="195" r="42"
+                  stroke="rgba(0,229,255,0.4)" stroke-width="1.5" fill="none"/>
+          <circle cx="200" cy="195" r="34"
+                  stroke="rgba(0,229,255,0.2)" stroke-width="1" fill="none"/>
+          <circle cx="200" cy="195" r="19" fill="url(#pupilGrad)"/>
+          <circle cx="190" cy="186" r="7" fill="rgba(255,255,255,0.18)"/>
+          <circle cx="207" cy="202" r="3" fill="rgba(255,255,255,0.08)"/>
+          <circle cx="200" cy="195" r="4" fill="rgba(0,229,255,0.6)"/>
+          <path d="M 68 130 A 178 178 0 0 1 155 42"
+                stroke="rgba(255,255,255,0.18)" stroke-width="4"
+                fill="none" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Title -->
+    <div class="title-block">
+      <div class="title-the">The</div>
+      <div class="title-invisible">Invisible</div>
+      <div class="title-detective">Detective</div>
+    </div>
+
+    <div class="divider"></div>
+  </div>
+
+  <!-- Studio branding -->
+  <div class="studio-wrap">
+    <div class="studio-label">A Game By</div>
+    <div class="studio-name">Rāhi Studios</div>
+  </div>
+</div>
+</body>
+</html>

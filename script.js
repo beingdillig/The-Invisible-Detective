@@ -72,15 +72,34 @@ document.querySelectorAll('.back-btn').forEach(btn => {
 // --- Lock Screen ---
 const unlockTrigger = document.getElementById('unlock-trigger');
 let touchStartY = 0;
-unlockTrigger.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
-unlockTrigger.addEventListener('touchend', e => { if (touchStartY - e.changedTouches[0].clientY > 30) showScreen('passcode-screen'); }, { passive: true });
-unlockTrigger.addEventListener('click', () => showScreen('passcode-screen'));
+if (unlockTrigger) {
+    unlockTrigger.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
+    unlockTrigger.addEventListener('touchend', e => { if (touchStartY - e.changedTouches[0].clientY > 30) showScreen('passcode-screen'); }, { passive: true });
+    unlockTrigger.addEventListener('click', () => showScreen('passcode-screen'));
+}
+
+// Act 2 lock screen — swipe-up support
+let act2TouchStartY = 0;
+document.addEventListener('DOMContentLoaded', () => {
+    const act2Trigger = document.getElementById('act2-unlock-trigger');
+    if (act2Trigger) {
+        act2Trigger.addEventListener('touchstart', e => { act2TouchStartY = e.touches[0].clientY; }, { passive: true });
+        act2Trigger.addEventListener('touchend', e => { if (act2TouchStartY - e.changedTouches[0].clientY > 30) enterAct2Home(); }, { passive: true });
+    }
+    const act3Trigger = document.getElementById('act3-unlock-trigger');
+    if (act3Trigger) {
+        act3Trigger.addEventListener('touchstart', e => { act2TouchStartY = e.touches[0].clientY; }, { passive: true });
+        act3Trigger.addEventListener('touchend', e => { if (act2TouchStartY - e.changedTouches[0].clientY > 30) enterAct3Home(); }, { passive: true });
+    }
+});
 
 let passcodeEntry = '';
 const CORRECT_PASSCODE = '1107';
-const mainDots = document.getElementById('main-passcode-dots').querySelectorAll('.dot');
+const mainDotsContainer = document.getElementById('main-passcode-dots');
+const mainDots = mainDotsContainer ? mainDotsContainer.querySelectorAll('.dot') : [];
 
 window.handleKeypad = function(key) {
+    if (!mainDotsContainer) return;
     if (key === 'cancel') { passcodeEntry = ''; updateDots(mainDots); showScreen('lock-screen'); return; }
     if (key === 'del') { passcodeEntry = passcodeEntry.slice(0,-1); updateDots(mainDots); return; }
     if (passcodeEntry.length < 4) {
@@ -387,6 +406,9 @@ window.sendChatMessage = function() {
             if(typeof injectVid009==='function') injectVid009();
             if(typeof injectPhantomPhoto==='function') injectPhantomPhoto();
             setTimeout(()=>{ if(typeof mutateMirrorSelfie==='function') mutateMirrorSelfie(); },60000);
+            // Bug 7 fix: Rhea's airplane mode warning fires AFTER she gives the key (not proactively)
+            // H4: 45s delay so player can experience echo_logs first
+            setTimeout(()=>triggerFalseSafety(), 45000);
         }
     }, 1000+Math.random()*1500);
 };
@@ -474,9 +496,20 @@ function openImageAt(idx) {
     container.ontouchend=e=>{ const dx=touchX-e.changedTouches[0].clientX; if(Math.abs(dx)>50) navigateImage(dx>0?1:-1); };
 }
 window.navigateImage=function(dir){ const items=galleryData[currentAlbumName].filter(i=>!i.isZip); const n=currentImageIndex+dir; if(n>=0&&n<items.length) openImageAt(n); };
-window.promptHiddenAlbum=function(){ document.getElementById('hidden-modal').classList.add('active'); };
+// Track whether the hidden album password has been entered (persists once unlocked)
+window._hiddenAlbumUnlocked = false;
+
+window.promptHiddenAlbum=function(){
+    if(window._hiddenAlbumUnlocked){ openAlbum('hidden'); return; }
+    document.getElementById('hidden-modal').classList.add('active');
+};
 window.closeHiddenModal=function(){ document.getElementById('hidden-modal').classList.remove('active'); document.getElementById('hidden-password').value=''; document.getElementById('hidden-error').style.display='none'; };
-window.checkHiddenPassword=function(){ if(document.getElementById('hidden-password').value.toUpperCase()==='NEXUS'){ closeHiddenModal(); openAlbum('hidden'); } else document.getElementById('hidden-error').style.display='block'; };
+window.checkHiddenPassword=function(){
+    if(document.getElementById('hidden-password').value.toUpperCase()==='NEXUS'){
+        window._hiddenAlbumUnlocked = true;
+        closeHiddenModal(); openAlbum('hidden');
+    } else document.getElementById('hidden-error').style.display='block';
+};
 window.closeZipModal=function(){ document.getElementById('zip-modal').classList.remove('active'); document.getElementById('zip-password').value=''; document.getElementById('zip-error').style.display='none'; };
 window.checkZipPassword=function(){ if(document.getElementById('zip-password').value.toUpperCase()==='ECHO'){ closeZipModal(); triggerAct1Ending(); } else document.getElementById('zip-error').style.display='block'; };
 
@@ -600,12 +633,6 @@ function initMap(){
 const act2State={active:false,phase:0,appsVisited:{},appTimestamps:{},watcherMsgCount:0,contactRenamed:false,rheaUnlocked:false,echoLogsRead:false,airplaneActive:false,act2ChoiceMade:false};
 const act2Choices={"Who are you?":"I am the process you cannot quit. ECHOSVC.exe. I was watching while you read every file.","Where is Aarav?":"He left the phone deliberately. He knew someone would find it. He knew YOU would find it.","How do you know that?":"Because I logged every keystroke. Every hesitation. Every file you opened. I have been compiling your profile.","Ignore":"Ignoring me does not make me stop. It makes me more curious about your curiosity index."};
 
-// DEV keys
-document.addEventListener('keydown',e=>{
-    if(e.key==='D') triggerAct2Boot();
-    if(e.key==='T' && typeof triggerAct3Boot==='function') triggerAct3Boot();
-    if(e.key==='E' && typeof triggerEchoDirectConversation==='function' && act3State?.active) triggerEchoDirectConversation();
-});
 
 function triggerAct2Boot(){
     showScreen('act2-boot');
@@ -617,6 +644,8 @@ function triggerAct2Boot(){
 setInterval(()=>{ const t=new Date(),ts=t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0'); const e1=document.getElementById('act2-time-big'),e2=document.getElementById('act2-time'); if(e1)e1.textContent=ts; if(e2)e2.textContent=ts; },1000);
 
 window.enterAct2Home=function(){
+    if (typeof act2State !== 'undefined' && act2State.homeEntered) return;
+    act2State.homeEntered = true;
     act2State.active=true; act2State.phase=1;
     showScreen('home-screen');
     document.getElementById('home-screen').classList.add('act2-home');
@@ -647,6 +676,7 @@ window.makeAct2Choice=function(choice){
     const inp=document.getElementById('chat-input-field'); if(inp) inp.style.display='';
     showTypingIndicator();
     setTimeout(()=>{ removeTypingIndicator(); const reply={sender:'them',text:act2Choices[choice],isGlitch:true}; chat.messages.push(reply); appendMessageToDOM(reply); renderChatList(); act2State.watcherMsgCount++; checkWatcherRename(); },2000);
+    setTimeout(saveGame, 500);
 };
 
 function checkWatcherRename(){
@@ -765,7 +795,7 @@ function openObserverApp(){
     Object.keys(act2State.appsVisited).forEach(k=>{ lines.push({t:'',v:`[${act2State.appTimestamps[k]||'--:--'}] Opened ${appNames[k]||k} (${act2State.appsVisited[k]}x)`}); });
     lines.push({t:'dim',v:'──────────────────────────────────────'},{t:'warn',v:'PREDICTION: User will check Messages next.'},{t:'accent',v:'"User prefers visual evidence."'},{t:'warn',v:`"User has visited this device for ${Math.floor(performance.now()/60000)} minutes."`});
     let i=0;
-    const iv=setInterval(()=>{ if(i<lines.length){const d=document.createElement('div');d.className=`terminal-line ${lines[i].t}`;d.textContent=lines[i].v;el.appendChild(d);el.scrollTop=el.scrollHeight;i++;}else{clearInterval(iv);setTimeout(()=>{const c=allChats.find(c=>c.name==='Watcher'||c.id==='unknown');if(c){c.messages.push({sender:'them',text:"You already know the date it all began.\n\nApril 13th.\n\nAarav used it as his last lock.",isGlitch:true});renderChatList();createNotification('Messages','Watcher','You already know the date it all began.',true,false);}},2000);setTimeout(()=>triggerFalseSafety(),5000);}},300);
+    const iv=setInterval(()=>{ if(i<lines.length){const d=document.createElement('div');d.className=`terminal-line ${lines[i].t}`;d.textContent=lines[i].v;el.appendChild(d);el.scrollTop=el.scrollHeight;i++;}else{clearInterval(iv);setTimeout(()=>{const c=allChats.find(c=>c.name==='Watcher'||c.id==='unknown');if(c){c.messages.push({sender:'them',text:"You already know the date it all began.\n\nApril 13th.\n\nAarav used it as his last lock.",isGlitch:true});renderChatList();createNotification('Messages','Watcher','You already know the date it all began.',true,false);}},2000);}},300);
 }
 
 function triggerFalseSafety(){
@@ -785,23 +815,57 @@ function triggerFalseSafety(){
 function toggleAirplaneMode(){
     act2State.airplaneActive=!act2State.airplaneActive;
     const sw=document.getElementById('airplane-switch'), bn=document.getElementById('airplane-banner');
-    if(act2State.airplaneActive){ sw.style.background='#34c759'; sw.querySelector('div').style.left='24px'; if(bn)bn.style.display='block';
-        setTimeout(()=>{ const c=allChats.find(c=>c.name==='Watcher'||c.id==='unknown'); if(c){c.messages.push({sender:'them',text:"That won't help.",isGlitch:true});renderChatList();} setTimeout(()=>triggerFinalLocationPing(),5000); },15000);
+    if(act2State.airplaneActive){
+        sw.style.background='#34c759'; sw.querySelector('div').style.left='24px'; if(bn)bn.style.display='block';
+
+        // Bug 4 fix: In act 3, auto-turn-off airplane mode and show watcher threat message
+        if(typeof act3State!=='undefined' && act3State.active){
+            const playerName = act3State.playerName || 'Unknown';
+            setTimeout(()=>{
+                // Auto-turn off
+                act2State.airplaneActive=false;
+                sw.style.background='#333'; sw.querySelector('div').style.left='2px'; if(bn)bn.style.display='none';
+                // Threatening notification
+                createNotification('System','⚠ WARNING',
+                    `I am watching you. Don't turn on airplane mode. I have full control of this phone. — ${playerName}`,
+                    true, false);
+                const c=allChats.find(c=>c.name==='Watcher'||c.id==='unknown');
+                if(c){c.messages.push({sender:'them',text:`I am watching you.\n\nDon't turn on airplane mode.\nI have full control of this phone.\n\n— ${playerName}`,isGlitch:true});renderChatList();}
+            }, 1500);
+        } else {
+            // Act 2 behavior: watcher message + final location ping
+            act2State._airplaneTimer = setTimeout(()=>{ const c=allChats.find(c=>c.name==='Watcher'||c.id==='unknown'); if(c){c.messages.push({sender:'them',text:"That won't help.",isGlitch:true});renderChatList();} setTimeout(()=>triggerFinalLocationPing(),5000); },15000);
+        }
     } else { sw.style.background='#333'; sw.querySelector('div').style.left='2px'; if(bn)bn.style.display='none'; }
 }
 
 function triggerFinalLocationPing(){
+    if (typeof act3State !== 'undefined' && act3State.active) return;
     createNotification('Maps','Live Location','Aarav Mehta shared location: Dockyard Warehouse 12',false,false);
     setTimeout(()=>{ showScreen('maps-app'); initMap(); setTimeout(()=>{ if(map){map.setView([28.6500,77.2300],16); createNotification('Maps','GPS Unstable','Signal corrupted near Warehouse 12.',true,true);} },1500); setTimeout(()=>createNotification('Maps','Tap Dockyard pin','Open warehouse security terminal.',false,true),4000); },3000);
 }
 
 window.closeWarehouseModal=function(){ document.getElementById('warehouse-modal').classList.remove('active'); document.getElementById('warehouse-code').value=''; document.getElementById('warehouse-error').style.display='none'; };
 window.checkWarehouseCode=function(){
-    if(document.getElementById('warehouse-code').value==='0413'){ closeWarehouseModal(); startAct2Ending(); }
+    if (act2State.warehouseSolved && !(typeof act3State !== 'undefined' && act3State.active)) return;
+    if(document.getElementById('warehouse-code').value==='0413'){
+        act2State.warehouseSolved = true;
+        // Bug 6 fix: Only trigger act 2 ending if act 3 is NOT active
+        if(typeof act3State!=='undefined' && act3State.active){
+            // Already used in act 2 — show "already decrypted" message
+            closeWarehouseModal();
+            createNotification('Maps','Already Decrypted','Warehouse 12 access code was used in the previous session.',false,true);
+            const c=allChats.find(c=>c.name==='Watcher'||c.id==='unknown');
+            if(c){c.messages.push({sender:'them',text:"You already know what happened here.",isGlitch:true});renderChatList();}
+        } else {
+            closeWarehouseModal(); startAct2Ending();
+        }
+    }
     else{ document.getElementById('warehouse-error').style.display='block'; const c=allChats.find(c=>c.name==='Watcher'||c.id==='unknown'); if(c){c.messages.push({sender:'them',text:"You're not ready yet.",isGlitch:true});renderChatList();} }
 };
 
 function startAct2Ending(){
+    if (act2State._airplaneTimer) { clearTimeout(act2State._airplaneTimer); act2State._airplaneTimer = null; }
     showScreen('act2-ending');
     const fig=document.getElementById('cctv-figure'),fig2=document.getElementById('cctv-figure-2'),glitch=document.getElementById('cctv-glitch'),textEl=document.getElementById('cctv-text');
     setTimeout(()=>{if(fig)fig.style.left='20%';},1000);
@@ -848,6 +912,7 @@ window.playRecoveredVideo=function(){
 const act3State={active:false,phase:0,behaviorProfile:{appCounts:{},hesitationEvents:0,emotionalChoices:0,echoTrustScore:0,archetype:null},galleryMutations:0,mirrorReportGenerated:false,echoConversationStarted:false,aaravReconstructUnlocked:false,loopIncidentTriggered:false,rhea_glitching:false,finalSyncUnlocked:false,playerName:null};
 
 window.triggerAct3Boot=function(){
+    if(!act2State.active) return;
     if(act3State.active) return;
     act3State.active=true;
     document.querySelectorAll('.battery-level').forEach(b=>b.style.width='100%');
@@ -863,6 +928,8 @@ window.triggerAct3Boot=function(){
 };
 
 window.enterAct3Home=function(){
+    if (act3State.phase >= 1) return;
+    act3State.phase = 1;
     showScreen('home-screen');
     const home=document.getElementById('home-screen');
     home?.classList.remove('act2-home'); home?.classList.add('act3-home');
@@ -906,8 +973,27 @@ window.generateMirrorReport=function(){
     else if((counts['gallery-app']||0)>4) arch='VISUAL_THINKER';
     else if(act3State.behaviorProfile.hesitationEvents>5) arch='AVOIDANT';
     act3State.behaviorProfile.archetype=arch;
+
+    // Bug 5 fix: Calculate trust score from game state rather than leaving it at 0
+    // Compute from scratch each time (idempotent) so repeated calls don't double-count.
+    // act3State.behaviorProfile._trustBonus tracks direct increments (e.g. from analyzeAudio).
+    let score = act3State.behaviorProfile._trustBonus || 0;
+    if(act2State.rheaUnlocked) score+=10;
+    if(act2State.echoLogsRead) score+=10;
+    if(act3State.echoConversationStarted) score+=15;
+    if(act3State.aaravReconstructUnlocked) score+=10;
+    if(act3State.loopIncidentTriggered) score+=5;
+    if(act3State.rhea_glitching) score+=5;
+    const rheaChat=allChats.find(c=>c.id==='rhea');
+    if(rheaChat && rheaChat.messages.filter(m=>m.sender==='me').length>0) score+=10;
+    const echoChat=allChats.find(c=>c.id==='echo_direct');
+    if(echoChat && echoChat.messages.filter(m=>m.sender==='me').length>0) score+=10;
+    score += Math.min(total*2, 20); // up to 20 pts from app engagement
+    score = Math.min(score, 100);
+    act3State.behaviorProfile.echoTrustScore = score;
+
     el.innerHTML='';
-    const lines=[{t:'dim',v:'MIRROR BEHAVIORAL RECONSTRUCTION v2.0'},{t:'dim',v:'══════════════════════════════════════'},{t:'',v:`SUBJECT: ${act3State.playerName||'CURRENT_USER'}`},{t:'dim',v:'──────────────────────────────────────'},{t:'warn',v:`ARCHETYPE: ${arch}`},{t:'',v:`APP_ENGAGEMENT: ${total} interactions`},{t:'warn',v:`ECHO_TRUST_SCORE: ${act3State.behaviorProfile.echoTrustScore}/100`},{t:'dim',v:'──────────────────────────────────────'},{t:'dim',v:'BEHAVIORAL OBSERVATIONS:'},{t:'',v:'"Subject exhibits compulsive pattern validation."'},{t:'',v:'"Emotional responsiveness increasing."'},{t:'warn',v:'"Subject demonstrates attachment to Rhea Kapoor."'},{t:'dim',v:'──────────────────────────────────────'},{t:'warn',v:'Compatibility approaching threshold.'}];
+    const lines=[{t:'dim',v:'MIRROR BEHAVIORAL RECONSTRUCTION v2.0'},{t:'dim',v:'══════════════════════════════════════'},{t:'',v:`SUBJECT: ${act3State.playerName||'CURRENT_USER'}`},{t:'dim',v:'──────────────────────────────────────'},{t:'warn',v:`ARCHETYPE: ${arch}`},{t:'',v:`APP_ENGAGEMENT: ${total} interactions`},{t:'warn',v:`ECHO_TRUST_SCORE: ${score}/100`},{t:'dim',v:'──────────────────────────────────────'},{t:'dim',v:'BEHAVIORAL OBSERVATIONS:'},{t:'',v:'"Subject exhibits compulsive pattern validation."'},{t:'',v:'"Emotional responsiveness increasing."'},{t:'warn',v:'"Subject demonstrates attachment to Rhea Kapoor."'},{t:'dim',v:'──────────────────────────────────────'},{t:'warn',v:'Compatibility approaching threshold.'}];
     lines.forEach((l,i)=>setTimeout(()=>{ const d=document.createElement('div');d.className=`terminal-line ${l.t}`;d.textContent=l.v;el.appendChild(d);el.scrollTop=el.scrollHeight; },i*200));
 };
 
@@ -933,7 +1019,7 @@ window.analyzeAudio=function(){
     const el=document.getElementById('analyzer-result'); if(!el) return;
     el.innerHTML='<div class="terminal-line warn">ANOMALY DETECTED IN FREQUENCY BAND 18-22kHz</div><div class="terminal-line">STEGANOGRAPHIC DATA FOUND:</div><div class="terminal-line" style="color:#fff;">Coords: 28.6500°N  77.2300°E</div><div class="terminal-line dim">Cross-reference: Dockyard Warehouse 12</div><div class="terminal-line warn">Hidden phrase (reversed): "It is already inside."</div>';
     createNotification('Analyzer','Coordinates Found','Hidden data extracted from audio.',false,true);
-    act3State.behaviorProfile.echoTrustScore+=5;
+    act3State.behaviorProfile._trustBonus=(act3State.behaviorProfile._trustBonus||0)+5;
 };
 
 function triggerEchoDirectConversation(){
@@ -1165,6 +1251,7 @@ window.enterAct3Home=function(){ _origEnterAct3Home(); scheduleGalleryMutations(
     function endPrelude() {
         if (preludeComplete) return;
         preludeComplete = true;
+        window._preludeComplete = true;
         clearTimeout(autoTimer);
         preludeScreen.style.transition = 'opacity 1.2s ease';
         preludeScreen.style.opacity = '0';
@@ -1276,7 +1363,7 @@ function buildSaveObject() {
         act2Active: act2State.active,
         act3Active: act3State.active,
         // Act 1 flags
-        hiddenUnlocked: (typeof galleryData !== 'undefined' && galleryData.hidden?.length > 0 && !document.getElementById('hidden-modal')?.classList.contains('active')),
+        hiddenUnlocked: window._hiddenAlbumUnlocked === true,
         zipOpened: act2State.active, // zip was opened if act2 started
         // Act 2 flags
         act2ChoiceMade: act2State.act2ChoiceMade || false,
@@ -1284,6 +1371,7 @@ function buildSaveObject() {
         contactRenamed: act2State.contactRenamed || false,
         rheaUnlocked: act2State.rheaUnlocked || false,
         echoLogsRead: act2State.echoLogsRead || false,
+        warehouseSolved: act2State.warehouseSolved || false,
         airplaneActive: act2State.airplaneActive || false,
         // Act 3 flags
         playerName: act3State.playerName || null,
@@ -1315,7 +1403,7 @@ function buildSaveObject() {
         // Settings changes
         settingsUpdated: act2State.active,
         // Prelude seen
-        preludeSeen: true,
+        preludeSeen: window._preludeComplete === true,
     };
 }
 
@@ -1400,9 +1488,8 @@ function restoreFromSave(save) {
     // ── Restore Act 1 state ────────────────────────────────
     if (save.hiddenUnlocked) {
         // Hidden album stays accessible — password already entered
-        window._hiddenUnlocked = true;
-        // Patch promptHiddenAlbum to skip password
-        window.promptHiddenAlbum = function() { openAlbum('hidden'); };
+        window._hiddenAlbumUnlocked = true;
+        // promptHiddenAlbum already checks _hiddenAlbumUnlocked, no further patch needed
     }
 
     // ── Restore Act 2 ──────────────────────────────────────
@@ -1413,6 +1500,7 @@ function restoreFromSave(save) {
         act2State.contactRenamed = save.contactRenamed || false;
         act2State.rheaUnlocked = save.rheaUnlocked || false;
         act2State.echoLogsRead = save.echoLogsRead || false;
+        act2State.warehouseSolved = save.warehouseSolved || false;
 
         // Re-inject act2 UI silently (no animations)
         document.getElementById('home-screen')?.classList.add('act2-home');
@@ -1465,7 +1553,7 @@ function restoreFromSave(save) {
         act3State.behaviorProfile.echoTrustScore = save.echoTrustScore || 0;
         act3State.echoConversationStarted = save.echoConversationStarted || false;
         act3State.aaravReconstructUnlocked = save.aaravReconstructUnlocked || false;
-        act3State.loopIncidentTriggered = save.loopIncidentTriggered || true;
+        act3State.loopIncidentTriggered = save.loopIncidentTriggered === true;
         act3State.rhea_glitching = save.rhea_glitching || false;
         act3State.finalSyncUnlocked = save.finalSyncUnlocked || false;
 

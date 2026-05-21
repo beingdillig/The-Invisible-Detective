@@ -80,7 +80,132 @@ if (unlockTrigger) {
 
 // Act 2 lock screen — swipe-up support
 let act2TouchStartY = 0;
+// ═══════════════════════════════════════════════════════════
+// LANDING PAGE — Splash → Title → Game
+// ═══════════════════════════════════════════════════════════
+
+const LS_ACT_DATA = [
+    { num: 'I',   name: 'THE\nLOST PHONE'    },
+    { num: 'II',  name: 'THE\nWATCHERS'      },
+    { num: 'III', name: 'PHONE\nKNOWS YOU'   },
+    { num: 'IV',  name: 'INVISIBLE\nDETECTIVE'},
+    { num: 'V',   name: 'THE\nMIRROR'        },
+];
+
+function lsGetProgress() {
+    // Returns { currentAct: 1-5, hasSave: bool, completedActs: 0-5 }
+    try {
+        const raw = localStorage.getItem('tid_save_v1');
+        if (!raw) return { currentAct: 1, hasSave: false, completedActs: 0 };
+        const save = JSON.parse(raw);
+        const act = save.currentAct || 1;
+        return { currentAct: act, hasSave: true, completedActs: Math.max(0, act - 1) };
+    } catch(e) {
+        return { currentAct: 1, hasSave: false, completedActs: 0 };
+    }
+}
+
+function lsPopulateLanding() {
+    const { currentAct, hasSave, completedActs } = lsGetProgress();
+
+    // Progress bar
+    const pct = Math.round((completedActs / 5) * 100);
+    const fillEl = document.getElementById('ls-progress-fill');
+    const pctEl  = document.getElementById('ls-progress-pct');
+    if (fillEl) setTimeout(() => { fillEl.style.width = pct + '%'; }, 300);
+    if (pctEl)  pctEl.textContent = pct + '%';
+
+    // Act nodes
+    const row = document.getElementById('ls-acts-row');
+    if (!row) return;
+    row.innerHTML = '';
+    LS_ACT_DATA.forEach((act, i) => {
+        const actNum = i + 1;
+        let dotState = 'locked';
+        let textActive = false;
+        if (hasSave && actNum < currentAct) { dotState = 'completed'; }
+        else if (!hasSave && actNum === 1)   { dotState = 'current'; textActive = true; }
+        else if (hasSave && actNum === currentAct) { dotState = 'current'; textActive = true; }
+
+        const node = document.createElement('div');
+        node.className = 'ls-act-node';
+        node.innerHTML = `
+            <div class="ls-act-dot ${dotState}"></div>
+            <div class="ls-act-meta">
+                <span class="ls-act-num${textActive?' active-text':''}">${act.num}</span>
+                <span class="ls-act-name${textActive?' active-text':''}">${act.name.replace('\n','<br>')}</span>
+            </div>`;
+        row.appendChild(node);
+    });
+
+    // Update phone hint text based on save state
+    const hint = document.getElementById('ls-phone-hint');
+    if (hint) hint.textContent = hasSave ? 'TAP TO CONTINUE INVESTIGATION' : 'TAP THE PHONE TO BEGIN';
+
+    // Update live clock on mini phone
+    lsTickClock();
+    setInterval(lsTickClock, 30000);
+}
+
+function lsTickClock() {
+    const el = document.getElementById('ls-ps-clock');
+    if (!el) return;
+    const now = new Date();
+    el.textContent = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+
+// Phone tap — enter game (continue if save, else new game)
+window.enterGameFromLanding = function() {
+    const { hasSave } = lsGetProgress();
+    if (hasSave) {
+        continueGame();
+    } else {
+        startPrelude();
+    }
+};
+
+// NEW GAME button (footer) — always warns if save exists
+window.beginNewGame = function() {
+    const { hasSave } = lsGetProgress();
+    if (hasSave) {
+        const modal = document.getElementById('newgame-modal');
+        modal.style.display = 'flex';
+    } else {
+        startPrelude();
+    }
+};
+
+window.confirmNewGame = function() {
+    document.getElementById('newgame-modal').style.display = 'none';
+    clearSave();
+    startPrelude();
+};
+
+function startPrelude() {
+    showScreen('prelude-screen');
+    if (typeof startPreludeSequence === 'function') {
+        startPreludeSequence();
+    } else {
+        // Fallback: kick off prelude typing
+        window._preludeComplete = false;
+        if (typeof preludeLines !== 'undefined') runPrelude();
+    }
+}
+
+window.continueGame = function() {
+    const save = loadGame();
+    if (!save) {
+        // No save — start fresh
+        startPrelude();
+        return;
+    }
+    // Restore and jump to the correct screen
+    restoreFromSave(save);
+};
+
+// ─── Splash → Landing page transition ────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    // Act trigger swipe handlers (unchanged)
     const act2Trigger = document.getElementById('act2-unlock-trigger');
     if (act2Trigger) {
         act2Trigger.addEventListener('touchstart', e => { act2TouchStartY = e.touches[0].clientY; }, { passive: true });
@@ -95,6 +220,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (act4Trigger) {
         act4Trigger.addEventListener('touchstart', e => { act2TouchStartY = e.touches[0].clientY; }, { passive: true });
         act4Trigger.addEventListener('touchend', e => { if (act2TouchStartY - e.changedTouches[0].clientY > 30) enterAct4Home(); }, { passive: true });
+    }
+
+    // ── Splash screen: show for 2.5s then fade to landing page ──
+    const splash = document.getElementById('splash-screen');
+    const title  = document.getElementById('title-screen');
+    if (splash && title) {
+        setTimeout(() => {
+            // Fade out splash
+            splash.style.transition = 'opacity 0.7s ease';
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.classList.remove('active');
+                splash.style.opacity = '';
+                // Populate landing page data before showing
+                lsPopulateLanding();
+                // Show title screen
+                title.classList.add('active');
+            }, 700);
+        }, 2200);
     }
 });
 
@@ -2184,8 +2328,12 @@ window.enterAct3Home=function(){ _origEnterAct3Home(); scheduleGalleryMutations(
         if (index >= 5 && tapHintEl) tapHintEl.classList.add('show');
     }
 
-    // Start after a brief black moment
-    setTimeout(() => showBeat(0), 600);
+    // Expose start function — called by startPrelude() from landing page
+    // (no longer auto-starts; waits for player to tap the phone)
+    window.startPreludeSequence = function() {
+        if (preludeComplete) return;
+        setTimeout(() => showBeat(0), 400);
+    };
 
     // Tap / click to skip or advance
     preludeScreen.addEventListener('click', () => {

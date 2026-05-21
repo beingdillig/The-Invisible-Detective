@@ -710,3 +710,491 @@ body{background-color:#000;color:var(--text-primary);display:flex;justify-conten
     border-color: #ff453a;
     color: #ff453a;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   SPLASH SCREEN — Rāhi Studios
+   ═══════════════════════════════════════════════════════════ */
+#splash-screen {
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.splash-inner {
+    text-align: center;
+    animation: splashFadeIn 0.8s ease forwards;
+}
+@keyframes splashFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.splash-studio-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: #e8e8e8;
+}
+.splash-presents {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: #555;
+    margin-top: 6px;
+    text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LANDING PAGE — The Invisible Detective
+   ═══════════════════════════════════════════════════════════ */
+#title-screen {
+    background: #060609;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    padding: 44px 24px 24px;
+}
+
+/* Atmospheric background layers */
+.ls-bg-gradient {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 100% 50% at 50% 0%, rgba(40,0,0,0.6) 0%, transparent 65%),
+        radial-gradient(ellipse 80% 40% at 50% 100%, rgba(20,0,40,0.5) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+}
+.ls-scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg, transparent, transparent 3px,
+        rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.ls-header {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    width: 100%;
+}
+.ls-eyebrow {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 5px;
+    color: #ff453a;
+    opacity: 0.75;
+    margin-bottom: 10px;
+}
+.ls-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    line-height: 1;
+    margin-bottom: 10px;
+}
+.ls-title-line1 {
+    font-family: 'Inter', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 7px;
+    color: #ffffff;
+    text-shadow: 0 0 24px rgba(255,255,255,0.25);
+    animation: lsTitleGlitch 10s infinite;
+}
+.ls-title-line2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 31px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    color: #ff453a;
+    text-shadow: 0 0 32px rgba(255,69,58,0.45);
+    animation: lsTitleGlitch 10s 0.2s infinite;
+}
+@keyframes lsTitleGlitch {
+    0%,87%,100% { clip-path:none; transform:none; }
+    88% { clip-path:inset(15% 0 65% 0); transform:translate(-4px,0); }
+    89% { clip-path:inset(65% 0 8%  0); transform:translate(4px,0); }
+    90% { clip-path:none; transform:none; }
+    92% { clip-path:inset(35% 0 45% 0); transform:translate(2px,0); }
+    93% { clip-path:none; transform:none; }
+}
+.ls-tagline {
+    font-size: 11px;
+    font-weight: 300;
+    color: #555;
+    letter-spacing: 1px;
+    font-style: italic;
+}
+
+/* ── Progress Timeline ──────────────────────────────────── */
+.ls-timeline-wrap {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+}
+.ls-timeline-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: #444;
+    text-align: center;
+    margin-bottom: 10px;
+}
+.ls-progress-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.ls-progress-bar-track {
+    flex: 1;
+    height: 3px;
+    background: #1e1e1e;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.ls-progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff453a, #ff6b35);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 1s ease;
+    box-shadow: 0 0 8px rgba(255,69,58,0.4);
+}
+.ls-progress-pct {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: #ff453a;
+    min-width: 32px;
+    text-align: right;
+}
+
+/* Act nodes row */
+.ls-acts-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+}
+/* connecting line behind nodes */
+.ls-acts-row::before {
+    content: '';
+    position: absolute;
+    top: 11px;
+    left: 11px;
+    right: 11px;
+    height: 1px;
+    background: #1e1e1e;
+    z-index: 0;
+}
+.ls-act-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+.ls-act-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #2a2a2a;
+    background: #0d0d0d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s ease;
+}
+.ls-act-dot.completed {
+    background: #ff453a;
+    border-color: #ff453a;
+    box-shadow: 0 0 10px rgba(255,69,58,0.5);
+}
+.ls-act-dot.completed::after {
+    content: '✓';
+    font-size: 10px;
+    color: #fff;
+    font-weight: 700;
+}
+.ls-act-dot.current {
+    border-color: #ff453a;
+    background: transparent;
+    animation: lsNodePulse 2s ease-in-out infinite;
+}
+.ls-act-dot.current::after {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #ff453a;
+}
+@keyframes lsNodePulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,69,58,0.5); }
+    50%      { box-shadow: 0 0 0 5px rgba(255,69,58,0); }
+}
+.ls-act-dot.locked {
+    border-color: #1a1a1a;
+    background: #0a0a0a;
+}
+.ls-act-meta {
+    text-align: center;
+}
+.ls-act-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: #444;
+    display: block;
+    margin-bottom: 1px;
+}
+.ls-act-num.active-text { color: #ff453a; }
+.ls-act-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 7px;
+    font-weight: 500;
+    color: #333;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+    max-width: 50px;
+    display: block;
+}
+.ls-act-name.active-text { color: #aaa; }
+
+/* ── Phone Artifact ─────────────────────────────────────── */
+.ls-phone-section {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+.ls-phone-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: #555;
+    animation: lsHintBlink 2.5s ease-in-out infinite;
+}
+@keyframes lsHintBlink {
+    0%,100% { opacity: 0.5; }
+    50%      { opacity: 1; }
+}
+.ls-phone-wrap {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.ls-phone-wrap:active { transform: scale(0.96); }
+.ls-phone-body {
+    width: 140px;
+    height: 230px;
+    background: linear-gradient(160deg, #1a1a1e 0%, #0d0d10 100%);
+    border-radius: 26px;
+    border: 1.5px solid #2a2a2f;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 0 0 0.5px #000,
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        0 8px 40px rgba(0,0,0,0.8);
+}
+/* Side volume button */
+.ls-phone-btn-vol {
+    position: absolute;
+    left: -3px;
+    top: 60px;
+    width: 3px;
+    height: 36px;
+    background: #1e1e22;
+    border-radius: 2px 0 0 2px;
+}
+/* Side power button */
+.ls-phone-btn-pwr {
+    position: absolute;
+    right: -3px;
+    top: 72px;
+    width: 3px;
+    height: 26px;
+    background: #1e1e22;
+    border-radius: 0 2px 2px 0;
+}
+/* Notch */
+.ls-phone-notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 42px;
+    height: 18px;
+    background: #0d0d10;
+    border-radius: 0 0 14px 14px;
+    z-index: 10;
+}
+/* Phone screen */
+.ls-phone-screen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #0a0208 0%, #040108 100%);
+    display: flex;
+    flex-direction: column;
+    border-radius: 24.5px;
+    overflow: hidden;
+    padding-top: 18px;
+}
+.ls-ps-statusbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 14px 0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: rgba(255,255,255,0.6);
+}
+.ls-ps-body {
+    flex: 1;
+    padding: 14px 8px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.ls-ps-notification {
+    background: rgba(30,30,35,0.9);
+    border-radius: 8px;
+    padding: 7px 9px;
+    font-family: 'Inter', sans-serif;
+    font-size: 8px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.4;
+    border-left: 2px solid #2a2a2f;
+}
+.ls-ps-notif-red {
+    border-left-color: #ff453a;
+    color: rgba(255,180,180,0.85);
+}
+.ls-ps-swipe {
+    text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: rgba(255,255,255,0.2);
+    padding-bottom: 30px;
+    animation: lsSwipePulse 3s ease-in-out infinite;
+}
+@keyframes lsSwipePulse {
+    0%,100% { opacity: 0.4; transform: translateY(0); }
+    50%      { opacity: 0.9; transform: translateY(-3px); }
+}
+/* Home indicator */
+.ls-phone-home-bar {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 42px;
+    height: 3px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+}
+/* Phone glow */
+.ls-phone-glow {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 40px;
+    background: radial-gradient(ellipse, rgba(255,69,58,0.18) 0%, transparent 70%);
+    pointer-events: none;
+    animation: lsGlowPulse 3s ease-in-out infinite;
+}
+@keyframes lsGlowPulse {
+    0%,100% { opacity: 0.6; }
+    50%      { opacity: 1; }
+}
+
+/* ── Footer ─────────────────────────────────────────────── */
+.ls-footer {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: #2a2a2a;
+}
+.ls-footer-studio { color: #383838; }
+.ls-footer-dot { color: #222; }
+.ls-footer-ver { color: #2a2a2a; }
+.ls-footer-new {
+    color: #444;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    letter-spacing: 1px;
+}
+.ls-footer-new:active { color: #ff453a; }
+
+/* ── New-game confirmation modal ─────────────────────────── */
+#newgame-modal {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+.modal-box {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 28px 22px;
+    margin: 0 24px;
+    text-align: center;
+}
+.modal-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 10px;
+}
+.modal-body {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 22px;
+}
+.modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.modal-btn {
+    padding: 12px;
+    border-radius: 6px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+.modal-btn-danger {
+    background: #ff453a;
+    color: #fff;
+    border-color: #ff453a;
+}
+.modal-btn-cancel {
+    background: transparent;
+    color: #555;
+    border-color: #2a2a2a;
+}

@@ -13,13 +13,102 @@
 
     <!-- OS Container -->
     <div id="phone-container">
-        
+
+        <!-- SPLASH SCREEN — Rāhi Studios -->
+        <div id="splash-screen" class="screen active">
+            <div class="splash-inner">
+                <div class="splash-studio-name">Rāhi Studios</div>
+                <div class="splash-presents">presents</div>
+            </div>
+        </div>
+
+        <!-- LANDING PAGE / TITLE SCREEN -->
+        <div id="title-screen" class="screen">
+            <!-- Atmospheric background layers -->
+            <div class="ls-bg-gradient"></div>
+            <div class="ls-scanlines"></div>
+
+            <!-- Header -->
+            <div class="ls-header">
+                <div class="ls-eyebrow">A PSYCHOLOGICAL THRILLER</div>
+                <div class="ls-title">
+                    <span class="ls-title-line1">THE INVISIBLE</span>
+                    <span class="ls-title-line2">DETECTIVE</span>
+                </div>
+                <div class="ls-tagline">"One phone. Five acts. No escape."</div>
+            </div>
+
+            <!-- Progress Timeline -->
+            <div class="ls-timeline-wrap">
+                <div class="ls-timeline-label">INVESTIGATION PROGRESS</div>
+                <div class="ls-progress-bar-wrap">
+                    <div class="ls-progress-bar-track">
+                        <div class="ls-progress-bar-fill" id="ls-progress-fill"></div>
+                    </div>
+                    <div class="ls-progress-pct" id="ls-progress-pct">0%</div>
+                </div>
+                <div class="ls-acts-row" id="ls-acts-row">
+                    <!-- Dynamically populated by JS -->
+                </div>
+            </div>
+
+            <!-- Phone Artifact -->
+            <div class="ls-phone-section">
+                <div class="ls-phone-hint" id="ls-phone-hint">TAP THE PHONE TO ENTER</div>
+                <div class="ls-phone-wrap" id="ls-phone-wrap" onclick="enterGameFromLanding()">
+                    <div class="ls-phone-body">
+                        <!-- Side buttons -->
+                        <div class="ls-phone-btn-vol"></div>
+                        <div class="ls-phone-btn-pwr"></div>
+                        <!-- Screen notch -->
+                        <div class="ls-phone-notch"></div>
+                        <!-- Screen -->
+                        <div class="ls-phone-screen">
+                            <div class="ls-ps-statusbar">
+                                <span class="ls-ps-time" id="ls-ps-clock">00:00</span>
+                                <span class="ls-ps-batt">18%</span>
+                            </div>
+                            <div class="ls-ps-body">
+                                <div class="ls-ps-notification ls-ps-notif-red">UNKNOWN: "You picked it up."</div>
+                                <div class="ls-ps-notification">Mom: "Please call me."</div>
+                            </div>
+                            <div class="ls-ps-swipe">↑ Swipe to unlock</div>
+                        </div>
+                        <!-- Home indicator -->
+                        <div class="ls-phone-home-bar"></div>
+                    </div>
+                    <div class="ls-phone-glow"></div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="ls-footer">
+                <span class="ls-footer-studio">Rāhi Studios</span>
+                <span class="ls-footer-dot">·</span>
+                <span class="ls-footer-ver">v0.5.0</span>
+                <span class="ls-footer-dot">·</span>
+                <span class="ls-footer-new" onclick="beginNewGame()">NEW GAME</span>
+            </div>
+        </div>
+
+        <!-- NEW GAME CONFIRM MODAL (shown if save exists on NEW GAME) -->
+        <div id="newgame-modal" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.88); z-index:9999; align-items:center; justify-content:center; flex-direction:column;">
+            <div class="modal-box">
+                <div class="modal-title">Start New Game?</div>
+                <div class="modal-body">Your current investigation will be<br>permanently erased.</div>
+                <div class="modal-actions">
+                    <button class="modal-btn modal-btn-danger" onclick="confirmNewGame()">ERASE &amp; START FRESH</button>
+                    <button class="modal-btn modal-btn-cancel" onclick="document.getElementById('newgame-modal').style.display='none'">CANCEL</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Black Screen (End Act 1 / Dead Battery) -->
         <div id="black-screen" class="screen"></div>
 
 
         <!-- PRELUDE SCREEN -->
-        <div id="prelude-screen" class="screen active">
+        <div id="prelude-screen" class="screen">
             <div class="prelude-container" id="prelude-container">
                 <div class="prelude-text" id="prelude-text"></div>
                 <div class="prelude-tap-hint" id="prelude-tap-hint">tap to continue</div>

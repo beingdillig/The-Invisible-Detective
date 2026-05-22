@@ -1571,3 +1571,13 @@ body{background-color:#000;color:var(--text-primary);display:flex;justify-conten
     letter-spacing: 3px;
     padding: 20px 0 8px;
 }
+
+/* ── App slide-up / slide-down transitions (improvement #2) ─────────────── */
+/* Inactive app-screens sit below the viewport; the existing transition slides them up on .active */
+.app-screen{transform:translateY(100%);opacity:1;}
+/* Exit: slide current app back down before home-screen is shown */
+@keyframes slideDownOut{from{transform:translateY(0)}to{transform:translateY(105%)}}
+.app-screen.exiting{animation:slideDownOut 0.26s cubic-bezier(0.4,0,1,1) forwards;pointer-events:none;opacity:1;z-index:11;}
+/* Home-screen settle: brief scale-in when the phone "pops" back to home */
+@keyframes homeSettle{from{transform:scale(0.94) translateY(0);opacity:0.8}to{transform:scale(1) translateY(0);opacity:1}}
+#home-screen.home-settle{animation:homeSettle 0.28s cubic-bezier(0.2,0.8,0.2,1) forwards;}

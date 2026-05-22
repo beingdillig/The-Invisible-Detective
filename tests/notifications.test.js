@@ -82,11 +82,11 @@ describe('MAX_NOTIFS cap', () => {
 
 // ── Auto-remove ────────────────────────────────────────────
 describe('Auto-remove notifications', () => {
-  test('autoRemove=true: notification removed after 8s timeout + fade', () => {
+  test('autoRemove=true: notification removed after 6s timeout + rise animation', () => {
     window.createNotification('App', 'Auto', 'Removes', false, true);
     expect(getNotifCount()).toBe(1);
-    jest.advanceTimersByTime(8100); // 8s timeout
-    jest.advanceTimersByTime(600);  // 500ms fade
+    jest.advanceTimersByTime(6100); // 6s hold
+    jest.advanceTimersByTime(450);  // 380ms rise animation + buffer
     expect(getNotifCount()).toBe(0);
   });
 

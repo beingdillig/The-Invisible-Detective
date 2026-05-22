@@ -401,7 +401,10 @@ function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
     notif.className = `notification ${isGlitch?'glitch':''}`;
     notif.innerHTML = `<div class="notification-header"><span class="notification-app">${app}</span><span class="notification-time">now</span></div><div class="notification-title">${title}</div><div class="notification-body">${body}</div>`;
     container.appendChild(notif);
-    if (autoRemove) setTimeout(() => { notif.style.opacity='0'; setTimeout(()=>notif.remove(),500); }, 8000);
+    if (autoRemove) setTimeout(() => {
+        notif.classList.add('rising');
+        setTimeout(() => notif.remove(), 380); // matches notifRise animation duration
+    }, 6000);
 }
 setTimeout(() => {
     createNotification('Messages','UNKNOWN','You took it.',false,false);

@@ -13,6 +13,8 @@
 
     <!-- OS Container -->
     <div id="phone-container">
+        <!-- Dynamic Island pill — always on top, purely decorative -->
+        <div class="dynamic-island"></div>
 
         <!-- SPLASH SCREEN — Rāhi Studios -->
         <div id="splash-screen" class="screen active">
@@ -57,13 +59,14 @@
                 <div class="ls-phone-hint" id="ls-phone-hint">TAP THE PHONE TO ENTER</div>
                 <div class="ls-phone-wrap" id="ls-phone-wrap" onclick="enterGameFromLanding()">
                     <div class="ls-phone-body">
-                        <!-- Side buttons -->
+                        <!-- Physical frame buttons -->
+                        <div class="ls-phone-btn-mute"></div>
                         <div class="ls-phone-btn-vol"></div>
                         <div class="ls-phone-btn-pwr"></div>
-                        <!-- Screen notch -->
-                        <div class="ls-phone-notch"></div>
-                        <!-- Screen -->
+                        <!-- OLED display panel -->
                         <div class="ls-phone-screen">
+                            <!-- Dynamic Island -->
+                            <div class="ls-phone-di"></div>
                             <div class="ls-ps-statusbar">
                                 <span class="ls-ps-time" id="ls-ps-clock">00:00</span>
                                 <span class="ls-ps-batt">18%</span>
@@ -74,7 +77,7 @@
                             </div>
                             <div class="ls-ps-swipe">↑ Swipe to unlock</div>
                         </div>
-                        <!-- Home indicator -->
+                        <!-- Home indicator bar -->
                         <div class="ls-phone-home-bar"></div>
                     </div>
                     <div class="ls-phone-glow"></div>
@@ -117,7 +120,10 @@
 
         <!-- Lock Screen -->
         <div id="lock-screen" class="screen">
-            <div class="status-bar">
+            <!-- wallpaper layers -->
+            <div class="ls-wallpaper-base"></div>
+            <div class="ls-wallpaper-glow"></div>
+            <div class="status-bar ls-status">
                 <span class="time">00:00</span>
                 <span class="icons">
                     <svg class="signal-icon" viewBox="0 0 24 18" width="20" height="14" fill="white"><rect x="0" y="10" width="4" height="8" rx="1" opacity="0.3"/><rect x="5" y="7" width="4" height="11" rx="1" opacity="0.5"/><rect x="10" y="4" width="4" height="14" rx="1" opacity="0.8"/><rect x="15" y="1" width="4" height="17" rx="1"/></svg>
@@ -125,11 +131,23 @@
                     <div class="battery-wrap"><div class="battery"><div class="battery-level" style="width:18%"></div></div><span class="batt-pct">18%</span></div>
                 </span>
             </div>
-            <div class="lock-time-huge time">00:00</div>
-            <div class="lock-date">Monday, Nov 12</div>
+            <!-- clock section — date above time, iOS style -->
+            <div class="ls-clock-area">
+                <div class="lock-date">Tuesday, Nov 12</div>
+                <div class="lock-time-huge time">00:00</div>
+            </div>
+            <!-- swipe hint pushes to bottom -->
+            <div class="ls-spacer"></div>
             <div class="unlock-area" id="unlock-trigger">
-                <div class="swipe-hint">Swipe up to unlock</div>
-                <div class="swipe-indicator"></div>
+                <!-- bottom utility bar: torch left, camera right -->
+                <div class="ls-bottom-bar">
+                    <div class="ls-icon-btn ls-torch">🔦</div>
+                    <div class="swipe-hint-wrap">
+                        <div class="swipe-hint">Swipe up to unlock</div>
+                        <div class="swipe-indicator"></div>
+                    </div>
+                    <div class="ls-icon-btn ls-camera">📷</div>
+                </div>
             </div>
         </div>
 
@@ -165,6 +183,11 @@
                     <div class="battery-container"><span class="batt-pct">18%</span><div class="battery-icon"><div class="battery-level" style="width:18%"></div></div></div>
                 </div>
             </div>
+            <!-- iOS-style date widget -->
+            <div class="home-date-widget">
+                <div class="hdw-day" id="hdw-day">Monday</div>
+                <div class="hdw-date" id="hdw-date">November 12</div>
+            </div>
             <div class="app-grid">
                 <div class="app-icon" data-target="messages-app"><div class="icon msg-icon"></div><span>Messages</span></div>
                 <div class="app-icon" data-target="gallery-app"><div class="icon gallery-icon"></div><span>Gallery</span></div>
@@ -178,9 +201,16 @@
                 <div class="app-icon" data-target="bank-app"><div class="icon bank-icon"></div><span>Banking</span></div>
                 <div class="app-icon" data-target="voice-app"><div class="icon voice-icon"></div><span>Recorder</span></div>
                 <div class="app-icon" onclick="openCaseFile()"><div class="icon casefile-icon"></div><span>Case File</span></div>
+                <div class="app-icon" data-target="phone-app"><div class="icon phone-icon"></div><span>Phone</span></div>
+                <div class="app-icon" data-target="calendar-app"><div class="icon clock-icon"></div><span>Clock</span></div>
+                <div class="app-icon" data-target="camera-app"><div class="icon camera-icon"></div><span>Camera</span></div>
+                <div class="app-icon" data-target="email-app"><div class="icon email-icon"></div><span>Mail</span></div>
             </div>
+            <!-- Page indicator dots -->
+            <div class="page-dots"><div class="page-dot active"></div></div>
             <div class="dock">
                 <div class="app-icon" data-target="phone-app"><div class="icon phone-icon"></div></div>
+                <div class="app-icon" data-target="messages-app"><div class="icon msg-icon"></div></div>
                 <div class="app-icon" data-target="email-app"><div class="icon email-icon"></div></div>
                 <div class="app-icon" data-target="camera-app"><div class="icon camera-icon"></div></div>
             </div>

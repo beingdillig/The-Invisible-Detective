@@ -92,13 +92,13 @@
         </div>
 
         <!-- NEW GAME CONFIRM MODAL (shown if save exists on NEW GAME) -->
-        <div id="newgame-modal" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.88); z-index:9999; align-items:center; justify-content:center; flex-direction:column;">
+        <div id="newgame-modal">
             <div class="modal-box">
                 <div class="modal-title">Start New Game?</div>
                 <div class="modal-body">Your current investigation will be<br>permanently erased.</div>
                 <div class="modal-actions">
                     <button class="modal-btn modal-btn-danger" onclick="confirmNewGame()">ERASE &amp; START FRESH</button>
-                    <button class="modal-btn modal-btn-cancel" onclick="document.getElementById('newgame-modal').style.display='none'">CANCEL</button>
+                    <button class="modal-btn modal-btn-cancel" onclick="document.getElementById('newgame-modal').classList.remove('active')">CANCEL</button>
                 </div>
             </div>
         </div>
@@ -127,7 +127,6 @@
             </div>
             <div class="lock-time-huge time">00:00</div>
             <div class="lock-date">Monday, Nov 12</div>
-            <div class="notification-container" id="notification-container"></div>
             <div class="unlock-area" id="unlock-trigger">
                 <div class="swipe-hint">Swipe up to unlock</div>
                 <div class="swipe-indicator"></div>
@@ -669,7 +668,7 @@
                 </div>
                 <div class="act2-lock-date">
                     <div class="act2-date-text">Wednesday, Oct 13</div>
-                    <div class="act2-time-big" id="act2-time-big">00:00</div>
+                    <div class="act2-time-big time" id="act2-time-big">00:00</div>
                 </div>
                 <div class="act2-temp-warn"><span>🌡️</span> Background processes detected.</div>
                 <div class="act2-unlock-hint" id="act2-unlock-trigger" onclick="enterAct2Home()">
@@ -1086,6 +1085,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Global notification overlay — above all screens, below modals -->
+        <div id="notification-container"></div>
 
     </div><!-- end #phone-container -->
 

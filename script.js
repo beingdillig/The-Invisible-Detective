@@ -10,6 +10,20 @@ function updateTime() {
     const ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
     document.querySelectorAll('.time').forEach(el => el.textContent = ts);
 }
+
+// ── Home screen date widget ───────────────────────────────────────────────────
+// The phone is frozen in Aarav's story: Monday, November 12, 2024.
+// We show a static game date (not real date) to stay in fiction.
+(function initHomeDateWidget() {
+    const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    // Game date: November 12, 2024 → Monday
+    const gameDate = new Date(2024, 10, 12); // month is 0-indexed
+    const dayEl = document.getElementById('hdw-day');
+    const dateEl = document.getElementById('hdw-date');
+    if (dayEl) dayEl.textContent = DAYS[gameDate.getDay()];
+    if (dateEl) dateEl.textContent = MONTHS[gameDate.getMonth()] + ' ' + gameDate.getDate();
+})();
 setInterval(updateTime, 30000);
 updateTime();   // run once immediately so clocks are correct on first render
 
@@ -193,7 +207,7 @@ function showScreen(id) {
     // ── Notification container visibility ────────────────────
     // Show only on gameplay screens; hide during story/cinematic sequences
     const NOTIF_VISIBLE = new Set([
-        'lock-screen','passcode-screen','home-screen',
+        'lock-screen','home-screen',
         'messages-app','chat-view','gallery-app','album-view','image-view',
         'settings-app','settings-detail','notes-app','note-view',
         'browser-app','search-results','browser-history-screen','browser-page-view',
@@ -439,8 +453,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 splash.style.opacity = '';
                 // Populate landing page data before showing
                 lsPopulateLanding();
-                // Show title screen
-                title.classList.add('active');
+                // Show title screen via showScreen() so notification container visibility is set correctly
+                showScreen('title-screen');
             }, 700);
         }, 2200);
     }
@@ -1187,13 +1201,13 @@ window.enterAct2Home=function(){
     document.getElementById('home-screen').classList.add('act2-home');
     if(!document.getElementById('files-icon')){
         const el=document.createElement('div'); el.className='app-icon'; el.id='files-icon';
-        el.innerHTML='<div class="icon" style="background:linear-gradient(135deg,#ff9500,#ff6b00);font-size:22px;display:flex;align-items:center;justify-content:center;">📁</div><span>Files</span>';
+        el.innerHTML='<div class="icon files-icon"></div><span>Files</span>';
         el.addEventListener('click',()=>showScreen('files-app'));
         document.querySelector('.app-grid').appendChild(el);
     }
     if(!document.getElementById('observer-icon')){
         const el=document.createElement('div'); el.className='app-icon'; el.id='observer-icon';
-        el.innerHTML='<div class="icon" style="background:#1a000a;border:1px solid #ff453a;font-size:22px;display:flex;align-items:center;justify-content:center;">👁</div><span style="color:#ff453a">Observer</span>';
+        el.innerHTML='<div class="icon observer-icon-bg"></div><span style="color:#ff453a">Observer</span>';
         el.addEventListener('click',()=>openObserverApp());
         document.querySelector('.app-grid').appendChild(el);
     }
@@ -2877,14 +2891,14 @@ function restoreFromSave(save) {
         // Files app icon
         if (!document.getElementById('files-icon')) {
             const el = document.createElement('div'); el.className = 'app-icon'; el.id = 'files-icon';
-            el.innerHTML = '<div class="icon" style="background:linear-gradient(135deg,#ff9500,#ff6b00);font-size:22px;display:flex;align-items:center;justify-content:center;">📁</div><span>Files</span>';
+            el.innerHTML = '<div class="icon files-icon"></div><span>Files</span>';
             el.addEventListener('click', () => showScreen('files-app'));
             document.querySelector('.app-grid')?.appendChild(el);
         }
         // Observer icon
         if (!document.getElementById('observer-icon')) {
             const el = document.createElement('div'); el.className = 'app-icon'; el.id = 'observer-icon';
-            el.innerHTML = '<div class="icon" style="background:#1a000a;border:1px solid #ff453a;font-size:22px;display:flex;align-items:center;justify-content:center;">👁</div><span style="color:#ff453a">Observer</span>';
+            el.innerHTML = '<div class="icon observer-icon-bg"></div><span style="color:#ff453a">Observer</span>';
             el.addEventListener('click', () => openObserverApp());
             document.querySelector('.app-grid')?.appendChild(el);
         }

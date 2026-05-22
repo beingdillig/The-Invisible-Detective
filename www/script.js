@@ -2,15 +2,169 @@
 // script.js — Acts 1 + 2 + 3 fully merged
 // ═══════════════════════════════════════════════════════════
 
-// --- System Time ---
+// ── System Clock ─────────────────────────────────────────────────────────────
+// Single source of truth for all HH:MM displays across every screen.
+// Fires every 30s (no seconds shown — no need for 1s polling).
 function updateTime() {
     const now = new Date();
-    let h = now.getHours().toString().padStart(2,'0');
-    let m = now.getMinutes().toString().padStart(2,'0');
-    document.querySelectorAll('.time').forEach(el => el.textContent = `${h}:${m}`);
+    const ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    document.querySelectorAll('.time').forEach(el => el.textContent = ts);
 }
-setInterval(updateTime, 1000);
-updateTime();
+setInterval(updateTime, 30000);
+updateTime();   // run once immediately so clocks are correct on first render
+
+// ── Battery Drain System ──────────────────────────────────────────────────────
+// Narrative battery: starts at 18% (phone was dying when found).
+// Drains 1% every 4 minutes. Stops at 3% (critical — phone is barely alive).
+// Act transitions override this for story beats (Act 2 → 3%, Act 3 → 100%).
+let _gameBattery = 18;
+let _batteryDrainTimer = null;
+
+function updateBattery(pct) {
+    _gameBattery = Math.max(0, Math.min(100, pct));
+    const color = _gameBattery <= 10 ? '#ff453a'
+                : _gameBattery <= 20 ? '#ff9500'
+                : null;
+    // Only update the three main status bars — act-specific hardcoded values stay untouched
+    ['#lock-screen', '#passcode-screen', '#home-screen'].forEach(id => {
+        const screen = document.querySelector(id);
+        if (!screen) return;
+        screen.querySelectorAll('.battery-level').forEach(el => {
+            el.style.width = _gameBattery + '%';
+            color ? el.style.background = color : el.style.removeProperty('background');
+        });
+        screen.querySelectorAll('.batt-pct, .batt-num').forEach(el => {
+            el.textContent = _gameBattery + '%';
+            color ? el.style.color = color : el.style.removeProperty('color');
+        });
+    });
+}
+
+function startBatteryDrain() {
+    if (_batteryDrainTimer) return;
+    _batteryDrainTimer = setInterval(() => {
+        if (_gameBattery > 3) {
+            updateBattery(_gameBattery - 1);
+            if (_gameBattery === 8) {
+                createNotification('System', '⚠ Low Battery', '8% — connect to power', false, true);
+            }
+        }
+    }, 4 * 60 * 1000); // 1% every 4 minutes
+}
+
+// Expose for act transitions that hard-set battery level
+window._updateBattery = updateBattery;
+window._startBatteryDrain = startBatteryDrain;
+
+// ── UI Sound System ───────────────────────────────────────────────────────────
+// Lazy AudioContext — created on first user gesture, silently fails if blocked
+(function() {
+    let _ctx = null;
+    function ctx() {
+        if (!_ctx) try { _ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+        return _ctx;
+    }
+    function tone(freq, dur, type, gain, delay) {
+        try {
+            const c = ctx(); if (!c) return;
+            const osc = c.createOscillator(), g = c.createGain();
+            osc.connect(g); g.connect(c.destination);
+            osc.type = type || 'sine'; osc.frequency.value = freq;
+            const t = c.currentTime + (delay || 0);
+            g.gain.setValueAtTime(0, t);
+            g.gain.linearRampToValueAtTime(gain || 0.03, t + 0.015);
+            g.gain.linearRampToValueAtTime(0, t + dur);
+            osc.start(t); osc.stop(t + dur + 0.05);
+        } catch(e) {}
+    }
+    // Short tap — keypad keys, back button
+    window.uiClick = () => tone(1080, 0.05, 'sine', 0.022);
+    // Rising sweep — message sent
+    window.uiSend = () => {
+        try {
+            const c = ctx(); if (!c) return;
+            const osc = c.createOscillator(), g = c.createGain();
+            osc.connect(g); g.connect(c.destination); osc.type = 'sine';
+            osc.frequency.setValueAtTime(380, c.currentTime);
+            osc.frequency.linearRampToValueAtTime(1100, c.currentTime + 0.18);
+            g.gain.setValueAtTime(0.035, c.currentTime);
+            g.gain.linearRampToValueAtTime(0, c.currentTime + 0.18);
+            osc.start(); osc.stop(c.currentTime + 0.22);
+        } catch(e) {}
+    };
+    // Two-tap chime — notification arrival
+    window.uiNotif = () => { tone(880, 0.10, 'sine', 0.03); tone(660, 0.14, 'sine', 0.02, 0.13); };
+    // Airy swipe — app open / screen transition
+    window.uiSwipe = () => {
+        try {
+            const c = ctx(); if (!c) return;
+            const buf = c.createBuffer(1, Math.floor(c.sampleRate * 0.14), c.sampleRate);
+            const d = buf.getChannelData(0);
+            for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) * 0.07;
+            const src = c.createBufferSource();
+            const flt = c.createBiquadFilter(); flt.type = 'highpass'; flt.frequency.value = 2800;
+            const g = c.createGain(); g.gain.value = 0.55;
+            src.buffer = buf; src.connect(flt); flt.connect(g); g.connect(c.destination); src.start();
+        } catch(e) {}
+    };
+})();
+
+// ── Ambient Act Audio ──────────────────────────────────────────────────────────
+// Each act has a unique atmospheric drone. Fades between acts. Silent in jsdom.
+(function() {
+    let _ac = null, _master = null, _nodes = [], _currentAct = 0;
+    function ac() {
+        if (!_ac) {
+            try {
+                _ac = new (window.AudioContext || window.webkitAudioContext)();
+                _master = _ac.createGain(); _master.gain.value = 0; _master.connect(_ac.destination);
+            } catch(e) {}
+        }
+        return _ac;
+    }
+    function addOsc(freq, type, gain, lfoRate, lfoDepth) {
+        try {
+            const c = ac(); if (!c || !_master) return;
+            const lpf = c.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 600;
+            const osc = c.createOscillator(); const g = c.createGain(); g.gain.value = gain;
+            osc.type = type || 'sine'; osc.frequency.value = freq;
+            osc.connect(g); g.connect(lpf); lpf.connect(_master);
+            if (lfoRate) { // gentle tremolo
+                const lfo = c.createOscillator(); const lg = c.createGain(); lg.gain.value = lfoDepth || 0.004;
+                lfo.frequency.value = lfoRate; lfo.type = 'sine';
+                lfo.connect(lg); lg.connect(g.gain); lfo.start(); _nodes.push(lfo);
+            }
+            osc.start(); _nodes.push(osc);
+        } catch(e) {}
+    }
+    function stopAll() { _nodes.forEach(n => { try { n.stop(); } catch(e) {} }); _nodes = []; }
+    function fadeTo(val, dur) {
+        try {
+            if (!_ac || !_master) return;
+            _master.gain.cancelScheduledValues(_ac.currentTime);
+            _master.gain.linearRampToValueAtTime(val, _ac.currentTime + dur);
+        } catch(e) {}
+    }
+    // Per-act drone recipes — all very subtle (master gain tops at 0.18)
+    const LAYERS = {
+        1: () => { addOsc(55,'sine',0.18,0.12,0.004); addOsc(110,'sine',0.07); },                          // soft city hum
+        2: () => { addOsc(55,'sine',0.16,0.08,0.005); addOsc(82,'sine',0.08); addOsc(110,'sine',0.04); }, // uneasy tritone
+        3: () => { addOsc(55,'sine',0.12); addOsc(110,'sine',0.08,0.15,0.006); addOsc(165,'sine',0.03); addOsc(440,'sine',0.008); }, // ethereal
+        4: () => { addOsc(40,'sawtooth',0.06,0.5,0.006); addOsc(55,'sine',0.12); addOsc(110,'triangle',0.04); }, // tense pulse
+        5: () => { addOsc(55,'square',0.04); addOsc(110,'square',0.025); addOsc(220,'square',0.01,0.3,0.003); }, // digital glitch
+    };
+    window.playAmbient = function(act) {
+        try {
+            const c = ac(); if (!c) return;
+            if (act === _currentAct) return; _currentAct = act;
+            fadeTo(0, 1.5);
+            setTimeout(() => { stopAll(); if (LAYERS[act]) { LAYERS[act](); fadeTo(0.18, 2.5); } }, 1600);
+        } catch(e) {}
+    };
+    window.stopAmbient = function(dur) {
+        try { fadeTo(0, dur ?? 1.5); setTimeout(() => { stopAll(); _currentAct = 0; }, (dur ?? 1.5) * 1000 + 100); } catch(e) {}
+    };
+})();
 
 // --- Screen Management ---
 function showScreen(id) {
@@ -36,6 +190,33 @@ function showScreen(id) {
         const btn = document.getElementById('analyzer-launch-btn');
         if (btn) btn.style.display = 'block';
     }
+    // ── Notification container visibility ────────────────────
+    // Show only on gameplay screens; hide during story/cinematic sequences
+    const NOTIF_VISIBLE = new Set([
+        'lock-screen','passcode-screen','home-screen',
+        'messages-app','chat-view','gallery-app','album-view','image-view',
+        'settings-app','settings-detail','notes-app','note-view',
+        'browser-app','search-results','browser-history-screen','browser-page-view',
+        'voice-app','audio-player','maps-app','calendar-app','event-detail',
+        'phone-app','bank-app','email-app','email-detail','camera-app',
+        'case-file-app','files-app','mirror-folder','echo-terminal',
+        'observer-app','act4-report','act5-choice-screen',
+        'weather-app','act2-home','act3-home','act4-home',
+    ]);
+    const nc = document.getElementById('notification-container');
+    if (nc) nc.style.display = NOTIF_VISIBLE.has(id) || target?.classList.contains('app-screen') ? '' : 'none';
+
+    // ── Ambient audio ────────────────────────────────────────
+    const QUIET_SCREENS = new Set(['prelude-screen','act2-boot','act2-lock','act3-unlock','act4-intro','act5-boot','title-screen','splash-screen']);
+    if (id === 'home-screen') {
+        const act = (typeof act5State !== 'undefined' && act5State.active) ? 5
+                  : (typeof act4State !== 'undefined' && act4State.active) ? 4
+                  : (typeof act3State !== 'undefined' && act3State.active) ? 3
+                  : (typeof act2State !== 'undefined' && act2State.active) ? 2 : 1;
+        window.playAmbient?.(act);
+    } else if (QUIET_SCREENS.has(id)) {
+        window.stopAmbient?.(2.0);
+    }
 }
 
 let globalCameraStream = null;
@@ -55,6 +236,7 @@ function requestCamera() {
 
 document.querySelectorAll('.app-icon').forEach(icon => {
     icon.addEventListener('click', () => {
+        window.uiSwipe?.();
         const t = icon.getAttribute('data-target');
         if (t === 'browser-app') renderBrowserHome();
         else if (t === 'camera-app') { requestCamera(); showScreen(t); }
@@ -64,8 +246,25 @@ document.querySelectorAll('.app-icon').forEach(icon => {
 document.querySelectorAll('.back-btn').forEach(btn => {
     btn.addEventListener('click', e => {
         e.stopPropagation();
-        const t = btn.getAttribute('data-back');
-        if (t) showScreen(t);
+        window.uiClick?.();
+        const target = btn.getAttribute('data-back');
+        if (!target) return;
+        // When going back to home, slide the current app down first then settle home
+        const current = document.querySelector('.app-screen.active');
+        if (current && target === 'home-screen') {
+            current.classList.add('exiting');
+            setTimeout(() => {
+                current.classList.remove('exiting');
+                showScreen(target);
+                const home = document.getElementById('home-screen');
+                if (home) {
+                    home.classList.add('home-settle');
+                    home.addEventListener('animationend', () => home.classList.remove('home-settle'), { once: true });
+                }
+            }, 240);
+        } else {
+            showScreen(target);
+        }
     });
 });
 
@@ -142,9 +341,11 @@ function lsPopulateLanding() {
     const hint = document.getElementById('ls-phone-hint');
     if (hint) hint.textContent = hasSave ? 'TAP TO CONTINUE INVESTIGATION' : 'TAP THE PHONE TO BEGIN';
 
-    // Update live clock on mini phone
+    // Update live clock on mini phone (guard: only start interval once)
     lsTickClock();
-    setInterval(lsTickClock, 30000);
+    if (!window._lsClockInterval) {
+        window._lsClockInterval = setInterval(lsTickClock, 30000);
+    }
 }
 
 function lsTickClock() {
@@ -168,15 +369,14 @@ window.enterGameFromLanding = function() {
 window.beginNewGame = function() {
     const { hasSave } = lsGetProgress();
     if (hasSave) {
-        const modal = document.getElementById('newgame-modal');
-        modal.style.display = 'flex';
+        document.getElementById('newgame-modal').classList.add('active');
     } else {
         startPrelude();
     }
 };
 
 window.confirmNewGame = function() {
-    document.getElementById('newgame-modal').style.display = 'none';
+    document.getElementById('newgame-modal').classList.remove('active');
     clearSave();
     startPrelude();
 };
@@ -222,6 +422,10 @@ document.addEventListener('DOMContentLoaded', () => {
         act4Trigger.addEventListener('touchend', e => { if (act2TouchStartY - e.changedTouches[0].clientY > 30) enterAct4Home(); }, { passive: true });
     }
 
+    // ── Battery: set initial level and start draining ────────────────────────
+    updateBattery(18);
+    startBatteryDrain();
+
     // ── Splash screen: show for 2.5s then fade to landing page ──
     const splash = document.getElementById('splash-screen');
     const title  = document.getElementById('title-screen');
@@ -249,6 +453,7 @@ const mainDots = mainDotsContainer ? mainDotsContainer.querySelectorAll('.dot') 
 
 window.handleKeypad = function(key) {
     if (!mainDotsContainer) return;
+    window.uiClick?.();
     if (key === 'cancel') { passcodeEntry = ''; updateDots(mainDots); showScreen('lock-screen'); return; }
     if (key === 'del') { passcodeEntry = passcodeEntry.slice(0,-1); updateDots(mainDots); return; }
     if (passcodeEntry.length < 4) {
@@ -275,11 +480,15 @@ function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
     if (existing.length >= MAX_NOTIFS) {
         existing[0].remove();
     }
+    window.uiNotif?.();
     const notif = document.createElement('div');
     notif.className = `notification ${isGlitch?'glitch':''}`;
     notif.innerHTML = `<div class="notification-header"><span class="notification-app">${app}</span><span class="notification-time">now</span></div><div class="notification-title">${title}</div><div class="notification-body">${body}</div>`;
     container.appendChild(notif);
-    if (autoRemove) setTimeout(() => { notif.style.opacity='0'; setTimeout(()=>notif.remove(),500); }, 8000);
+    if (autoRemove) setTimeout(() => {
+        notif.classList.add('rising');
+        setTimeout(() => notif.remove(), 380); // matches notifRise animation duration
+    }, 6000);
 }
 setTimeout(() => {
     createNotification('Messages','UNKNOWN','You took it.',false,false);
@@ -581,6 +790,7 @@ window.sendChatMessage = function() {
     const input = document.getElementById('chat-input-field');
     const text = input.value.trim();
     if (!text || !activeChatId) return;
+    window.uiSend?.();
     const chat = allChats.find(c=>c.id===activeChatId);
     const newMsg = {sender:'me',text};
     chat.messages.push(newMsg); appendMessageToDOM(newMsg); input.value=''; renderChatList();
@@ -968,7 +1178,7 @@ function triggerAct2Boot(){
     let i=0; el.textContent='';
     const iv=setInterval(()=>{ if(i<lines.length){el.textContent+='> '+lines[i]+'\n'; bar.style.width=((i+1)/lines.length*100)+'%'; i++;}else{clearInterval(iv);setTimeout(()=>showScreen('act2-lock'),1500);}},900);
 }
-setInterval(()=>{ const t=new Date(),ts=t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0'); const e1=document.getElementById('act2-time-big'),e2=document.getElementById('act2-time'); if(e1)e1.textContent=ts; if(e2)e2.textContent=ts; },1000);
+// act2-time and act2-time-big now carry class "time" — handled by global updateTime()
 
 window.enterAct2Home=function(){
     if (typeof act2State !== 'undefined' && act2State.homeEntered) return;
@@ -1872,6 +2082,11 @@ const act5State = {
 function triggerAct5Boot(){
     if(act5State.active) return;
     act5State.active = true;
+
+    // Shift home screen to Act 5 green terminal wallpaper
+    const home = document.getElementById('home-screen');
+    home?.classList.remove('act4-home');
+    home?.classList.add('act5-home');
 
     // Notify player something has shifted
     createNotification('System','NX_OS','Signal anomaly detected.',true,false);
@@ -2810,6 +3025,8 @@ function restoreFromSave(save) {
     // ── Restore Act 5 ──────────────────────────────────────
     if (save.act5Active) {
         act5State.active = true;
+        document.getElementById('home-screen')?.classList.remove('act4-home');
+        document.getElementById('home-screen')?.classList.add('act5-home');
         act5State.impossibleCallDone = save.act5ImpossibleCallDone || false;
         act5State.playerPhotoDone = save.act5PlayerPhotoDone || false;
         act5State.chatGlitchDone = save.act5ChatGlitchDone || false;

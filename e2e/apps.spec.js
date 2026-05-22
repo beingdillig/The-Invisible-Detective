@@ -26,34 +26,35 @@ test.describe('Messages app', () => {
   test('chat list renders at least 2 contacts', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'messages-app');
-    await expect(page.locator('.chat-item')).not.toHaveCount(0);
-    const count = await page.locator('.chat-item').count();
+    // Chat items are rendered as .nx-list-item inside #chat-list
+    await expect(page.locator('#chat-list .nx-list-item')).not.toHaveCount(0);
+    const count = await page.locator('#chat-list .nx-list-item').count();
     expect(count).toBeGreaterThanOrEqual(2);
   });
 
   test('UNKNOWN contact is in the chat list', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'messages-app');
-    await expect(page.locator('.chat-item').filter({ hasText: 'UNKNOWN' })).toBeVisible();
+    await expect(page.locator('#chat-list .nx-list-item').filter({ hasText: 'UNKNOWN' })).toBeVisible();
   });
 
   test('Mom contact is in the chat list', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'messages-app');
-    await expect(page.locator('.chat-item').filter({ hasText: 'Mom' })).toBeVisible();
+    await expect(page.locator('#chat-list .nx-list-item').filter({ hasText: 'Mom' })).toBeVisible();
   });
 
   test('tapping a chat opens the conversation view', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'messages-app');
-    await page.locator('.chat-item').first().click();
+    await page.locator('#chat-list .nx-list-item').first().click();
     await expect(page.locator('#chat-view')).toHaveClass(/active/, { timeout: 3000 });
   });
 
   test('chat view shows at least one message bubble', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'messages-app');
-    await page.locator('.chat-item').first().click();
+    await page.locator('#chat-list .nx-list-item').first().click();
     await expect(page.locator('#chat-view')).toHaveClass(/active/);
     await expect(page.locator('.message')).not.toHaveCount(0);
   });
@@ -61,7 +62,7 @@ test.describe('Messages app', () => {
   test('back button in chat view returns to message list', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'messages-app');
-    await page.locator('.chat-item').first().click();
+    await page.locator('#chat-list .nx-list-item').first().click();
     await expect(page.locator('#chat-view')).toHaveClass(/active/);
     await page.locator('#chat-view .back-btn').click();
     await expect(page.locator('#messages-app')).toHaveClass(/active/, { timeout: 3000 });
@@ -70,7 +71,7 @@ test.describe('Messages app', () => {
   test('chat input field is present and focusable', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'messages-app');
-    await page.locator('.chat-item').first().click();
+    await page.locator('#chat-list .nx-list-item').first().click();
     await expect(page.locator('#chat-input-field')).toBeVisible();
   });
 });
@@ -81,19 +82,21 @@ test.describe('Gallery app', () => {
   test('gallery renders at least one album', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'gallery-app');
-    await expect(page.locator('.album-thumb')).not.toHaveCount(0);
+    await expect(page.locator('.album-card')).not.toHaveCount(0);
   });
 
   test('Camera Roll album is present', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'gallery-app');
-    await expect(page.locator('.album-thumb').filter({ hasText: 'Camera Roll' })).toBeVisible();
+    // Album text lives in .album-title sibling; the parent is .album-card
+    await expect(page.locator('.album-card').filter({ hasText: 'Camera Roll' })).toBeVisible();
   });
 
   test('tapping an album opens album view', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'gallery-app');
-    await page.locator('.album-thumb').first().click();
+    // Click the album-card (has the onclick handler)
+    await page.locator('.album-card').first().click();
     await expect(page.locator('#album-view')).toHaveClass(/active/, { timeout: 3000 });
   });
 

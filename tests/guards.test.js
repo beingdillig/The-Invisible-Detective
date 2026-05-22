@@ -137,7 +137,7 @@ describe('Landing page functions', () => {
     const modal = document.getElementById('newgame-modal');
     window.beginNewGame();
     // Without a save, should not show the confirmation modal
-    expect(modal.style.display).not.toBe('flex');
+    expect(modal.classList.contains('active')).toBe(false);
   });
 
   test('beginNewGame with existing save shows confirmation modal', () => {
@@ -145,7 +145,7 @@ describe('Landing page functions', () => {
     window.saveGame();
     const modal = document.getElementById('newgame-modal');
     window.beginNewGame();
-    expect(modal.style.display).toBe('flex');
+    expect(modal.classList.contains('active')).toBe(true);
   });
 
   test('confirmNewGame clears the save', () => {

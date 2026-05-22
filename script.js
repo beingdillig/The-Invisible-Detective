@@ -142,9 +142,11 @@ function lsPopulateLanding() {
     const hint = document.getElementById('ls-phone-hint');
     if (hint) hint.textContent = hasSave ? 'TAP TO CONTINUE INVESTIGATION' : 'TAP THE PHONE TO BEGIN';
 
-    // Update live clock on mini phone
+    // Update live clock on mini phone (guard: only start interval once)
     lsTickClock();
-    setInterval(lsTickClock, 30000);
+    if (!window._lsClockInterval) {
+        window._lsClockInterval = setInterval(lsTickClock, 30000);
+    }
 }
 
 function lsTickClock() {
@@ -168,15 +170,14 @@ window.enterGameFromLanding = function() {
 window.beginNewGame = function() {
     const { hasSave } = lsGetProgress();
     if (hasSave) {
-        const modal = document.getElementById('newgame-modal');
-        modal.style.display = 'flex';
+        document.getElementById('newgame-modal').classList.add('active');
     } else {
         startPrelude();
     }
 };
 
 window.confirmNewGame = function() {
-    document.getElementById('newgame-modal').style.display = 'none';
+    document.getElementById('newgame-modal').classList.remove('active');
     clearSave();
     startPrelude();
 };

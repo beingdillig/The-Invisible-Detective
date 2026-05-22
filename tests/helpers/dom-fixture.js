@@ -13,7 +13,7 @@ function buildDOMFixture() {
     <div id="ls-acts-row"></div>
     <div id="ls-phone-hint"></div>
     <div id="ls-ps-clock"></div>
-    <div id="newgame-modal" style="display:none"></div>
+    <div id="newgame-modal"></div>
   </div>
 
   <!-- Prelude -->

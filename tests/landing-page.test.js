@@ -165,7 +165,7 @@ describe('beginNewGame()', () => {
     localStorage.clear();
     const modal = document.getElementById('newgame-modal');
     window.beginNewGame();
-    expect(modal.style.display).not.toBe('flex');
+    expect(modal.classList.contains('active')).toBe(false);
   });
 
   test('with save: shows confirmation modal', () => {
@@ -173,7 +173,7 @@ describe('beginNewGame()', () => {
     window.saveGame();
     const modal = document.getElementById('newgame-modal');
     window.beginNewGame();
-    expect(modal.style.display).toBe('flex');
+    expect(modal.classList.contains('active')).toBe(true);
   });
 });
 
@@ -193,9 +193,9 @@ describe('confirmNewGame()', () => {
 
   test('hides the confirmation modal', () => {
     const modal = document.getElementById('newgame-modal');
-    modal.style.display = 'flex';
+    modal.classList.add('active');
     window.confirmNewGame();
-    expect(modal.style.display).toBe('none');
+    expect(modal.classList.contains('active')).toBe(false);
   });
 
   test('shows prelude-screen after confirming', () => {

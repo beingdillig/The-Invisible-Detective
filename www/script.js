@@ -269,12 +269,11 @@ function updateDots(dots) {
 function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
     const container = document.getElementById('notification-container');
     if (!container) return;
-    // M9 fix: cap at 5 notifications — remove the oldest non-auto-remove one first, then oldest overall
+    // M9 fix: cap at 5 notifications — immediately remove oldest when cap is hit
     const MAX_NOTIFS = 5;
     const existing = container.querySelectorAll('.notification');
     if (existing.length >= MAX_NOTIFS) {
-        existing[0].style.opacity = '0';
-        setTimeout(() => existing[0].remove(), 400);
+        existing[0].remove();
     }
     const notif = document.createElement('div');
     notif.className = `notification ${isGlitch?'glitch':''}`;
@@ -2495,7 +2494,7 @@ function buildSaveObject() {
         version: 1,
         timestamp: Date.now(),
         // Act progress
-        currentAct: act4State.active ? 4 : (act3State.active ? 3 : (act2State.active ? 2 : 1)),
+        currentAct: act5State.active ? 5 : (act4State.active ? 4 : (act3State.active ? 3 : (act2State.active ? 2 : 1))),
         act2Active: act2State.active,
         act3Active: act3State.active,
         // Act 1 flags

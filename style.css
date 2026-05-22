@@ -1148,9 +1148,17 @@ body{background-color:#000;color:var(--text-primary);display:flex;justify-conten
 
 /* ── New-game confirmation modal ─────────────────────────── */
 #newgame-modal {
-    display: flex !important;
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    z-index: 9999;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
+}
+#newgame-modal.active {
+    display: flex;
 }
 .modal-box {
     background: #111;

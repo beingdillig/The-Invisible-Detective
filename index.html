@@ -92,13 +92,13 @@
         </div>
 
         <!-- NEW GAME CONFIRM MODAL (shown if save exists on NEW GAME) -->
-        <div id="newgame-modal" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.88); z-index:9999; align-items:center; justify-content:center; flex-direction:column;">
+        <div id="newgame-modal">
             <div class="modal-box">
                 <div class="modal-title">Start New Game?</div>
                 <div class="modal-body">Your current investigation will be<br>permanently erased.</div>
                 <div class="modal-actions">
                     <button class="modal-btn modal-btn-danger" onclick="confirmNewGame()">ERASE &amp; START FRESH</button>
-                    <button class="modal-btn modal-btn-cancel" onclick="document.getElementById('newgame-modal').style.display='none'">CANCEL</button>
+                    <button class="modal-btn modal-btn-cancel" onclick="document.getElementById('newgame-modal').classList.remove('active')">CANCEL</button>
                 </div>
             </div>
         </div>

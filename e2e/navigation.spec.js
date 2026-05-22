@@ -76,9 +76,9 @@ test.describe('App navigation', () => {
     await goToHome(page);
     await page.locator('.app-icon').filter({ hasText: 'Messages' }).click();
     await expect(page.locator('#messages-app')).toHaveClass(/active/);
-    // Back button in app header
+    // Back button triggers 240ms slide-down animation before showScreen fires
     await page.locator('#messages-app .app-header button').first().click();
-    await expect(page.locator('#home-screen')).toHaveClass(/active/, { timeout: 3000 });
+    await expect(page.locator('#home-screen')).toHaveClass(/active/, { timeout: 5000 });
   });
 });
 

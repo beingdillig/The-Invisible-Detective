@@ -490,11 +490,10 @@ function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
         setTimeout(() => notif.remove(), 380); // matches notifRise animation duration
     }, 6000);
 }
-setTimeout(() => {
-    createNotification('Messages','UNKNOWN','You took it.',false,false);
-    createNotification('Messages','Mom','Happy 26th Birthday Aarav! Nov 7th is always special. Call me back.',false,false);
-    createNotification('Calendar','Reminder','Dockyard Meeting — 11:30 PM',false,false);
-}, 1000);
+// Story notifications — appear on lock screen one by one, auto-remove after 10s
+setTimeout(() => createNotification('Messages','UNKNOWN','You took it.',false,true), 1200);
+setTimeout(() => createNotification('Messages','Mom','Happy 26th Birthday Aarav! Nov 7th is always special. Call me back.',false,true), 2400);
+setTimeout(() => createNotification('Calendar','Reminder','Dockyard Meeting — 11:30 PM',false,true), 3600);
 
 // --- NX List Renderer ---
 function renderNXList(elementId, data, onClickCb, showIcon=false) {

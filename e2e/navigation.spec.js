@@ -133,4 +133,25 @@ test.describe('CSS rendering (catches jsdom-invisible bugs)', () => {
     // (we navigated via JS, skipping the normal act1 notification sequence)
     expect(count).toBe(0);
   });
+
+  test('notification container is hidden on prelude screen [regression: fixed overlay]', async ({ page }) => {
+    // Banners must not float over cinematic/story screens.
+    // This test catches the bug where position:absolute made them visible everywhere.
+    await page.goto('/');
+    await page.waitForFunction(() => typeof window.showScreen === 'function');
+    await page.evaluate(() => window.showScreen('prelude-screen'));
+    await page.waitForSelector('#prelude-screen.active', { timeout: 3000 });
+    const display = await page.locator('#notification-container').evaluate(
+      el => getComputedStyle(el).display
+    );
+    expect(display).toBe('none');
+  });
+
+  test('notification container is visible on home screen', async ({ page }) => {
+    await goToHome(page);
+    const display = await page.locator('#notification-container').evaluate(
+      el => getComputedStyle(el).display
+    );
+    expect(display).not.toBe('none');
+  });
 });

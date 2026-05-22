@@ -20,9 +20,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # ── Run test suite before every build ───────────────────────────────────────
-echo "🧪  Running test suite ..."
+echo "🧪  Running unit tests (Jest) ..."
 npm run test:ci
-echo "✅  All tests passed"
+echo "✅  Unit tests passed"
+
+echo "🌐  Running e2e tests (Playwright) ..."
+npx playwright test --reporter=list
+echo "✅  E2E tests passed"
 
 # ── Sync web assets before every build ───────────────────────────────────────
 echo "🔄  Syncing web assets → www/ ..."

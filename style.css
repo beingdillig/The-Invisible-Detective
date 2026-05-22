@@ -591,6 +591,14 @@ body{background-color:#000;color:var(--text-primary);display:flex;justify-conten
     z-index: 0;
 }
 
+/* Act 5 home — NX_OS hijack: deep black with green terminal scanlines */
+@keyframes act5Scan{0%{background-position:0 0}100%{background-position:0 48px}}
+.act5-home{background:radial-gradient(ellipse at 50% 20%,#001408 0%,#000a04 60%,#000 100%) !important;}
+.act5-home .status-bar .time,.act5-home .status-bar .batt-pct{color:#00e87a;}
+.act5-home .battery-level{background:#00e87a !important;}
+.act5-home::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0px,transparent 2px,rgba(0,232,100,0.018) 2px,rgba(0,232,100,0.018) 3px);background-size:100% 48px;animation:act5Scan 6s linear infinite;pointer-events:none;z-index:0;}
+.act5-home::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,200,80,0.06) 100%);pointer-events:none;z-index:0;}
+
 /* SUBJECT_094_PROFILE file button glow */
 #report-file-btn:hover,
 #report-file-btn:active {

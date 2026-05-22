@@ -109,6 +109,63 @@ window._startBatteryDrain = startBatteryDrain;
     };
 })();
 
+// ── Ambient Act Audio ──────────────────────────────────────────────────────────
+// Each act has a unique atmospheric drone. Fades between acts. Silent in jsdom.
+(function() {
+    let _ac = null, _master = null, _nodes = [], _currentAct = 0;
+    function ac() {
+        if (!_ac) {
+            try {
+                _ac = new (window.AudioContext || window.webkitAudioContext)();
+                _master = _ac.createGain(); _master.gain.value = 0; _master.connect(_ac.destination);
+            } catch(e) {}
+        }
+        return _ac;
+    }
+    function addOsc(freq, type, gain, lfoRate, lfoDepth) {
+        try {
+            const c = ac(); if (!c || !_master) return;
+            const lpf = c.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 600;
+            const osc = c.createOscillator(); const g = c.createGain(); g.gain.value = gain;
+            osc.type = type || 'sine'; osc.frequency.value = freq;
+            osc.connect(g); g.connect(lpf); lpf.connect(_master);
+            if (lfoRate) { // gentle tremolo
+                const lfo = c.createOscillator(); const lg = c.createGain(); lg.gain.value = lfoDepth || 0.004;
+                lfo.frequency.value = lfoRate; lfo.type = 'sine';
+                lfo.connect(lg); lg.connect(g.gain); lfo.start(); _nodes.push(lfo);
+            }
+            osc.start(); _nodes.push(osc);
+        } catch(e) {}
+    }
+    function stopAll() { _nodes.forEach(n => { try { n.stop(); } catch(e) {} }); _nodes = []; }
+    function fadeTo(val, dur) {
+        try {
+            if (!_ac || !_master) return;
+            _master.gain.cancelScheduledValues(_ac.currentTime);
+            _master.gain.linearRampToValueAtTime(val, _ac.currentTime + dur);
+        } catch(e) {}
+    }
+    // Per-act drone recipes — all very subtle (master gain tops at 0.18)
+    const LAYERS = {
+        1: () => { addOsc(55,'sine',0.18,0.12,0.004); addOsc(110,'sine',0.07); },                          // soft city hum
+        2: () => { addOsc(55,'sine',0.16,0.08,0.005); addOsc(82,'sine',0.08); addOsc(110,'sine',0.04); }, // uneasy tritone
+        3: () => { addOsc(55,'sine',0.12); addOsc(110,'sine',0.08,0.15,0.006); addOsc(165,'sine',0.03); addOsc(440,'sine',0.008); }, // ethereal
+        4: () => { addOsc(40,'sawtooth',0.06,0.5,0.006); addOsc(55,'sine',0.12); addOsc(110,'triangle',0.04); }, // tense pulse
+        5: () => { addOsc(55,'square',0.04); addOsc(110,'square',0.025); addOsc(220,'square',0.01,0.3,0.003); }, // digital glitch
+    };
+    window.playAmbient = function(act) {
+        try {
+            const c = ac(); if (!c) return;
+            if (act === _currentAct) return; _currentAct = act;
+            fadeTo(0, 1.5);
+            setTimeout(() => { stopAll(); if (LAYERS[act]) { LAYERS[act](); fadeTo(0.18, 2.5); } }, 1600);
+        } catch(e) {}
+    };
+    window.stopAmbient = function(dur) {
+        try { fadeTo(0, dur ?? 1.5); setTimeout(() => { stopAll(); _currentAct = 0; }, (dur ?? 1.5) * 1000 + 100); } catch(e) {}
+    };
+})();
+
 // --- Screen Management ---
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active','active-under'); });
@@ -132,6 +189,17 @@ function showScreen(id) {
     if (id === 'audio-player' && typeof act3State !== 'undefined' && act3State.active) {
         const btn = document.getElementById('analyzer-launch-btn');
         if (btn) btn.style.display = 'block';
+    }
+    // ── Ambient audio ────────────────────────────────────────
+    const QUIET_SCREENS = new Set(['prelude-screen','act2-boot','act2-lock','act3-unlock','act4-intro','act5-boot','lock-screen','passcode-screen','title-screen','splash-screen']);
+    if (id === 'home-screen') {
+        const act = (typeof act5State !== 'undefined' && act5State.active) ? 5
+                  : (typeof act4State !== 'undefined' && act4State.active) ? 4
+                  : (typeof act3State !== 'undefined' && act3State.active) ? 3
+                  : (typeof act2State !== 'undefined' && act2State.active) ? 2 : 1;
+        window.playAmbient?.(act);
+    } else if (QUIET_SCREENS.has(id)) {
+        window.stopAmbient?.(2.0);
     }
 }
 
@@ -1999,6 +2067,11 @@ function triggerAct5Boot(){
     if(act5State.active) return;
     act5State.active = true;
 
+    // Shift home screen to Act 5 green terminal wallpaper
+    const home = document.getElementById('home-screen');
+    home?.classList.remove('act4-home');
+    home?.classList.add('act5-home');
+
     // Notify player something has shifted
     createNotification('System','NX_OS','Signal anomaly detected.',true,false);
 
@@ -2936,6 +3009,8 @@ function restoreFromSave(save) {
     // ── Restore Act 5 ──────────────────────────────────────
     if (save.act5Active) {
         act5State.active = true;
+        document.getElementById('home-screen')?.classList.remove('act4-home');
+        document.getElementById('home-screen')?.classList.add('act5-home');
         act5State.impossibleCallDone = save.act5ImpossibleCallDone || false;
         act5State.playerPhotoDone = save.act5PlayerPhotoDone || false;
         act5State.chatGlitchDone = save.act5ChatGlitchDone || false;

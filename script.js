@@ -190,8 +190,24 @@ function showScreen(id) {
         const btn = document.getElementById('analyzer-launch-btn');
         if (btn) btn.style.display = 'block';
     }
+    // ── Notification container visibility ────────────────────
+    // Show only on gameplay screens; hide during story/cinematic sequences
+    const NOTIF_VISIBLE = new Set([
+        'lock-screen','passcode-screen','home-screen',
+        'messages-app','chat-view','gallery-app','album-view','image-view',
+        'settings-app','settings-detail','notes-app','note-view',
+        'browser-app','search-results','browser-history-screen','browser-page-view',
+        'voice-app','audio-player','maps-app','calendar-app','event-detail',
+        'phone-app','bank-app','email-app','email-detail','camera-app',
+        'case-file-app','files-app','mirror-folder','echo-terminal',
+        'observer-app','act4-report','act5-choice-screen',
+        'weather-app','act2-home','act3-home','act4-home',
+    ]);
+    const nc = document.getElementById('notification-container');
+    if (nc) nc.style.display = NOTIF_VISIBLE.has(id) || target?.classList.contains('app-screen') ? '' : 'none';
+
     // ── Ambient audio ────────────────────────────────────────
-    const QUIET_SCREENS = new Set(['prelude-screen','act2-boot','act2-lock','act3-unlock','act4-intro','act5-boot','lock-screen','passcode-screen','title-screen','splash-screen']);
+    const QUIET_SCREENS = new Set(['prelude-screen','act2-boot','act2-lock','act3-unlock','act4-intro','act5-boot','title-screen','splash-screen']);
     if (id === 'home-screen') {
         const act = (typeof act5State !== 'undefined' && act5State.active) ? 5
                   : (typeof act4State !== 'undefined' && act4State.active) ? 4

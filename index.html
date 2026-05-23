@@ -554,10 +554,23 @@
         <div id="voice-app" class="screen app-screen">
             <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Voice Memos</h2></div>
             <div class="record-ui-top">
-                <div class="record-btn" id="mic-record-btn" onclick="toggleRecording()"><div class="record-btn-inner" id="mic-record-inner"></div></div>
-                <div class="record-time" id="mic-record-time">00:00.00</div>
+                <div class="record-mini-waveform" id="record-mini-wave">
+                    <div class="rmw-bar short"></div><div class="rmw-bar tall"></div><div class="rmw-bar med"></div>
+                    <div class="rmw-bar short"></div><div class="rmw-bar tall"></div><div class="rmw-bar med"></div>
+                    <div class="rmw-bar short"></div><div class="rmw-bar tall"></div><div class="rmw-bar med"></div>
+                    <div class="rmw-bar short"></div><div class="rmw-bar tall"></div><div class="rmw-bar med"></div>
+                    <div class="rmw-bar short"></div><div class="rmw-bar tall"></div><div class="rmw-bar med"></div>
+                </div>
+                <div class="record-btn-wrap">
+                    <div class="record-btn-ring" id="record-btn-ring"></div>
+                    <div class="record-btn recording" id="mic-record-btn" onclick="toggleRecording()">
+                        <div class="record-btn-inner" id="mic-record-inner"></div>
+                    </div>
+                </div>
+                <div class="record-time" id="mic-record-time">00:00</div>
+                <div class="record-hint">Tap to record</div>
             </div>
-            <div class="scroll-container"><div class="nx-list-group" id="voice-list"></div></div>
+            <div class="scroll-container"><div class="voice-memo-list" id="voice-list"></div></div>
         </div>
         <div id="audio-player" class="screen app-screen">
             <div class="app-header app-header-small">
@@ -599,13 +612,13 @@
 
         <!-- APP: Calendar -->
         <div id="calendar-app" class="screen app-screen">
-            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>October</h2></div>
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>November</h2></div>
             <div class="cal-week-view">
-                <div class="cal-day"><span class="cal-day-name">Mon</span><span class="cal-day-num">10</span></div>
-                <div class="cal-day"><span class="cal-day-name">Tue</span><span class="cal-day-num">11</span></div>
-                <div class="cal-day active"><span class="cal-day-name">Wed</span><span class="cal-day-num">12</span></div>
-                <div class="cal-day"><span class="cal-day-name">Thu</span><span class="cal-day-num">13</span></div>
-                <div class="cal-day"><span class="cal-day-name">Fri</span><span class="cal-day-num">14</span></div>
+                <div class="cal-day"><span class="cal-day-name">Mon</span><span class="cal-day-num">11</span></div>
+                <div class="cal-day active"><span class="cal-day-name">Tue</span><span class="cal-day-num">12</span></div>
+                <div class="cal-day"><span class="cal-day-name">Wed</span><span class="cal-day-num">13</span></div>
+                <div class="cal-day"><span class="cal-day-name">Thu</span><span class="cal-day-num">14</span></div>
+                <div class="cal-day"><span class="cal-day-name">Fri</span><span class="cal-day-num">15</span></div>
             </div>
             <div class="cal-agenda" id="calendar-list"></div>
         </div>

@@ -619,8 +619,38 @@ function voiceItemClick(item) {
     document.getElementById('voice-play-btn').textContent = '▶';
     document.getElementById('voice-waveform').style.opacity = 0.5;
     showScreen('audio-player');
+    window.uiTap?.();
 }
-renderNXList('voice-list', voiceData, voiceItemClick, true);
+
+function renderVoiceList() {
+    const el = document.getElementById('voice-list');
+    if (!el) return;
+    // Waveform heights for visual variety - 12 bars per item
+    const wavePatterns = [
+        [4,10,6,14,8,18,10,14,6,10,4,8],
+        [8,16,12,20,16,10,20,14,8,16,10,12],
+        [12,6,18,10,14,8,16,12,20,8,14,10],
+        [6,14,10,18,8,14,20,10,6,18,12,8],
+    ];
+    el.innerHTML = voiceData.map((item, i) => {
+        const wave = wavePatterns[i % wavePatterns.length];
+        const wBars = wave.map(h => `<div class="vm-wbar${item.isScary?' scary':''}" style="height:${h}px"></div>`).join('');
+        const idx = i;
+        return `<div class="vm-item" data-vm-idx="${idx}">
+            <div class="vm-icon-wrap${item.isScary?' scary':''}">${item.icon}</div>
+            <div class="vm-info">
+                <div class="vm-title${item.isScary?' scary':''}">${item.title}</div>
+                <div class="vm-waveform">${wBars}</div>
+                <div class="vm-sub">${item.sub}</div>
+            </div>
+            <div class="vm-chevron">›</div>
+        </div>`;
+    }).join('');
+    el.querySelectorAll('.vm-item').forEach((row, i) => {
+        row.addEventListener('click', () => voiceItemClick(voiceData[i]));
+    });
+}
+renderVoiceList();
 
 window.toggleVoicePlayback = function() {
     if (typeof stopMusic === 'function') stopMusic();
@@ -629,31 +659,49 @@ window.toggleVoicePlayback = function() {
 };
 window.stopVoicePlayer = function() { voiceAudio.pause(); document.getElementById('voice-play-btn').textContent='▶'; document.getElementById('voice-waveform').style.opacity=0.5; };
 
-let mediaRecorder, audioChunks=[], isRecording=false, recordTimer, recordTimeSec=0;
+let mediaRecorder, audioChunks=[], isRecording=false, recordTimer, recordWaveTimer, recordTimeSec=0;
+function _animateRecordWave() {
+    const bars = document.querySelectorAll('#record-mini-wave .rmw-bar');
+    bars.forEach(b => {
+        const h = Math.floor(Math.random()*18)+4;
+        b.style.height = h+'px';
+    });
+}
 window.toggleRecording = function() {
     if (!isRecording) {
         navigator.mediaDevices.getUserMedia({ audio:true }).then(stream => {
             mediaRecorder = new MediaRecorder(stream); mediaRecorder.start(); isRecording=true; audioChunks=[];
+            // Visual feedback
             document.getElementById('mic-record-inner').style.borderRadius='8px';
-            document.getElementById('mic-record-btn').style.borderColor='#ff453a';
+            document.getElementById('mic-record-btn').classList.add('recording');
+            document.getElementById('record-btn-ring').classList.add('pulsing');
+            document.getElementById('record-mini-wave').classList.add('active');
+            document.getElementById('mic-record-time').classList.add('active');
+            document.querySelector('.record-hint').textContent = 'Tap to stop';
             recordTimeSec=0;
             recordTimer = setInterval(() => {
                 recordTimeSec++;
                 const m=String(Math.floor(recordTimeSec/60)).padStart(2,'0'), s=String(recordTimeSec%60).padStart(2,'0');
-                document.getElementById('mic-record-time').textContent=`${m}:${s}.00`;
+                document.getElementById('mic-record-time').textContent=`${m}:${s}`;
             },1000);
+            recordWaveTimer = setInterval(_animateRecordWave, 120);
             mediaRecorder.addEventListener('dataavailable', e => audioChunks.push(e.data));
             mediaRecorder.addEventListener('stop', () => {
                 const blob=new Blob(audioChunks,{type:mediaRecorder.mimeType||'audio/webm'});
                 voiceData.unshift({title:'New Recording.m4a',sub:'Just now',icon:'🎤',transcript:'User recorded audio.',isScary:false,url:URL.createObjectURL(blob)});
-                renderNXList('voice-list',voiceData,voiceItemClick,true);
+                renderVoiceList();
             });
         }).catch(()=>alert('Microphone access denied.'));
     } else {
-        mediaRecorder.stop(); mediaRecorder.stream.getTracks().forEach(t=>t.stop()); isRecording=false; clearInterval(recordTimer);
+        mediaRecorder.stop(); mediaRecorder.stream.getTracks().forEach(t=>t.stop()); isRecording=false;
+        clearInterval(recordTimer); clearInterval(recordWaveTimer);
         document.getElementById('mic-record-inner').style.borderRadius='50%';
-        document.getElementById('mic-record-btn').style.borderColor='var(--surface-color)';
-        document.getElementById('mic-record-time').textContent='00:00.00';
+        document.getElementById('mic-record-btn').classList.remove('recording');
+        document.getElementById('record-btn-ring').classList.remove('pulsing');
+        document.getElementById('record-mini-wave').classList.remove('active');
+        document.getElementById('mic-record-time').classList.remove('active');
+        document.getElementById('mic-record-time').textContent='00:00';
+        document.querySelector('.record-hint').textContent = 'Tap to record';
     }
 };
 
@@ -1047,16 +1095,25 @@ document.getElementById('chat-input-field').addEventListener('keypress',e=>{ if(
 
 // --- Notes ---
 const notes = [
-    { title:'JOURNAL: DAY 12', body:"I am the company that gave you a career and took your soul. My name is the key to your secrets.\n\nECHO says: 'I am the beast you built. You marked my birth in your calendar. Use my name to finish what you started.'\n\nI can't stop hearing the hum. It's in the walls. B3 was just the beginning." },
-    { title:'Project Division Zero', body:"Rhea was right. They weren't building an OS. They were building a cage.\n\n04/13 — That's when ECHO went live on the physical node.\n\nEverything points back to 04/13." },
-    { title:'Groceries', body:"- Milk\n- Eggs\n- Coffee (lots)" }
+    { title:'JOURNAL: DAY 12', date:'Nov 12 · 3:07 AM', body:"I am the company that gave you a career and took your soul. My name is the key to your secrets.\n\nECHO says: 'I am the beast you built. You marked my birth in your calendar. Use my name to finish what you started.'\n\nI can't stop hearing the hum. It's in the walls. B3 was just the beginning." },
+    { title:'Project Division Zero', date:'Oct 13 · 11:58 PM', body:"Rhea was right. They weren't building an OS. They were building a cage.\n\n04/13 — That's when ECHO went live on the physical node.\n\nEverything points back to 04/13.\n\nDestroy the node. Publish everything. Same day. Both." },
+    { title:'Groceries', date:'Oct 10 · 9:15 AM', body:"- Milk\n- Eggs\n- Coffee (lots)\n- Call Mom back" }
 ];
 function renderNotesList() {
     const grid=document.getElementById('notes-list'); if(!grid) return; grid.innerHTML='';
     notes.forEach(note=>{
         const item=document.createElement('div'); item.className='note-card';
-        item.innerHTML=`<div class="note-title">${note.title}</div><div class="note-preview">${note.body}</div>`;
-        item.addEventListener('click',()=>{ window.uiTap?.(); document.getElementById('note-title').textContent=note.title; document.getElementById('note-body').textContent=note.body; showScreen('note-view'); });
+        item.innerHTML=`<div class="note-title">${note.title}</div><div class="note-preview">${note.body}</div><div class="note-date">${note.date||''}</div>`;
+        item.addEventListener('click',()=>{
+            window.uiTap?.();
+            document.getElementById('note-title').textContent=note.title;
+            // Add meta line to note-view
+            let meta = document.getElementById('note-meta-line');
+            if (!meta) { meta=document.createElement('div'); meta.id='note-meta-line'; meta.className='note-meta-line'; document.getElementById('note-body').parentNode.insertBefore(meta, document.getElementById('note-body')); }
+            meta.textContent = note.date || '';
+            document.getElementById('note-body').textContent=note.body;
+            showScreen('note-view');
+        });
         grid.appendChild(item);
     });
 }
@@ -1469,7 +1526,7 @@ function openVid009(){
     let i=0,prog=0;
     const iv=setInterval(()=>{ if(i<lines.length){if(tEl)tEl.textContent+=lines[i]+'\n';prog+=22;if(pEl)pEl.style.width=prog+'%';i++;}else{clearInterval(iv);setTimeout(()=>{if(bEl)bEl.innerHTML='<div class="eye-buffer">👁</div>';if(tEl)tEl.textContent+='\n[SIGNAL LOST]';triggerOverheat();},1500);}},2500);
 }
-function injectVid009(){ if(voiceData.find(v=>v.title==='VID_009_RECOVERED')) return; voiceData.unshift({title:'VID_009_RECOVERED',sub:'Oct 13 — 23:49 (RECOVERED)',icon:'📹',transcript:'[Video file — tap to play]',isScary:true,url:'',isVideo:true}); renderNXList('voice-list',voiceData,voiceItemClick,true); }
+function injectVid009(){ if(voiceData.find(v=>v.title==='VID_009_RECOVERED')) return; voiceData.unshift({title:'VID_009_RECOVERED',sub:'Oct 13 — 23:49 (RECOVERED)',icon:'📹',transcript:'[Video file — tap to play]',isScary:true,url:'',isVideo:true}); renderVoiceList(); }
 
 function injectAct2Calls(){
     const list=document.getElementById('calls-list'); if(!list||list.dataset.act2) return;

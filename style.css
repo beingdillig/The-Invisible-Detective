@@ -401,17 +401,62 @@ body{background-color:#000;color:var(--text-primary);display:flex;justify-conten
 .page-style-wiki{padding:20px;font-family:serif;background:#fff;color:#000;}
 .wiki-header{font-size:28px;border-bottom:1px solid #a2a9b1;margin-bottom:15px;padding-bottom:5px;}
 .wiki-body p{margin-bottom:12px;line-height:1.6;color:#333;}
-.notes-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:20px;}
-.note-card{background:#2c2c20;border:1px solid #4a4a30;border-radius:var(--radius-md);padding:16px;cursor:pointer;aspect-ratio:4/5;display:flex;flex-direction:column;}
-.note-title{font-weight:600;font-size:16px;margin-bottom:8px;color:#e6e6cc;line-height:1.3;}
-.note-preview{font-size:13px;color:#b3b399;overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;line-height:1.5;}
-.note-content-area{background:#1a1a14;flex-grow:1;padding:24px;overflow-y:auto;}
-.note-content-area h2{font-size:24px;margin-bottom:20px;color:#e6e6cc;font-weight:600;}
-.note-content-area #note-body{font-size:16px;line-height:1.6;color:#ccccb3;white-space:pre-wrap;}
-.record-ui-top{display:flex;flex-direction:column;align-items:center;padding:40px 20px;border-bottom:1px solid var(--border-color);}
-.record-btn{width:80px;height:80px;border-radius:50%;border:4px solid var(--surface-color);display:flex;justify-content:center;align-items:center;margin-bottom:20px;}
-.record-btn-inner{width:60px;height:60px;background:var(--danger-color);border-radius:50%;}
-.record-time{font-family:'Share Tech Mono',monospace;font-size:32px;font-weight:bold;color:var(--text-secondary);}
+.notes-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;}
+.note-card{background:linear-gradient(160deg,#2e2e1e,#252515);border:1px solid rgba(255,230,100,0.12);border-radius:16px;padding:14px;cursor:pointer;aspect-ratio:4/5;display:flex;flex-direction:column;box-shadow:0 2px 8px rgba(0,0,0,0.4);}
+.note-card:active{transform:scale(0.97);}
+.note-title{font-weight:700;font-size:15px;margin-bottom:6px;color:#f0f0cc;line-height:1.3;}
+.note-preview{font-size:12px;color:#9a9a7a;overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;line-height:1.5;flex:1;}
+.note-date{font-size:11px;color:rgba(255,230,100,0.35);margin-top:8px;}
+/* Note detail — Apple Notes dark warm lined look */
+.note-content-area{
+    background:#111108;
+    flex-grow:1;padding:20px 24px;overflow-y:auto;
+    background-image:repeating-linear-gradient(
+        transparent, transparent 27px,
+        rgba(255,230,100,0.05) 27px, rgba(255,230,100,0.05) 28px
+    );
+    background-size:100% 28px;
+    background-attachment:local;
+}
+.note-content-area h2{
+    font-size:22px;margin-bottom:12px;color:#f0f0cc;
+    font-weight:700;padding-bottom:10px;
+    border-bottom:1px solid rgba(255,230,100,0.12);
+}
+.note-meta-line{font-size:12px;color:rgba(255,230,100,0.35);margin-bottom:16px;}
+.note-content-area #note-body{font-size:15px;line-height:1.85;color:#c8c8a8;white-space:pre-wrap;}
+/* ── Voice Memos ─────────────────────────────────────────────── */
+.record-ui-top{display:flex;flex-direction:column;align-items:center;padding:18px 20px 16px;border-bottom:1px solid var(--border-color);gap:0;}
+.record-mini-waveform{display:flex;gap:3px;height:28px;align-items:center;margin-bottom:10px;opacity:0.25;transition:opacity 0.3s;}
+.record-mini-waveform.active{opacity:1;}
+.rmw-bar{width:3px;background:var(--danger-color);border-radius:2px;height:8px;transition:height 0.15s ease;}
+.rmw-bar.tall{height:22px;}.rmw-bar.med{height:14px;}.rmw-bar.short{height:6px;}
+.record-btn-wrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.record-btn-ring{position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(255,69,58,0);transition:border-color 0.3s,transform 0.3s;pointer-events:none;}
+.record-btn-ring.pulsing{border-color:rgba(255,69,58,0.4);animation:recordPulse 1.4s ease-in-out infinite;}
+@keyframes recordPulse{0%,100%{transform:scale(1);opacity:0.7;}50%{transform:scale(1.12);opacity:0.3;}}
+.record-btn{width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,69,58,0.3);background:radial-gradient(circle,rgba(255,69,58,0.1) 0%,transparent 70%);display:flex;justify-content:center;align-items:center;cursor:pointer;transition:border-color 0.3s;}
+.record-btn.recording{border-color:rgba(255,69,58,0.7);}
+.record-btn-inner{width:52px;height:52px;background:var(--danger-color);border-radius:50%;box-shadow:0 0 16px rgba(255,69,58,0.5);transition:border-radius 0.25s ease,transform 0.15s ease;}
+.record-btn:active .record-btn-inner{transform:scale(0.92);}
+.record-time{font-family:'Share Tech Mono',monospace;font-size:15px;font-weight:600;color:rgba(255,255,255,0.45);letter-spacing:1px;}
+.record-time.active{color:var(--danger-color);}
+.record-hint{font-size:11px;color:rgba(255,255,255,0.25);margin-top:4px;letter-spacing:0.3px;}
+/* Voice memo list items */
+.voice-memo-list{padding:12px 16px;display:flex;flex-direction:column;gap:1px;}
+.vm-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:opacity 0.15s;}
+.vm-item:last-child{border-bottom:none;}
+.vm-item:active{opacity:0.65;}
+.vm-icon-wrap{width:44px;height:44px;border-radius:12px;background:rgba(255,69,58,0.15);border:1px solid rgba(255,69,58,0.2);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.vm-icon-wrap.scary{background:rgba(255,69,58,0.22);border-color:rgba(255,69,58,0.4);}
+.vm-info{flex:1;min-width:0;}
+.vm-title{font-size:15px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vm-title.scary{color:var(--danger-color);}
+.vm-sub{font-size:12px;color:var(--text-secondary);margin-top:2px;}
+.vm-chevron{font-size:13px;color:rgba(255,255,255,0.2);flex-shrink:0;}
+.vm-waveform{display:flex;gap:2px;align-items:center;height:14px;margin-top:5px;}
+.vm-wbar{width:2px;border-radius:1px;background:rgba(255,255,255,0.2);}
+.vm-wbar.scary{background:rgba(255,69,58,0.45);}
 .audio-view{flex-grow:1;display:flex;flex-direction:column;align-items:center;padding:40px 24px;}
 .audio-title{font-size:22px;font-weight:600;margin-bottom:60px;color:#fff;}
 .audio-waveform{display:flex;gap:6px;height:80px;align-items:center;margin-bottom:40px;}

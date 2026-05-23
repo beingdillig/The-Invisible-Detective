@@ -116,7 +116,7 @@ body{background-color:#000;color:var(--text-primary);display:flex;justify-conten
     line-height: 1.38;
 }
 /* ── iOS-style notification banners ──────────────────────────────────────── */
-#notification-container{position:absolute;top:34px;left:0;right:0;z-index:9000;padding:4px 10px;display:flex;flex-direction:column;gap:6px;pointer-events:none;} /* top:34px keeps banners below the 30px status bar */
+#notification-container{position:absolute;top:34px;left:0;right:0;z-index:9000;padding:4px 10px;display:none;flex-direction:column;gap:6px;pointer-events:none;} /* hidden by default; showScreen() manages visibility */
 @keyframes notifDrop{from{transform:translateY(-115%);opacity:0}to{transform:translateY(0);opacity:1}}
 @keyframes notifRise{from{transform:translateY(0);opacity:1}to{transform:translateY(-115%);opacity:0}}
 .notification{background:rgba(30,30,32,0.94);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-radius:18px;padding:11px 14px;border:0.5px solid rgba(255,255,255,0.10);box-shadow:0 6px 24px rgba(0,0,0,0.55);pointer-events:all;animation:notifDrop 0.42s cubic-bezier(0.34,1.2,0.64,1) forwards;}

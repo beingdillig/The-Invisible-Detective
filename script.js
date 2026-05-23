@@ -272,7 +272,7 @@ function showScreen(id) {
         'weather-app','act2-home','act3-home','act4-home',
     ]);
     const nc = document.getElementById('notification-container');
-    if (nc) nc.style.display = NOTIF_VISIBLE.has(id) || target?.classList.contains('app-screen') ? '' : 'none';
+    if (nc) nc.style.display = NOTIF_VISIBLE.has(id) || target?.classList.contains('app-screen') ? 'flex' : 'none';
 
     // ── Ambient audio ────────────────────────────────────────
     const QUIET_SCREENS = new Set(['prelude-screen','act2-boot','act2-lock','act3-unlock','act4-intro','act5-boot','title-screen','splash-screen']);
@@ -571,10 +571,7 @@ function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
         setTimeout(() => notif.remove(), 380); // matches notifRise animation duration
     }, 6000);
 }
-// Story notifications — appear on lock screen one by one, auto-remove after 10s
-setTimeout(() => createNotification('Messages','UNKNOWN','You took it.',false,true), 1200);
-setTimeout(() => createNotification('Messages','Mom','Happy 26th Birthday Aarav! Nov 7th is always special. Call me back.',false,true), 2400);
-setTimeout(() => createNotification('Calendar','Reminder','Dockyard Meeting — 11:30 PM',false,true), 3600);
+// Story notifications fire from endPrelude() once the lock screen is visible — NOT at page load
 
 // --- NX List Renderer ---
 function renderNXList(elementId, data, onClickCb, showIcon=false) {
@@ -3002,9 +2999,15 @@ window.enterAct3Home=function(){ _origEnterAct3Home(); scheduleGalleryMutations(
         preludeScreen.style.transition = 'opacity 1.2s ease';
         preludeScreen.style.opacity = '0';
         setTimeout(() => {
-            preludeScreen.classList.remove('active');
             preludeScreen.style.display = 'none';
-            document.getElementById('lock-screen').classList.add('active');
+            showScreen('lock-screen'); // properly activates NC visibility
+            // Story lock-screen notifications — fire once, after player sees the lock screen
+            if (!window._storyNotifsFired) {
+                window._storyNotifsFired = true;
+                setTimeout(() => createNotification('Messages','UNKNOWN','You took it.',false,true), 1200);
+                setTimeout(() => createNotification('Messages','Mom','Happy 26th Birthday Aarav! Nov 7th is always special. Call me back.',false,true), 3000);
+                setTimeout(() => createNotification('Calendar','Reminder','Dockyard Meeting — 11:30 PM',false,true), 5000);
+            }
         }, 1200);
     }
 

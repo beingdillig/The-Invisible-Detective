@@ -600,9 +600,12 @@
         <!-- APP: Maps -->
         <div id="maps-app" class="screen app-screen">
             <div id="real-map" style="width: 100%; height: 100%; position: absolute; top:0; left:0; z-index:1; background: #000;"></div>
-            <button class="back-btn overlay-btn" data-back="home-screen" style="z-index: 30;">←</button>
-            <div class="map-search-bar" style="z-index:20;">
-                <input type="text" id="map-search-input" placeholder="Search for a place..." style="background:transparent; border:none; color:#fff; outline:none; width:100%; font-size:16px;">
+            <div class="map-top-bar">
+                <button class="map-back-btn back-btn" data-back="home-screen">←</button>
+                <div class="map-search-bar">
+                    <span style="color:rgba(255,255,255,0.35);font-size:14px;">🔍</span>
+                    <input type="text" id="map-search-input" placeholder="Search Maps…" style="background:transparent; border:none; color:#fff; outline:none; width:100%; font-size:15px;">
+                </div>
             </div>
             <div class="map-controls" style="z-index:20;">
                 <div class="map-btn" onclick="map.setZoom(map.getZoom() + 1)">+</div>
@@ -1195,6 +1198,21 @@
 
         <!-- Global notification overlay — above all screens, below modals -->
         <div id="notification-container"></div>
+
+        <!-- Pull-down notification panel -->
+        <div id="notif-panel">
+            <div class="notif-panel-handle-bar"></div>
+            <div class="notif-panel-toprow">
+                <div class="notif-panel-title">Notifications</div>
+                <div class="notif-panel-clear" onclick="clearNotifPanel()">Clear All</div>
+            </div>
+            <div class="notif-panel-scroll" id="notif-panel-list">
+                <div class="notif-panel-empty" id="notif-panel-empty">No notifications</div>
+            </div>
+        </div>
+
+        <!-- Pull zone — invisible strip at top of status bar -->
+        <div id="notif-pull-zone"></div>
 
     </div><!-- end #phone-container -->
 

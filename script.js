@@ -552,25 +552,132 @@ function updateDots(dots) {
 }
 
 // --- Notifications ---
+// ── Notification history (for pull-down panel) ───────────────
+const _notifHistory = [];
+
+function _addToNotifPanel(app, title, body, isGlitch, timeLabel) {
+    const list = document.getElementById('notif-panel-list');
+    const empty = document.getElementById('notif-panel-empty');
+    if (!list) return;
+    if (empty) empty.style.display = 'none';
+
+    const item = document.createElement('div');
+    item.className = `np-item${isGlitch?' glitch':''}`;
+    item.innerHTML = `
+        <div class="np-item-header">
+            <div class="np-item-icon"></div>
+            <div class="np-item-app">${app}</div>
+            <div class="np-item-time">${timeLabel}</div>
+        </div>
+        <div class="np-item-title">${title}</div>
+        <div class="np-item-body">${body}</div>`;
+    // Insert newest at top (after the empty label)
+    list.insertBefore(item, list.firstChild.nextSibling || list.firstChild);
+}
+
 function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
     const container = document.getElementById('notification-container');
     if (!container) return;
-    // M9 fix: cap at 5 notifications — immediately remove oldest when cap is hit
-    const MAX_NOTIFS = 5;
+    // Cap at 3 banners at a time
     const existing = container.querySelectorAll('.notification');
-    if (existing.length >= MAX_NOTIFS) {
-        existing[0].remove();
-    }
+    if (existing.length >= 3) existing[0].remove();
+
     window.uiNotif?.();
+
+    // Time label for panel
+    const now = new Date();
+    const timeLabel = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+    // Build banner
     const notif = document.createElement('div');
-    notif.className = `notification ${isGlitch?'glitch':''}`;
+    notif.className = `notification${isGlitch?' glitch':''}`;
     notif.innerHTML = `<div class="notification-header"><span class="notification-app">${app}</span><span class="notification-time">now</span></div><div class="notification-title">${title}</div><div class="notification-body">${body}</div>`;
     container.appendChild(notif);
-    if (autoRemove) setTimeout(() => {
+
+    // Dismiss banner after 2.5s → add to panel
+    const dismiss = () => {
+        if (!notif.parentNode) return;
         notif.classList.add('rising');
-        setTimeout(() => notif.remove(), 380); // matches notifRise animation duration
-    }, 6000);
+        setTimeout(() => {
+            notif.remove();
+            _addToNotifPanel(app, title, body, isGlitch, timeLabel);
+            _notifHistory.unshift({ app, title, body, isGlitch, time: timeLabel });
+        }, 320);
+    };
+    setTimeout(dismiss, 2500);
+
+    // Tap banner to dismiss immediately
+    notif.addEventListener('click', () => { clearTimeout(dismiss); dismiss(); });
 }
+
+// ── Notification panel open/close ──────────────────────────
+let _notifPanelOpen = false;
+
+function openNotifPanel() {
+    const panel = document.getElementById('notif-panel');
+    if (!panel || _notifPanelOpen) return;
+    _notifPanelOpen = true;
+    panel.classList.add('open');
+    window.uiSwipe?.();
+}
+function closeNotifPanel() {
+    const panel = document.getElementById('notif-panel');
+    if (!panel || !_notifPanelOpen) return;
+    _notifPanelOpen = false;
+    panel.classList.remove('open');
+    window.uiSwipe?.();
+}
+window.clearNotifPanel = function() {
+    const list = document.getElementById('notif-panel-list');
+    const empty = document.getElementById('notif-panel-empty');
+    if (!list) return;
+    // Remove all np-items
+    list.querySelectorAll('.np-item').forEach(el => el.remove());
+    if (empty) empty.style.display = '';
+    _notifHistory.length = 0;
+    window.uiClick?.();
+};
+
+// ── Pull-down gesture on status bar / pull zone ─────────────
+(function initNotifPullGesture() {
+    let startY = 0, dragging = false;
+    const THRESHOLD = 48;
+
+    function onStart(y) { startY = y; dragging = true; }
+    function onMove(y) {
+        if (!dragging) return;
+        if (!_notifPanelOpen && y - startY > THRESHOLD) { openNotifPanel(); dragging = false; }
+        if (_notifPanelOpen && startY - y > THRESHOLD)  { closeNotifPanel(); dragging = false; }
+    }
+    function onEnd() { dragging = false; }
+
+    const zone = document.getElementById('notif-pull-zone');
+    const panel = document.getElementById('notif-panel');
+
+    // Touch on pull zone (opens)
+    zone?.addEventListener('touchstart', e => onStart(e.touches[0].clientY), {passive:true});
+    zone?.addEventListener('touchmove',  e => onMove(e.touches[0].clientY),  {passive:true});
+    zone?.addEventListener('touchend',   onEnd, {passive:true});
+    // Tap the pull zone also opens
+    zone?.addEventListener('click', () => { if (!_notifPanelOpen) openNotifPanel(); });
+
+    // Touch on panel handle area (closes by swiping up)
+    panel?.addEventListener('touchstart', e => onStart(e.touches[0].clientY), {passive:true});
+    panel?.addEventListener('touchmove',  e => onMove(e.touches[0].clientY),  {passive:true});
+    panel?.addEventListener('touchend',   onEnd, {passive:true});
+
+    // Mouse support (desktop testing)
+    zone?.addEventListener('mousedown', e => onStart(e.clientY));
+    document.addEventListener('mousemove', e => { if (dragging) onMove(e.clientY); });
+    document.addEventListener('mouseup', onEnd);
+
+    // Click outside panel to close
+    document.getElementById('phone-container')?.addEventListener('click', e => {
+        if (_notifPanelOpen && !panel?.contains(e.target) && !zone?.contains(e.target)) {
+            closeNotifPanel();
+        }
+    });
+})();
 // Story notifications fire from endPrelude() once the lock screen is visible — NOT at page load
 
 // --- NX List Renderer ---

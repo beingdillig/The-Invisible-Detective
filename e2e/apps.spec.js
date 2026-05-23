@@ -190,14 +190,17 @@ test.describe('Settings app', () => {
   test('settings list renders items', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'settings-app');
-    // Settings render as .nx-list-item inside #settings-group
-    await expect(page.locator('#settings-group .nx-list-item')).not.toHaveCount(0);
+    // Settings render as .settings-row inside .settings-group
+    await expect(page.locator('.settings-group .settings-row')).not.toHaveCount(0);
+    const count = await page.locator('.settings-group .settings-row').count();
+    expect(count).toBeGreaterThanOrEqual(4);
   });
 
   test('tapping a settings item opens detail view', async ({ page }) => {
     await goToHome(page);
     await openApp(page, 'settings-app');
-    await page.locator('#settings-group .nx-list-item').first().click();
+    // Click a row that is NOT a toggle (toggles don't open detail)
+    await page.locator('.settings-group .settings-row').filter({ hasText: 'Wi-Fi' }).click();
     await expect(page.locator('#settings-detail')).toHaveClass(/active/, { timeout: 3000 });
   });
 });

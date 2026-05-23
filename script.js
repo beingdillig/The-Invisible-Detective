@@ -593,20 +593,139 @@ function renderNXList(elementId, data, onClickCb, showIcon=false) {
 
 // --- Settings ---
 const settingsData = [
-    { title:'Battery', sub:'High usage: ECHOSVC (18%)', warning:true, icon:'🔋', iconBg:'#34c759', detail:"<div class='nx-detail-group'><h3>Battery Usage</h3><br><strong style='color:#ff453a;'>ECHOSVC - 18%</strong><p>Background prediction engine active.</p><br><strong>Screen - 12%</strong></div>" },
-    { title:'Storage', sub:'47.8 GB "Other"', icon:'💾', iconBg:'#8e8e93', detail:"<div class='nx-detail-group'><h3>Internal Storage (128GB)</h3><br><strong style='color:#ff453a;'>Other: 47.8 GB</strong><p>System cache cannot be cleared. Protected by NX-OS.</p></div>" },
-    { title:'Permissions', sub:'Camera + Mic active recently', warning:true, icon:'🔒', iconBg:'#007aff', detail:"<div class='nx-detail-group'><h3>Recent Access</h3><br><strong>Microphone</strong><p>Accessed constantly by ECHOSVC</p></div>" },
-    { title:'Bluetooth', sub:'Paired: ECHO_NODE_2', icon:'📶', iconBg:'#5ac8fa', detail:"<div class='nx-detail-group'><h3>Paired Devices</h3><br><strong>ECHO_NODE_2</strong><p>Status: Connected. Proximity: &lt; 5 meters</p></div>" },
-    { title:'About Phone', sub:'NX-OS Internal Beta', icon:'📱', iconBg:'#ff9500', detail:"<div class='nx-detail-group'><h3>Device Info</h3><p>Model: Nexus Prototype V4<br>OS: NX-OS Internal Beta<br>Owner: Aarav Mehta</p></div>" }
+    // Connectivity
+    { title:'Airplane Mode',   icon:'✈️', iconBg:'#ff9500', toggle:true,  toggleOn:false, group:'connectivity', detail:"<div class='nx-detail-group'><h3>Airplane Mode</h3><p>Disables all wireless connections.<br><br>Status: <strong>Off</strong></p></div>" },
+    { title:'Wi-Fi',           icon:'📶', iconBg:'#007aff', value:'HomeNet_5G', group:'connectivity', detail:"<div class='nx-detail-group'><h3>Wi-Fi</h3><p>Network: <strong>HomeNet_5G</strong><br>Signal: Excellent<br>Security: WPA3</p></div>" },
+    { title:'Bluetooth',       icon:'🔵', iconBg:'#5ac8fa', value:'ECHO_NODE_2', warning:true, group:'connectivity', detail:"<div class='nx-detail-group'><h3>Paired Devices</h3><br><strong>ECHO_NODE_2</strong><p>Status: Connected. Proximity: &lt; 5 meters</p></div>" },
+    { title:'Cellular',        icon:'📡', iconBg:'#34c759', value:'4G LTE', group:'connectivity', detail:"<div class='nx-detail-group'><h3>Cellular</h3><p>Carrier: Jio<br>Signal: 4G LTE<br>Roaming: Off</p></div>" },
+    { title:'Personal Hotspot',icon:'🔴', iconBg:'#ff2d55', value:'Off', group:'connectivity', detail:"<div class='nx-detail-group'><h3>Personal Hotspot</h3><p>Allow others to join: <strong>Off</strong></p></div>" },
+    // Notifications
+    { title:'Notifications',   icon:'🔔', iconBg:'#ff3b30', group:'notifications', detail:"<div class='nx-detail-group'><h3>Notifications</h3><p>ECHOSVC: <strong style='color:#ff453a'>Persistent</strong><br>Messages: Banners<br>Camera: Off</p></div>" },
+    { title:'Focus',           icon:'🌙', iconBg:'#5856d6', value:'Off', group:'notifications', detail:"<div class='nx-detail-group'><h3>Focus</h3><p>Do Not Disturb: <strong>Off</strong><br>Sleep: Off<br>Work: Off</p></div>" },
+    { title:'Screen Time',     icon:'⏱️', iconBg:'#5ac8fa', value:'6h 24m', group:'notifications', detail:"<div class='nx-detail-group'><h3>Screen Time — Today</h3><br><strong>Total: 6h 24m</strong><p>Messages: 2h 11m<br>Notes: 1h 08m<br>ECHOSVC (background): <strong style='color:#ff453a'>Constant</strong></p></div>" },
+    // Device
+    { title:'General',         icon:'⚙️', iconBg:'#8e8e93', group:'device', detail:"<div class='nx-detail-group'><h3>General</h3><p>Software Update: <strong style='color:#ff453a'>Blocked by NX-OS</strong><br>VPN: Off<br>Background App Refresh: On</p></div>" },
+    { title:'Display & Brightness', icon:'☀️', iconBg:'#8e8e93', group:'device', detail:"<div class='nx-detail-group'><h3>Display</h3><p>Brightness: 62%<br>Night Shift: Off<br>Auto-Lock: <strong style='color:#ff453a'>Never (overridden)</strong></p></div>" },
+    { title:'Sounds & Haptics',icon:'🔊', iconBg:'#ff3b30', group:'device', detail:"<div class='nx-detail-group'><h3>Sounds</h3><p>Ringtone: Default<br>Haptics: On<br>Volume: 70%</p></div>" },
+    { title:'Wallpaper',       icon:'🖼️', iconBg:'#007aff', group:'device', detail:"<div class='nx-detail-group'><h3>Wallpaper</h3><p>Currently: Aurora Dark<br><br><em style='color:rgba(255,255,255,0.3)'>Last changed: Oct 7 — 23:14</em></p></div>" },
+    { title:'Face ID & Passcode', icon:'👤', iconBg:'#30d158', group:'device', detail:"<div class='nx-detail-group'><h3>Face ID & Passcode</h3><p>Face ID: <strong>Disabled</strong><br>Passcode: 4-digit<br><br><em style='color:rgba(255,255,255,0.3)'>Hint: something important happened in November.</em></p></div>" },
+    // Privacy / Scary
+    { title:'Privacy & Security', icon:'🛡️', iconBg:'#007aff', value:'⚠ ECHOSVC', warning:true, group:'privacy', detail:"<div class='nx-detail-group'><h3>Privacy</h3><br><strong style='color:#ff453a'>ECHOSVC has full access to:</strong><p>Location (Always)<br>Microphone (Always)<br>Camera (Always)<br>Contacts (Always)<br>Files (Always)</p><br><p style='color:rgba(255,255,255,0.35);font-size:13px'>Permission cannot be revoked.</p></div>" },
+    { title:'Battery',         icon:'🔋', iconBg:'#34c759', sub:'High usage: ECHOSVC (18%)', value:'18%', warning:true, group:'privacy', detail:"<div class='nx-detail-group'><h3>Battery Usage</h3><br><strong style='color:#ff453a;'>ECHOSVC - 18%</strong><p>Background prediction engine active.</p><br><strong>Screen - 12%</strong><br><strong>Messages - 8%</strong></div>" },
+    { title:'Storage',         icon:'💾', iconBg:'#8e8e93', sub:'47.8 GB "Other"', value:'47.8 GB', warning:true, group:'privacy', detail:"<div class='nx-detail-group'><h3>Internal Storage (128GB)</h3><br><strong style='color:#ff453a;'>Other: 47.8 GB</strong><p>System cache cannot be cleared. Protected by NX-OS.</p><br><strong>Apps: 12.1 GB</strong><br><strong>Photos: 3.2 GB</strong></div>" },
+    { title:'Permissions',     icon:'🔒', iconBg:'#ff9500', sub:'Camera + Mic active recently', value:'⚠ Active', warning:true, group:'privacy', detail:"<div class='nx-detail-group'><h3>Recent Access</h3><br><strong>Microphone</strong><p>Accessed constantly by ECHOSVC</p><br><strong>Camera</strong><p>Last accessed: Oct 12 — 23:51</p><br><strong style='color:#ff453a'>Access cannot be revoked.</strong></div>" },
+    // Apps
+    { title:'Safari',          icon:'🧭', iconBg:'#007aff', group:'apps', detail:"<div class='nx-detail-group'><h3>Safari</h3><p>Search Engine: Google<br>Private Browsing: Off<br>Prevent Cross-Site Tracking: On</p></div>" },
+    { title:'Camera',          icon:'📷', iconBg:'#6e6e73', group:'apps', detail:"<div class='nx-detail-group'><h3>Camera</h3><p>Formats: High Efficiency<br>Grid: On<br>Scan QR Codes: On<br>Record Video: 4K at 30fps</p></div>" },
+    { title:'Maps',            icon:'🗺️', iconBg:'#34c759', group:'apps', detail:"<div class='nx-detail-group'><h3>Maps</h3><p>Preferred Transport: Driving<br>Show Ratings: On<br>Location: While Using</p></div>" },
+    { title:'App Store',       icon:'🛒', iconBg:'#007aff', group:'apps', detail:"<div class='nx-detail-group'><h3>App Store</h3><p>Auto Downloads: Off<br>In-App Purchases: On<br>Updates: <strong style='color:#ff453a'>Disabled by NX-OS</strong></p></div>" },
+    // About
+    { title:'About Phone',     icon:'📱', iconBg:'#ff9500', sub:'NX-OS Internal Beta', group:'about', detail:"<div class='nx-detail-group'><h3>Device Info</h3><p>Model: Nexus Prototype V4<br>OS: NX-OS Internal Beta<br>Build: 2024.10.B3<br>Owner: Aarav Mehta<br><br><em style='color:rgba(255,255,255,0.3)'>This device is enrolled in a closed monitoring program.</em></p></div>" },
+    { title:'Developer Options',icon:'🔧', iconBg:'#ff453a', value:'⚠ Locked', warning:true, group:'about', detail:"<div class='nx-detail-group'><h3 style='color:#ff453a'>Access Denied</h3><p>Developer mode is locked by ECHOSVC.<br><br>Last access attempt: Oct 12 — 23:58<br><br><strong style='color:#ff453a'>Unauthorized access logged.</strong></p></div>" },
 ];
-const settingsGroup = document.createElement('div');
-settingsGroup.className = 'nx-list-group'; settingsGroup.id = 'settings-group';
-document.getElementById('settings-list')?.appendChild(settingsGroup);
-renderNXList('settings-group', settingsData, item => {
+
+// ── Custom Settings renderer (iOS-style grouped layout) ──
+const SETTINGS_SECTIONS = [
+    { label: null,              group: 'connectivity',  items: [] },
+    { label: 'Notifications',   group: 'notifications', items: [] },
+    { label: 'Device',          group: 'device',        items: [] },
+    { label: 'Privacy',         group: 'privacy',       items: [] },
+    { label: 'Apps',            group: 'apps',          items: [] },
+    { label: 'About',           group: 'about',         items: [] },
+];
+// Bucket items into sections
+settingsData.forEach(item => {
+    const sec = SETTINGS_SECTIONS.find(s => s.group === item.group);
+    if (sec) sec.items.push(item);
+});
+
+function _openSettingDetail(item) {
     document.getElementById('settings-detail-title').textContent = item.title;
-    document.getElementById('settings-detail-body').innerHTML = item.detail;
+    document.getElementById('settings-detail-body').innerHTML = item.detail || '<div class="nx-detail-group"><p>No additional information.</p></div>';
     showScreen('settings-detail');
-}, true);
+    window.uiTap?.();
+}
+
+function renderSettingsScreen() {
+    const container = document.getElementById('settings-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // ── Profile card ──
+    const profile = document.createElement('div');
+    profile.className = 'settings-profile-card';
+    profile.innerHTML = `
+        <div class="settings-profile-avatar">AM</div>
+        <div class="settings-profile-info">
+            <div class="settings-profile-name">Aarav Mehta</div>
+            <div class="settings-profile-sub">aarav.mehta@icloud.com · iCloud</div>
+        </div>
+        <div class="settings-profile-chevron">›</div>`;
+    profile.addEventListener('click', () => {
+        document.getElementById('settings-detail-title').textContent = 'Apple ID';
+        document.getElementById('settings-detail-body').innerHTML = "<div class='nx-detail-group'><h3>Apple ID</h3><p>Name: Aarav Mehta<br>Email: aarav.mehta@icloud.com<br>iCloud Storage: 5 GB used of 50 GB<br><br><em style='color:rgba(255,255,255,0.3)'>Signed in since: Mar 3, 2021</em></p></div>";
+        showScreen('settings-detail');
+        window.uiTap?.();
+    });
+    container.appendChild(profile);
+
+    // ── Rebuild section buckets each render (Act 2 may add items) ──
+    SETTINGS_SECTIONS.forEach(s => s.items = []);
+    settingsData.forEach(item => {
+        const sec = SETTINGS_SECTIONS.find(s => s.group === (item.group || 'about'));
+        if (sec) sec.items.push(item);
+    });
+
+    // ── Render each section ──
+    SETTINGS_SECTIONS.forEach(sec => {
+        if (!sec.items.length) return;
+        const section = document.createElement('div');
+        section.className = 'settings-section';
+        if (sec.label) {
+            const lbl = document.createElement('div');
+            lbl.className = 'settings-section-label';
+            lbl.textContent = sec.label;
+            section.appendChild(lbl);
+        }
+        const group = document.createElement('div');
+        group.className = 'settings-group';
+        group.id = sec.group === 'connectivity' ? 'settings-group' : '';
+
+        sec.items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'settings-row';
+            const iconHtml = `<div class="settings-row-icon" style="background:${item.iconBg||'#3a3a3c'}">${item.icon||'⚙️'}</div>`;
+            const titleHtml = `<div class="settings-row-title${item.warning?' warning':''}">${item.title}</div>`;
+            let rightHtml = '';
+            if (item.toggle !== undefined) {
+                rightHtml = `<div class="settings-toggle${item.toggleOn?' on':''}"></div>`;
+            } else {
+                const val = item.value || '';
+                if (val) rightHtml = `<div class="settings-row-value${item.warning?' warning':''}">${val}</div>`;
+                rightHtml += `<div class="settings-row-chevron">›</div>`;
+            }
+            row.innerHTML = iconHtml + titleHtml + rightHtml;
+            if (item.toggle !== undefined) {
+                // Toggle tap — no detail screen, just flip
+                const tog = row.querySelector('.settings-toggle');
+                row.addEventListener('click', () => { item.toggleOn = !item.toggleOn; tog.classList.toggle('on', item.toggleOn); window.uiClick?.(); });
+            } else {
+                row.addEventListener('click', () => _openSettingDetail(item));
+            }
+            group.appendChild(row);
+        });
+
+        section.appendChild(group);
+        container.appendChild(section);
+    });
+
+    // Footer note
+    const note = document.createElement('div');
+    note.className = 'settings-bottom-note';
+    note.textContent = 'NX-OS INTERNAL BETA · BUILD 2024.10.B3';
+    container.appendChild(note);
+}
+renderSettingsScreen();
 
 // --- Voice Recorder ---
 const voiceData = [
@@ -1553,9 +1672,9 @@ window.endActiveCall=function(){ showScreen('phone-app'); };
 function injectObserverNote(){ if(notes.find(n=>n.title==='Observer Effects')) return; notes.unshift({title:'Observer Effects',body:'observation changes outcomes.\n\nthe act of watching alters what is watched.\n\nECHO doesn\'t study you. ECHO creates you.\n\n[ENTRY INCOMPLETE — CORRUPTED]\n\n— This note was not written by Aarav.'}); renderNotesList(); createNotification('Notes','New Note','A note appeared that you didn\'t create.',true,true); }
 
 function updateAct2Settings(){
-    const b=settingsData.find(s=>s.title==='Battery'); if(b){b.sub='Critical: ECHO.RUNTIME (3%)';b.warning=true;}
-    const p=settingsData.find(s=>s.title==='Permissions'); if(p){p.sub='Mic accessed: 1 minute ago';p.warning=true;}
-    if(!settingsData.find(s=>s.title==='Network')){ settingsData.push({title:'Network',sub:'Unknown device: NODE_0',icon:'📶',iconBg:'#5ac8fa',warning:true,detail:"<div class='nx-detail-group'><h3>Connected Devices</h3><br><strong style='color:#ff453a;'>NODE_0</strong><p>Cannot disconnect.</p></div>"}); const sg=document.getElementById('settings-group'); if(sg){sg.innerHTML='';renderNXList('settings-group',settingsData,item=>{document.getElementById('settings-detail-title').textContent=item.title;document.getElementById('settings-detail-body').innerHTML=item.detail;showScreen('settings-detail');},true);} }
+    const b=settingsData.find(s=>s.title==='Battery'); if(b){b.sub='Critical: ECHO.RUNTIME (3%)';b.value='3%';b.warning=true;}
+    const p=settingsData.find(s=>s.title==='Permissions'); if(p){p.sub='Mic accessed: 1 minute ago';p.value='⚠ Active';p.warning=true;}
+    if(!settingsData.find(s=>s.title==='Network')){ settingsData.push({title:'Network',sub:'Unknown device: NODE_0',icon:'📶',iconBg:'#5ac8fa',warning:true,group:'privacy',detail:"<div class='nx-detail-group'><h3>Connected Devices</h3><br><strong style='color:#ff453a;'>NODE_0</strong><p>Cannot disconnect.</p></div>"}); renderSettingsScreen(); }
 }
 
 let _overheatActive = false;

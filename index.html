@@ -136,7 +136,40 @@
                 <div class="lock-date">Tuesday, Nov 12</div>
                 <div class="lock-time-huge time">00:00</div>
             </div>
-            <!-- swipe hint pushes to bottom -->
+            <!-- iOS-style persistent lock screen notification cards -->
+            <div class="ls-notif-stack">
+                <!-- UNKNOWN — atmosphere / intrigue -->
+                <div class="ls-notif-card ls-notif-glitch" onclick="window.uiSwipe?.();showScreen('passcode-screen')">
+                    <div class="ls-nc-header">
+                        <div class="ls-nc-app-icon" style="background:#ff453a"></div>
+                        <span class="ls-nc-app-name">Messages</span>
+                        <span class="ls-nc-time">11:07 PM</span>
+                    </div>
+                    <div class="ls-nc-sender">UNKNOWN</div>
+                    <div class="ls-nc-body">You picked it up. Now you have to find out why.</div>
+                </div>
+                <!-- Mom — the passcode hint (birthday = Nov 7 = 1107) -->
+                <div class="ls-notif-card" onclick="window.uiSwipe?.();showScreen('passcode-screen')">
+                    <div class="ls-nc-header">
+                        <div class="ls-nc-app-icon" style="background:#30d158"></div>
+                        <span class="ls-nc-app-name">Messages</span>
+                        <span class="ls-nc-time">10:41 PM</span>
+                    </div>
+                    <div class="ls-nc-sender">Mom</div>
+                    <div class="ls-nc-body">Happy 26th Aarav ❤️ Nov 7 will always be our special day. I even use it as my own lock code now 😄 Call me back.</div>
+                </div>
+                <!-- Calendar reminder — extra context -->
+                <div class="ls-notif-card" onclick="window.uiSwipe?.();showScreen('passcode-screen')">
+                    <div class="ls-nc-header">
+                        <div class="ls-nc-app-icon" style="background:#ff3b30"></div>
+                        <span class="ls-nc-app-name">Calendar</span>
+                        <span class="ls-nc-time">8:00 PM</span>
+                    </div>
+                    <div class="ls-nc-sender">Reminder</div>
+                    <div class="ls-nc-body">Dockyard Warehouse Meeting — 11:30 PM</div>
+                </div>
+            </div>
+            <!-- flex spacer between cards and bottom bar -->
             <div class="ls-spacer"></div>
             <div class="unlock-area" id="unlock-trigger">
                 <!-- bottom utility bar: torch left, camera right -->

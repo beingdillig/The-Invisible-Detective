@@ -425,6 +425,7 @@ function lsTickClock() {
 
 // Phone tap — enter game (continue if save, else new game)
 window.enterGameFromLanding = function() {
+    window.uiSwipe?.();
     const { hasSave } = lsGetProgress();
     if (hasSave) {
         continueGame();
@@ -467,8 +468,14 @@ window.continueGame = function() {
         startPrelude();
         return;
     }
-    // Restore and jump to the correct screen
+    // Restore all state, then navigate using showScreen so title-screen
+    // is properly deactivated (restoreFromSave only patches classList directly)
     restoreFromSave(save);
+    if (save.preludeSeen) {
+        showScreen('lock-screen');
+    } else {
+        startPrelude();
+    }
 };
 
 // ─── Splash → Landing page transition ────────────────────

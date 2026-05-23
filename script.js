@@ -673,21 +673,137 @@ calendarData.forEach(item => {
 });
 
 // --- Static Apps ---
-renderNXList('calls-list', [
-    {title:'Unknown Number',sub:'Missed - 2:14 AM',icon:'📞',iconBg:'#ff3b30',warning:true},
-    {title:'Mom',sub:'Missed - Yesterday',icon:'📞',iconBg:'#ff3b30'},
-    {title:'Kabir',sub:'Outgoing - 3 mins',icon:'📞',iconBg:'#8e8e93'}
-], null, true);
-renderNXList('bank-list', [
-    {title:'Starbucks',sub:'- ₹350.00',icon:'☕',iconBg:'#34c759'},
-    {title:'Metro Rail',sub:'- ₹40.00',icon:'🚆',iconBg:'#007aff'},
-    {title:'AWS Cloud Services',sub:'- ₹1500.00',icon:'☁️',iconBg:'#ff9500'}
-], null, true);
+// ── Phone: Recents ───────────────────────────────────────────────────────────
+(function renderCallsList() {
+    const calls = [
+        {name:'Unknown Number', detail:'Missed · 2:14 AM', missed:true, initial:'?', color:'#ff3b30', bg:'#2a0a0a'},
+        {name:'Mom',            detail:'Missed · Yesterday', missed:true, initial:'M', color:'#ff3b30', bg:'#2a0a0a'},
+        {name:'Kabir',          detail:'Outgoing · 3 mins', missed:false, initial:'K', color:'#30d158', bg:'#0a2a0a'},
+        {name:'Editor',         detail:'Incoming · Oct 11', missed:false, initial:'D', color:'#0a84ff', bg:'#0a1a2a'},
+        {name:'Unknown Number', detail:'Missed · Oct 10',   missed:true, initial:'?', color:'#ff3b30', bg:'#2a0a0a'},
+    ];
+    const list = document.getElementById('calls-list');
+    if (!list) return;
+    calls.forEach(c => {
+        const div = document.createElement('div'); div.className='call-row';
+        div.innerHTML=`
+          <div class="call-avatar" style="background:${c.bg};">
+            <span style="color:${c.color};font-size:18px;font-weight:700;">${c.initial}</span>
+          </div>
+          <div class="call-info">
+            <div class="call-name" style="color:${c.missed?'#ff3b30':'#fff'};">${c.name}</div>
+            <div class="call-detail">${c.missed?'↙':'↗'} ${c.detail}</div>
+          </div>
+          <div class="call-info-btn">ℹ</div>`;
+        list.appendChild(div);
+    });
+})();
+
+// ── Banking: Transactions ─────────────────────────────────────────────────────
+(function renderBankList() {
+    const txns = [
+        {merchant:'Starbucks',       cat:'Coffee & Cafes',    amount:'-₹350',  date:'Today',   icon:'☕', bg:'#2a1a00', color:'#ff9500'},
+        {merchant:'Metro Rail',      cat:'Transportation',     amount:'-₹40',   date:'Today',   icon:'🚇', bg:'#001a2a', color:'#0a84ff'},
+        {merchant:'AWS Cloud Svc',   cat:'Technology',         amount:'-₹1,500',date:'Oct 11',  icon:'☁️', bg:'#1a1a2a', color:'#636366'},
+        {merchant:'Zomato',          cat:'Food & Dining',      amount:'-₹280',  date:'Oct 11',  icon:'🍔', bg:'#2a0a0a', color:'#ff3b30'},
+        {merchant:'Salary Credit',   cat:'Income',             amount:'+₹42,000',date:'Oct 1', icon:'↓',  bg:'#001a00', color:'#30d158'},
+    ];
+    const list = document.getElementById('bank-list');
+    if (!list) return;
+    txns.forEach(t => {
+        const div = document.createElement('div'); div.className='bank-txn-row';
+        const isCredit = t.amount.startsWith('+');
+        div.innerHTML=`
+          <div class="bank-txn-icon" style="background:${t.bg};color:${t.color};">${t.icon}</div>
+          <div class="bank-txn-info">
+            <div class="bank-txn-name">${t.merchant}</div>
+            <div class="bank-txn-cat">${t.cat} · ${t.date}</div>
+          </div>
+          <div class="bank-txn-amount" style="color:${isCredit?'#30d158':'#fff'};">${t.amount}</div>`;
+        list.appendChild(div);
+    });
+})();
 const emailData = [
-    {title:'Editor',sub:'Where is the draft??',detail:"<div class='nx-detail-group'><strong>From: Editor</strong><br><br><p>Aarav, you've missed the deadline. Send whatever you have on Nexus Dynamics immediately.</p></div>"},
-    {title:'Nexus HR',sub:'Interview Follow-up',warning:true,detail:"<div class='nx-detail-group'><strong>From: Nexus HR</strong><br><br><p>Dear Aarav, we noticed you snooping around the server farm. This is your final warning.</p></div>"}
+    {
+        from:'ECHOSVC', fromInitial:'E', fromColor:'#1a0020', fromInitialColor:'#b44fde',
+        subject:'[AUTOMATED] Behavioral Sync Complete',
+        preview:'Your profile has been updated. Prediction accuracy: 91.4%. Next sync scheduled...',
+        time:'2:14 AM', unread:true, warning:true,
+        detail:`<div class='email-detail-wrap'>
+            <div class='email-detail-subject'>[AUTOMATED] Behavioral Sync Complete</div>
+            <div class='email-detail-meta'><span class='email-from-badge' style='background:#1a0020;color:#b44fde;'>E</span><div><div class='email-from-name'>ECHOSVC <span style='color:#555;font-weight:400'>&lt;noreply@echosvc.net&gt;</span></div><div class='email-from-to'>To: aarav.mehta@delhichronicle.com</div></div><span class='email-detail-time'>2:14 AM</span></div>
+            <div class='email-detail-body'>Your behavioral profile has been updated.<br><br>Prediction accuracy: <strong style='color:#b44fde'>91.4%</strong><br>Sync cycles completed: 847<br>Active nodes: 12<br><br>Next scheduled sync: Tonight, 3:00 AM<br><br>Do not reply to this address. This is an automated transmission.<br><br>— ECHOSVC Process Manager</div>
+        </div>`
+    },
+    {
+        from:'Editor', fromInitial:'D', fromColor:'#1a2a1a', fromInitialColor:'#30d158',
+        subject:'Where is the draft??',
+        preview:'Aarav, you\'ve missed the deadline. Send whatever you have on Nexus immediately. The issue goes to print—',
+        time:'11:23 PM', unread:false, warning:false,
+        detail:`<div class='email-detail-wrap'>
+            <div class='email-detail-subject'>Where is the draft??</div>
+            <div class='email-detail-meta'><span class='email-from-badge' style='background:#1a2a1a;color:#30d158;'>D</span><div><div class='email-from-name'>Deepa Iyer <span style='color:#555;font-weight:400'>&lt;editor@delhichronicle.com&gt;</span></div><div class='email-from-to'>To: aarav.mehta@delhichronicle.com</div></div><span class='email-detail-time'>11:23 PM</span></div>
+            <div class='email-detail-body'>Aarav,<br><br>You've missed the deadline. <strong>Again.</strong><br><br>Send whatever you have on Nexus Dynamics tonight. Even a rough draft. The issue goes to print Friday morning and we need something from you.<br><br>If I don't have copy by midnight I'm pulling the story and giving the slot to Priya.<br><br>This is not a request.<br><br>— Deepa</div>
+        </div>`
+    },
+    {
+        from:'Nexus HR', fromInitial:'N', fromColor:'#1a1a0a', fromInitialColor:'#ff9f0a',
+        subject:'Re: Interview Follow-up',
+        preview:'Dear Mr. Mehta, we have noticed several unauthorized access attempts from your credentials on our internal—',
+        time:'Oct 11', unread:true, warning:true,
+        detail:`<div class='email-detail-wrap'>
+            <div class='email-detail-subject'>Re: Interview Follow-up</div>
+            <div class='email-detail-meta'><span class='email-from-badge' style='background:#1a1a0a;color:#ff9f0a;'>N</span><div><div class='email-from-name'>Nexus HR <span style='color:#555;font-weight:400'>&lt;hr@nexusdynamics.com&gt;</span></div><div class='email-from-to'>To: aarav.mehta@delhichronicle.com</div></div><span class='email-detail-time'>Oct 11</span></div>
+            <div class='email-detail-body'>Dear Mr. Mehta,<br><br>Thank you for your interest in Nexus Dynamics.<br><br>We have noticed several <strong style='color:#ff9f0a'>unauthorized access attempts</strong> originating from your credentials on our internal network. Our security team has logged 14 such attempts between October 9–11.<br><br>This is your final notice before we escalate to our legal department.<br><br>We strongly advise you to discontinue your current line of inquiry.<br><br>Regards,<br>Nexus Dynamics HR<br><span style='color:#555;font-size:12px'>This message may be monitored for compliance purposes.</span></div>
+        </div>`
+    },
+    {
+        from:'Kabir', fromInitial:'K', fromColor:'#0a1a2a', fromInitialColor:'#0a84ff',
+        subject:'USE SIGNAL NOT EMAIL',
+        preview:'Bro what are you doing emailing me about this?? They read everything. Delete this. Install Signal. NOW.',
+        time:'Oct 10', unread:false, warning:false,
+        detail:`<div class='email-detail-wrap'>
+            <div class='email-detail-subject'>USE SIGNAL NOT EMAIL</div>
+            <div class='email-detail-meta'><span class='email-from-badge' style='background:#0a1a2a;color:#0a84ff;'>K</span><div><div class='email-from-name'>Kabir Singh <span style='color:#555;font-weight:400'>&lt;kabir.s@gmail.com&gt;</span></div><div class='email-from-to'>To: aarav.mehta@delhichronicle.com</div></div><span class='email-detail-time'>Oct 10</span></div>
+            <div class='email-detail-body'>Bro,<br><br>What are you DOING emailing me about this?? They read everything. Corporate emails, personal emails, doesn't matter — if ECHOSVC has network access they can intercept it.<br><br>Delete this thread. Don't reply.<br><br>Install Signal. Use a number they don't know. Message me from there.<br><br>— K<br><br><span style='color:#555;font-size:11px;font-style:italic'>P.S. I'm serious about deleting this. Right now.</span></div>
+        </div>`
+    }
 ];
-renderNXList('email-list', emailData, item => { document.getElementById('email-detail-body').innerHTML=item.detail; showScreen('email-detail'); });
+
+function renderEmailList() {
+    const list = document.getElementById('email-list');
+    if (!list) return;
+    list.innerHTML = '';
+    const unread = emailData.filter(e=>e.unread).length;
+    const countEl = document.getElementById('email-unread-count');
+    if (countEl) countEl.textContent = unread > 0 ? `${unread} Unread` : 'All Read';
+    emailData.forEach(email => {
+        const div = document.createElement('div');
+        div.className = `email-row${email.unread?' email-unread':''}`;
+        div.innerHTML = `
+          <div class="email-avatar" style="background:${email.fromColor};color:${email.fromInitialColor};">${email.fromInitial}</div>
+          <div class="email-content">
+            <div class="email-row-top">
+              <span class="email-sender">${email.from}</span>
+              <span class="email-row-time${email.unread?' email-time-unread':''}">${email.time}</span>
+            </div>
+            <div class="email-subject${email.unread?' email-subject-unread':''}">${email.subject}</div>
+            <div class="email-preview">${email.preview}</div>
+          </div>
+          ${email.unread?'<div class="email-unread-dot"></div>':''}`;
+        div.addEventListener('click', () => {
+            window.uiTap?.();
+            email.unread = false;
+            div.classList.remove('email-unread');
+            document.querySelector('.email-unread-dot', div)?.remove();
+            renderEmailList();
+            document.getElementById('email-detail-body').innerHTML = email.detail;
+            showScreen('email-detail');
+        });
+        list.appendChild(div);
+    });
+}
+renderEmailList();
 
 // --- Messages & Chat ---
 function showTypingIndicator() {
@@ -698,7 +814,7 @@ function showTypingIndicator() {
 function removeTypingIndicator() { document.getElementById('typing-indicator')?.remove(); }
 
 const allChats = [
-  { id:'unknown', name:'UNKNOWN', unread:true,
+  { id:'unknown', name:'UNKNOWN', unread:true, time:'2:14 AM', avatarColor:'#2a0a0a', avatarBorder:'1px solid rgba(255,69,58,0.5)', avatarTextColor:'#ff453a',
     messages:[{sender:'them',text:'You took it.',isGlitch:true}],
     responses:[
       {match:/who are you|who is this|identify/i,reply:'I am the process you cannot kill.\n\nECHOSVC.exe — currently running.\n\nI have 847 registered identities.\n\nNone of them are me.',glitch:true},
@@ -734,7 +850,7 @@ const allChats = [
       {match:/.+/i,reply:'Noted.\n\nProcessing.\n\nProfile updated.',glitch:true}
     ]
   },
-  { id:'mom', name:'Mom', unread:true,
+  { id:'mom', name:'Mom', unread:true, time:'10:41 PM', avatarColor:'#1a3a1a', avatarBorder:'none', avatarTextColor:'#30d158',
     messages:[{sender:'them',text:'Happy 26th Birthday Aarav! Nov 7th is always special 🎂 Call me back when you can beta.'}],
     responses:[
       {match:/^(hi|hello|hey|heyy|mama|maa|mom)[\s!.?]*$/i,reply:'Aarav! Finally! I have been waiting all day. How are you? Did you eat something?'},
@@ -755,7 +871,7 @@ const allChats = [
       {match:/.+/i,reply:'Okay beta. I am always here. Day or night — you call, I pick up. And PLEASE eat something. Love you so much 💕'}
     ]
   },
-  { id:'kabir', name:'Kabir', unread:false,
+  { id:'kabir', name:'Kabir', unread:false, time:'Yesterday', avatarColor:'#0a2040', avatarBorder:'none', avatarTextColor:'#0a84ff',
     messages:[{sender:'them',text:"Bro stop digging into this Nexus thing. I'm serious."}],
     responses:[
       {match:/^(hi|hey|yo|bro|sup|hello)[\s!.?]*$/i,reply:"Bro finally. Where have you been? You okay?"},
@@ -784,7 +900,7 @@ const allChats = [
       {match:/.+/i,reply:"Message me every hour. If I don't hear from you I'm coming to find you."}
     ]
   },
-  { id:'source', name:'Anonymous Source', unread:false,
+  { id:'source', name:'Anonymous Source', unread:false, time:'Oct 11', avatarColor:'#1e1e22', avatarBorder:'none', avatarTextColor:'#8e8e93',
     messages:[{sender:'them',text:'They monitor behavioral drift. Never keep the files online. If your battery heats up, shut it down.'}],
     responses:[
       {match:/who are you|your name|identity/i,reply:"Someone who got out before it was too late.\n\nDon't try to find me. Knowing who I am only makes you a better lead for them to follow."},
@@ -815,10 +931,23 @@ function renderChatList() {
         const lastMsg = chat.messages[chat.messages.length-1];
         const item = document.createElement('div'); item.className='nx-list-item';
         const isEcho = chat.id === 'echo_direct';
-        const avatarStyle = isEcho ? 'background:radial-gradient(circle,#1a0030,#000);border:1px solid rgba(180,79,222,0.5);' : '';
-        const nameStyle = isEcho ? 'color:#b44fde;font-family:"Share Tech Mono",monospace;' : '';
-        const preview = (lastMsg.text||'').substring(0,55)+(lastMsg.text?.length>55?'...':'');
-        item.innerHTML=`<div class="msg-avatar" style="${avatarStyle}">${isEcho?'◈':chat.name.charAt(0)}</div><div class="nx-content" style="padding-right:30px;"><div class="nx-title" style="${nameStyle}">${chat.name} <span class="msg-time">12:00</span></div><div class="nx-sub" style="${chat.unread?'color:#fff;font-weight:600;':''}">${preview}</div></div>${chat.unread?'<div class="msg-unread-dot"></div>':''}`;
+        const avatarBg = isEcho ? 'radial-gradient(circle,#1a0030,#000)' : (chat.avatarColor||'#2a2a2e');
+        const avatarBorder = isEcho ? '1px solid rgba(180,79,222,0.5)' : (chat.avatarBorder||'none');
+        const avatarColor = isEcho ? '#b44fde' : (chat.avatarTextColor||'#fff');
+        const nameColor = isEcho ? '#b44fde' : '#fff';
+        const nameFontFamily = isEcho ? '"Share Tech Mono",monospace' : 'inherit';
+        const preview = (lastMsg.text||'').replace(/\n/g,' ').substring(0,52)+(lastMsg.text?.length>52?'…':'');
+        const time = chat.time || '';
+        item.innerHTML=`
+          <div class="msg-avatar" style="background:${avatarBg};border:${avatarBorder};color:${avatarColor};">${isEcho?'◈':chat.name.charAt(0)}</div>
+          <div class="nx-content" style="padding-right:${chat.unread?'24px':'8px'};">
+            <div class="msg-list-meta">
+              <span class="nx-title" style="color:${nameColor};font-family:${nameFontFamily};">${chat.name}</span>
+              <span class="msg-time${chat.unread?' unread':''}">${time}</span>
+            </div>
+            <div class="nx-sub" style="${chat.unread?'color:rgba(255,255,255,0.85);font-weight:500;':''}">${preview}</div>
+          </div>
+          ${chat.unread?'<div class="msg-unread-dot"></div>':''}`;
         item.addEventListener('click',()=>{ window.uiTap?.(); openChat(chat.id); });
         list.appendChild(item);
     });
@@ -830,8 +959,22 @@ function openChat(chatId) {
     if (!chat) return;
     activeChatId = chatId; chat.unread = false; renderChatList();
     document.getElementById('chat-contact-name').textContent = chat.name;
+    // Populate iOS-style avatar + sub header
+    const avatarEl = document.getElementById('chat-contact-avatar');
+    if (avatarEl) {
+        avatarEl.textContent = chat.id === 'echo_direct' ? '◈' : chat.name.charAt(0);
+        avatarEl.style.background = chat.avatarColor || '#2a2a2e';
+        avatarEl.style.border = chat.avatarBorder || 'none';
+        avatarEl.style.color = chat.avatarTextColor || '#fff';
+    }
+    const subEl = document.getElementById('chat-contact-sub');
+    if (subEl) subEl.textContent = chat.id === 'unknown' ? '⚠ Unknown Caller' : chat.id === 'source' ? 'Anonymous' : '';
     const history = document.getElementById('chat-history');
     history.innerHTML = '';
+    // Date divider
+    const divider = document.createElement('div'); divider.className='chat-date-divider';
+    divider.textContent = 'Tuesday, Nov 12';
+    history.appendChild(divider);
     chat.messages.forEach(m=>appendMessageToDOM(m));
     showScreen('chat-view');
     history.scrollTop = history.scrollHeight;

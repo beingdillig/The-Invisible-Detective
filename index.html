@@ -360,15 +360,23 @@
         <!-- APP: Messages -->
         <div id="messages-app" class="screen app-screen">
             <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Messages</h2></div>
+            <div class="msg-search-bar">
+                <span class="msg-search-icon">🔍</span>
+                <input type="text" placeholder="Search" readonly>
+            </div>
             <div class="scroll-container" id="chat-list-container">
                 <div class="nx-list-group" id="chat-list"></div>
             </div>
         </div>
 
-        <div id="chat-view" class="screen app-screen">
-            <div class="app-header app-header-small">
-                <button class="back-btn" data-back="messages-app">←</button>
-                <h2 id="chat-contact-name">Contact</h2>
+        <div id="chat-view" class="screen app-screen" style="background:#000;">
+            <div class="chat-view-header">
+                <button class="back-btn" data-back="messages-app" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);">←</button>
+                <div class="chat-contact-header">
+                    <div class="chat-contact-avatar" id="chat-contact-avatar">?</div>
+                    <div class="chat-contact-header-name" id="chat-contact-name">Contact</div>
+                    <div class="chat-contact-sub" id="chat-contact-sub"></div>
+                </div>
             </div>
             <div class="chat-history" id="chat-history"></div>
             <div class="chat-input-bar">
@@ -609,15 +617,38 @@
         <!-- Static Shell Apps -->
         <div id="phone-app" class="screen app-screen">
             <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Recents</h2></div>
-            <div class="scroll-container"><div class="nx-list-group" id="calls-list"></div></div>
+            <div class="phone-tab-bar">
+                <span class="phone-tab active">All</span>
+                <span class="phone-tab">Missed</span>
+            </div>
+            <div class="scroll-container"><div id="calls-list" class="calls-list"></div></div>
+            <div class="phone-bottom-bar">
+                <div class="phone-bottom-btn">⌨️<span>Keypad</span></div>
+                <div class="phone-bottom-btn phone-bottom-active">🕐<span>Recents</span></div>
+                <div class="phone-bottom-btn">👤<span>Contacts</span></div>
+            </div>
         </div>
         <div id="bank-app" class="screen app-screen">
             <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Banking</h2></div>
-            <div class="scroll-container"><div class="nx-list-group" id="bank-list"></div></div>
+            <div class="scroll-container">
+                <div class="bank-balance-card">
+                    <div class="bank-balance-label">Available Balance</div>
+                    <div class="bank-balance-amount">₹12,480<span class="bank-balance-cents">.55</span></div>
+                    <div class="bank-balance-account">HDFC Savings ···· 4821</div>
+                    <div class="bank-balance-actions">
+                        <div class="bank-action-btn">↑ Send</div>
+                        <div class="bank-action-btn">↓ Receive</div>
+                        <div class="bank-action-btn">+ Add</div>
+                    </div>
+                </div>
+                <div class="bank-section-label">Recent Transactions</div>
+                <div id="bank-list" class="bank-list"></div>
+            </div>
         </div>
         <div id="email-app" class="screen app-screen">
             <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Inbox</h2></div>
-            <div class="scroll-container"><div class="nx-list-group" id="email-list"></div></div>
+            <div class="email-account-bar">All Inboxes · <span id="email-unread-count" style="color:#0a84ff;font-weight:600;">3 Unread</span></div>
+            <div class="scroll-container"><div id="email-list" class="email-list"></div></div>
         </div>
         <div id="email-detail" class="screen app-screen">
             <div class="app-header app-header-small"><button class="back-btn" data-back="email-app">←</button><h2>Message</h2></div>

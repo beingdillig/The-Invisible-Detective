@@ -10,6 +10,20 @@ function updateTime() {
     const ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
     document.querySelectorAll('.time').forEach(el => el.textContent = ts);
 }
+
+// ── Home screen date widget ───────────────────────────────────────────────────
+// The phone is frozen in Aarav's story: Monday, November 12, 2024.
+// We show a static game date (not real date) to stay in fiction.
+(function initHomeDateWidget() {
+    const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    // Game date: November 12, 2024 → Monday
+    const gameDate = new Date(2024, 10, 12); // month is 0-indexed
+    const dayEl = document.getElementById('hdw-day');
+    const dateEl = document.getElementById('hdw-date');
+    if (dayEl) dayEl.textContent = DAYS[gameDate.getDay()];
+    if (dateEl) dateEl.textContent = MONTHS[gameDate.getMonth()] + ' ' + gameDate.getDate();
+})();
 setInterval(updateTime, 30000);
 updateTime();   // run once immediately so clocks are correct on first render
 
@@ -57,13 +71,16 @@ window._updateBattery = updateBattery;
 window._startBatteryDrain = startBatteryDrain;
 
 // ── UI Sound System ───────────────────────────────────────────────────────────
-// Lazy AudioContext — created on first user gesture, silently fails if blocked
+// ── UI Sound Engine — iOS-style audio feedback ─────────────────────────────
 (function() {
     let _ctx = null;
     function ctx() {
         if (!_ctx) try { _ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+        if (_ctx && _ctx.state === 'suspended') _ctx.resume().catch(()=>{});
         return _ctx;
     }
+
+    // Core tone builder: soft attack, exponential decay (sounds natural, no click artifacts)
     function tone(freq, dur, type, gain, delay) {
         try {
             const c = ctx(); if (!c) return;
@@ -71,41 +88,92 @@ window._startBatteryDrain = startBatteryDrain;
             osc.connect(g); g.connect(c.destination);
             osc.type = type || 'sine'; osc.frequency.value = freq;
             const t = c.currentTime + (delay || 0);
-            g.gain.setValueAtTime(0, t);
-            g.gain.linearRampToValueAtTime(gain || 0.03, t + 0.015);
-            g.gain.linearRampToValueAtTime(0, t + dur);
-            osc.start(t); osc.stop(t + dur + 0.05);
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(gain || 0.03, t + 0.008);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+            osc.start(t); osc.stop(t + dur + 0.02);
         } catch(e) {}
     }
-    // Short tap — keypad keys, back button
-    window.uiClick = () => tone(1080, 0.05, 'sine', 0.022);
-    // Rising sweep — message sent
+
+    // Filtered noise burst (for swoosh/swipe sounds)
+    function noise(dur, hipass, gain, delay) {
+        try {
+            const c = ctx(); if (!c) return;
+            const len = Math.floor(c.sampleRate * dur);
+            const buf = c.createBuffer(1, len, c.sampleRate);
+            const d = buf.getChannelData(0);
+            for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1);
+            const src = c.createBufferSource();
+            const flt = c.createBiquadFilter(); flt.type = 'highpass'; flt.frequency.value = hipass;
+            const g = c.createGain();
+            const t = c.currentTime + (delay || 0);
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(gain, t + 0.008);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+            src.buffer = buf;
+            src.connect(flt); flt.connect(g); g.connect(c.destination);
+            src.start(t); src.stop(t + dur + 0.01);
+        } catch(e) {}
+    }
+
+    // ── tap / keypad key — soft triangle click, very subtle
+    window.uiClick = () => {
+        tone(1200, 0.045, 'triangle', 0.018);
+        noise(0.04, 3500, 0.06);
+    };
+
+    // ── list item tap — slightly warmer than keypad
+    window.uiTap = () => tone(980, 0.055, 'triangle', 0.016);
+
+    // ── back / cancel — lower pitched tap
+    window.uiBack = () => tone(820, 0.055, 'triangle', 0.016);
+
+    // ── app open — airy high-pass swoosh (like iOS springboard)
+    window.uiSwipe = () => {
+        noise(0.13, 2600, 0.45);
+        tone(1400, 0.06, 'sine', 0.008, 0.02);
+    };
+
+    // ── message sent — quick rising sweep (satisfying send whoosh)
     window.uiSend = () => {
         try {
             const c = ctx(); if (!c) return;
             const osc = c.createOscillator(), g = c.createGain();
-            osc.connect(g); g.connect(c.destination); osc.type = 'sine';
-            osc.frequency.setValueAtTime(380, c.currentTime);
-            osc.frequency.linearRampToValueAtTime(1100, c.currentTime + 0.18);
-            g.gain.setValueAtTime(0.035, c.currentTime);
-            g.gain.linearRampToValueAtTime(0, c.currentTime + 0.18);
-            osc.start(); osc.stop(c.currentTime + 0.22);
+            osc.connect(g); g.connect(c.destination);
+            osc.type = 'sine';
+            const t = c.currentTime;
+            osc.frequency.setValueAtTime(420, t);
+            osc.frequency.exponentialRampToValueAtTime(1320, t + 0.16);
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(0.032, t + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+            osc.start(t); osc.stop(t + 0.20);
         } catch(e) {}
     };
-    // Two-tap chime — notification arrival
-    window.uiNotif = () => { tone(880, 0.10, 'sine', 0.03); tone(660, 0.14, 'sine', 0.02, 0.13); };
-    // Airy swipe — app open / screen transition
-    window.uiSwipe = () => {
-        try {
-            const c = ctx(); if (!c) return;
-            const buf = c.createBuffer(1, Math.floor(c.sampleRate * 0.14), c.sampleRate);
-            const d = buf.getChannelData(0);
-            for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) * 0.07;
-            const src = c.createBufferSource();
-            const flt = c.createBiquadFilter(); flt.type = 'highpass'; flt.frequency.value = 2800;
-            const g = c.createGain(); g.gain.value = 0.55;
-            src.buffer = buf; src.connect(flt); flt.connect(g); g.connect(c.destination); src.start();
-        } catch(e) {}
+
+    // ── notification chime — two-tone descending (iOS Messages style)
+    window.uiNotif = () => {
+        tone(1047, 0.18, 'sine', 0.028);          // C6
+        tone(784,  0.22, 'sine', 0.020, 0.14);    // G5
+    };
+
+    // ── glitch / error — harsh buzz for wrong passcode
+    window.uiError = () => {
+        tone(180, 0.12, 'sawtooth', 0.025);
+        tone(160, 0.10, 'sawtooth', 0.018, 0.06);
+    };
+
+    // ── unlock success — bright ascending 3-note chime
+    window.uiUnlock = () => {
+        tone(880,  0.12, 'sine', 0.028);           // A5
+        tone(1047, 0.12, 'sine', 0.024, 0.10);     // C6
+        tone(1319, 0.18, 'sine', 0.020, 0.20);     // E6
+    };
+
+    // ── screenshot / camera shutter — quick mechanical snap
+    window.uiShutter = () => {
+        noise(0.05, 800, 0.7);
+        tone(240, 0.08, 'square', 0.018, 0.01);
     };
 })();
 
@@ -193,7 +261,7 @@ function showScreen(id) {
     // ── Notification container visibility ────────────────────
     // Show only on gameplay screens; hide during story/cinematic sequences
     const NOTIF_VISIBLE = new Set([
-        'lock-screen','passcode-screen','home-screen',
+        'lock-screen','home-screen',
         'messages-app','chat-view','gallery-app','album-view','image-view',
         'settings-app','settings-detail','notes-app','note-view',
         'browser-app','search-results','browser-history-screen','browser-page-view',
@@ -246,7 +314,7 @@ document.querySelectorAll('.app-icon').forEach(icon => {
 document.querySelectorAll('.back-btn').forEach(btn => {
     btn.addEventListener('click', e => {
         e.stopPropagation();
-        window.uiClick?.();
+        window.uiBack?.();
         const target = btn.getAttribute('data-back');
         if (!target) return;
         // When going back to home, slide the current app down first then settle home
@@ -273,8 +341,8 @@ const unlockTrigger = document.getElementById('unlock-trigger');
 let touchStartY = 0;
 if (unlockTrigger) {
     unlockTrigger.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
-    unlockTrigger.addEventListener('touchend', e => { if (touchStartY - e.changedTouches[0].clientY > 30) showScreen('passcode-screen'); }, { passive: true });
-    unlockTrigger.addEventListener('click', () => showScreen('passcode-screen'));
+    unlockTrigger.addEventListener('touchend', e => { if (touchStartY - e.changedTouches[0].clientY > 30) { window.uiSwipe?.(); showScreen('passcode-screen'); } }, { passive: true });
+    unlockTrigger.addEventListener('click', () => { window.uiSwipe?.(); showScreen('passcode-screen'); });
 }
 
 // Act 2 lock screen — swipe-up support
@@ -439,8 +507,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 splash.style.opacity = '';
                 // Populate landing page data before showing
                 lsPopulateLanding();
-                // Show title screen
-                title.classList.add('active');
+                // Show title screen via showScreen() so notification container visibility is set correctly
+                showScreen('title-screen');
             }, 700);
         }, 2200);
     }
@@ -453,15 +521,21 @@ const mainDots = mainDotsContainer ? mainDotsContainer.querySelectorAll('.dot') 
 
 window.handleKeypad = function(key) {
     if (!mainDotsContainer) return;
+    if (key === 'cancel') { window.uiBack?.(); passcodeEntry = ''; updateDots(mainDots); showScreen('lock-screen'); return; }
+    if (key === 'del') { window.uiClick?.(); passcodeEntry = passcodeEntry.slice(0,-1); updateDots(mainDots); return; }
     window.uiClick?.();
-    if (key === 'cancel') { passcodeEntry = ''; updateDots(mainDots); showScreen('lock-screen'); return; }
-    if (key === 'del') { passcodeEntry = passcodeEntry.slice(0,-1); updateDots(mainDots); return; }
     if (passcodeEntry.length < 4) {
         passcodeEntry += key; updateDots(mainDots);
         if (passcodeEntry.length === 4) {
             setTimeout(() => {
-                if (passcodeEntry === CORRECT_PASSCODE) { showScreen('home-screen'); passcodeEntry = ''; updateDots(mainDots); }
-                else { mainDots.forEach(d => d.classList.add('error')); setTimeout(() => { passcodeEntry = ''; updateDots(mainDots); }, 400); }
+                if (passcodeEntry === CORRECT_PASSCODE) {
+                    window.uiUnlock?.();
+                    showScreen('home-screen'); passcodeEntry = ''; updateDots(mainDots);
+                } else {
+                    window.uiError?.();
+                    mainDots.forEach(d => d.classList.add('error'));
+                    setTimeout(() => { passcodeEntry = ''; updateDots(mainDots); }, 400);
+                }
             }, 200);
         }
     }
@@ -490,11 +564,10 @@ function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
         setTimeout(() => notif.remove(), 380); // matches notifRise animation duration
     }, 6000);
 }
-setTimeout(() => {
-    createNotification('Messages','UNKNOWN','You took it.',false,false);
-    createNotification('Messages','Mom','Happy 26th Birthday Aarav! Nov 7th is always special. Call me back.',false,false);
-    createNotification('Calendar','Reminder','Dockyard Meeting — 11:30 PM',false,false);
-}, 1000);
+// Story notifications — appear on lock screen one by one, auto-remove after 10s
+setTimeout(() => createNotification('Messages','UNKNOWN','You took it.',false,true), 1200);
+setTimeout(() => createNotification('Messages','Mom','Happy 26th Birthday Aarav! Nov 7th is always special. Call me back.',false,true), 2400);
+setTimeout(() => createNotification('Calendar','Reminder','Dockyard Meeting — 11:30 PM',false,true), 3600);
 
 // --- NX List Renderer ---
 function renderNXList(elementId, data, onClickCb, showIcon=false) {
@@ -506,7 +579,7 @@ function renderNXList(elementId, data, onClickCb, showIcon=false) {
         div.className = 'nx-list-item';
         const iconHtml = showIcon ? `<div class="nx-icon" style="background:${item.iconBg||'#333'}">${item.icon||'•'}</div>` : '';
         div.innerHTML = `${iconHtml}<div class="nx-content"><div class="nx-title">${item.title}</div><div class="nx-sub ${item.warning?'warning-text':''}">${item.sub}</div></div>${onClickCb?'<div class="nx-chevron">›</div>':''}`;
-        if (onClickCb) div.addEventListener('click', () => onClickCb(item));
+        if (onClickCb) div.addEventListener('click', () => { window.uiTap?.(); onClickCb(item); });
         container.appendChild(div);
     });
 }
@@ -595,7 +668,7 @@ const calContainer = document.getElementById('calendar-list');
 calendarData.forEach(item => {
     const div = document.createElement('div'); div.className='cal-event';
     div.innerHTML=`<div class="cal-time">${item.time}</div><div class="cal-card ${item.warning?'warning':''}"><h4>${item.title}</h4><p>${item.sub}</p></div>`;
-    div.querySelector('.cal-card').addEventListener('click',()=>{ document.getElementById('event-detail-body').innerHTML=item.detail; showScreen('event-detail'); });
+    div.querySelector('.cal-card').addEventListener('click',()=>{ window.uiTap?.(); document.getElementById('event-detail-body').innerHTML=item.detail; showScreen('event-detail'); });
     calContainer.appendChild(div);
 });
 
@@ -746,7 +819,7 @@ function renderChatList() {
         const nameStyle = isEcho ? 'color:#b44fde;font-family:"Share Tech Mono",monospace;' : '';
         const preview = (lastMsg.text||'').substring(0,55)+(lastMsg.text?.length>55?'...':'');
         item.innerHTML=`<div class="msg-avatar" style="${avatarStyle}">${isEcho?'◈':chat.name.charAt(0)}</div><div class="nx-content" style="padding-right:30px;"><div class="nx-title" style="${nameStyle}">${chat.name} <span class="msg-time">12:00</span></div><div class="nx-sub" style="${chat.unread?'color:#fff;font-weight:600;':''}">${preview}</div></div>${chat.unread?'<div class="msg-unread-dot"></div>':''}`;
-        item.addEventListener('click',()=>openChat(chat.id));
+        item.addEventListener('click',()=>{ window.uiTap?.(); openChat(chat.id); });
         list.appendChild(item);
     });
 }
@@ -787,6 +860,7 @@ function appendMessageToDOM(msg) {
 }
 
 window.sendChatMessage = function() {
+    window.uiSend?.();
     const input = document.getElementById('chat-input-field');
     const text = input.value.trim();
     if (!text || !activeChatId) return;
@@ -839,7 +913,7 @@ function renderNotesList() {
     notes.forEach(note=>{
         const item=document.createElement('div'); item.className='note-card';
         item.innerHTML=`<div class="note-title">${note.title}</div><div class="note-preview">${note.body}</div>`;
-        item.addEventListener('click',()=>{ document.getElementById('note-title').textContent=note.title; document.getElementById('note-body').textContent=note.body; showScreen('note-view'); });
+        item.addEventListener('click',()=>{ window.uiTap?.(); document.getElementById('note-title').textContent=note.title; document.getElementById('note-body').textContent=note.body; showScreen('note-view'); });
         grid.appendChild(item);
     });
 }
@@ -998,8 +1072,8 @@ window.openAlbum = function(albumName) {
     currentAlbumName=albumName; currentImageIndex=0;
     galleryData[albumName].forEach((item,idx)=>{
         const div=document.createElement('div'); div.className='gallery-item';
-        if(item.isZip){ div.classList.add('file-item'); div.innerHTML='📁'; div.addEventListener('click',()=>document.getElementById('zip-modal').classList.add('active')); }
-        else { div.style.backgroundImage=`url(${item.url})`; div.addEventListener('click',()=>openImageAt(idx)); }
+        if(item.isZip){ div.classList.add('file-item'); div.innerHTML='📁'; div.addEventListener('click',()=>{ window.uiTap?.(); document.getElementById('zip-modal').classList.add('active'); }); }
+        else { div.style.backgroundImage=`url(${item.url})`; div.addEventListener('click',()=>{ window.uiTap?.(); openImageAt(idx); }); }
         grid.appendChild(div);
     });
     showScreen('album-view');
@@ -1188,13 +1262,13 @@ window.enterAct2Home=function(){
     document.getElementById('home-screen').classList.add('act2-home');
     if(!document.getElementById('files-icon')){
         const el=document.createElement('div'); el.className='app-icon'; el.id='files-icon';
-        el.innerHTML='<div class="icon" style="background:linear-gradient(135deg,#ff9500,#ff6b00);font-size:22px;display:flex;align-items:center;justify-content:center;">📁</div><span>Files</span>';
+        el.innerHTML='<div class="icon files-icon"></div><span>Files</span>';
         el.addEventListener('click',()=>showScreen('files-app'));
         document.querySelector('.app-grid').appendChild(el);
     }
     if(!document.getElementById('observer-icon')){
         const el=document.createElement('div'); el.className='app-icon'; el.id='observer-icon';
-        el.innerHTML='<div class="icon" style="background:#1a000a;border:1px solid #ff453a;font-size:22px;display:flex;align-items:center;justify-content:center;">👁</div><span style="color:#ff453a">Observer</span>';
+        el.innerHTML='<div class="icon observer-icon-bg"></div><span style="color:#ff453a">Observer</span>';
         el.addEventListener('click',()=>openObserverApp());
         document.querySelector('.app-grid').appendChild(el);
     }
@@ -2878,14 +2952,14 @@ function restoreFromSave(save) {
         // Files app icon
         if (!document.getElementById('files-icon')) {
             const el = document.createElement('div'); el.className = 'app-icon'; el.id = 'files-icon';
-            el.innerHTML = '<div class="icon" style="background:linear-gradient(135deg,#ff9500,#ff6b00);font-size:22px;display:flex;align-items:center;justify-content:center;">📁</div><span>Files</span>';
+            el.innerHTML = '<div class="icon files-icon"></div><span>Files</span>';
             el.addEventListener('click', () => showScreen('files-app'));
             document.querySelector('.app-grid')?.appendChild(el);
         }
         // Observer icon
         if (!document.getElementById('observer-icon')) {
             const el = document.createElement('div'); el.className = 'app-icon'; el.id = 'observer-icon';
-            el.innerHTML = '<div class="icon" style="background:#1a000a;border:1px solid #ff453a;font-size:22px;display:flex;align-items:center;justify-content:center;">👁</div><span style="color:#ff453a">Observer</span>';
+            el.innerHTML = '<div class="icon observer-icon-bg"></div><span style="color:#ff453a">Observer</span>';
             el.addEventListener('click', () => openObserverApp());
             document.querySelector('.app-grid')?.appendChild(el);
         }

@@ -213,6 +213,7 @@
                 <div class="passcode-dots" id="main-passcode-dots">
                     <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
                 </div>
+                <div class="passcode-attempt-hint" id="passcode-attempt-hint"></div>
                 <div class="keypad">
                     <button class="key" onclick="handleKeypad('1')">1</button><button class="key" onclick="handleKeypad('2')">2</button><button class="key" onclick="handleKeypad('3')">3</button>
                     <button class="key" onclick="handleKeypad('4')">4</button><button class="key" onclick="handleKeypad('5')">5</button><button class="key" onclick="handleKeypad('6')">6</button>
@@ -1451,6 +1452,93 @@
 
         <!-- Pull zone — invisible strip at top of status bar -->
         <div id="notif-pull-zone"></div>
+
+        <!-- ══════════════════════════════════════ -->
+        <!-- ACT 4 SCREENS                         -->
+        <!-- ══════════════════════════════════════ -->
+
+        <!-- Act 4 Sync Opening -->
+        <div id="act4-sync-opening" class="screen">
+            <div class="act4-sync-container">
+                <div class="act4-silhouette" id="act4-silhouette"></div>
+                <div class="act4-sync-text" id="act4-sync-text"></div>
+            </div>
+        </div>
+
+        <!-- Archive App -->
+        <div id="archive-app" class="screen app-screen">
+            <div class="archive-header">
+                <button class="back-btn" data-back="home-screen" style="color:#ff2244;">←</button>
+                <h2>📂 ARCHIVE</h2>
+            </div>
+            <div class="scroll-container">
+                <div class="archive-subject-list" id="archive-subject-list"></div>
+            </div>
+        </div>
+
+        <!-- Archive Subject View -->
+        <div id="archive-subject-view" class="screen app-screen">
+            <div class="archive-header">
+                <button class="back-btn" data-back="archive-app" style="color:#ff2244;">←</button>
+                <h2 id="archive-subject-title">Subject</h2>
+            </div>
+            <div class="scroll-container">
+                <div class="archive-subject-body" id="archive-subject-body"></div>
+            </div>
+        </div>
+
+        <!-- Archive Subject Chat -->
+        <div id="archive-subject-chat" class="screen app-screen">
+            <div class="app-header app-header-small" style="background:#080008;border-color:#220011;">
+                <button class="back-btn" data-back="archive-subject-view" style="color:#ff2244;">←</button>
+                <h2 style="color:#ff2244;font-family:'Share Tech Mono',monospace;" id="archive-chat-title">Fragments</h2>
+            </div>
+            <div class="chat-history" id="archive-chat-history"></div>
+        </div>
+
+        <!-- Maze App -->
+        <div id="maze-app" class="screen app-screen">
+            <div class="maze-header">
+                <button class="back-btn" id="maze-back-btn" style="color:#ff2244;">←</button>
+                <h2 id="maze-path-display">/ROOT/</h2>
+            </div>
+            <div class="scroll-container">
+                <div class="maze-folder-list" id="maze-folder-list"></div>
+            </div>
+        </div>
+
+        <!-- ECHO Root -->
+        <div id="echo-root" class="screen">
+            <div class="echo-root-container">
+                <div class="echo-root-messages" id="echo-root-messages"></div>
+                <div class="echo-root-input" id="echo-root-input" style="display:none;">
+                    <div class="echo-root-choices" id="echo-root-choices"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROOT_CORE Access Code Modal -->
+        <div id="echo-root-modal" class="modal-overlay">
+            <div class="modal-box" style="border:1px solid rgba(255,255,255,0.1);background:#000;">
+                <h3 style="color:#fff;font-family:'Share Tech Mono',monospace;letter-spacing:3px;">◈ ROOT_CORE</h3>
+                <p style="color:#555;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:20px;">Direct access restricted.<br>Enter override code to proceed.</p>
+                <input type="text" id="echo-root-code" placeholder="_ _ _ _ _ _ _ _ _ _" maxlength="20" style="letter-spacing:4px;font-family:'Share Tech Mono',monospace;text-transform:uppercase;background:#111;border-color:#333;color:#fff;">
+                <div style="color:#ff453a;font-size:12px;display:none;margin-bottom:12px;font-family:'Share Tech Mono',monospace;" id="echo-root-error">ACCESS DENIED</div>
+                <div id="echo-root-code-hint" style="color:#666;font-size:11px;display:none;margin-bottom:14px;font-family:'Share Tech Mono',monospace;">💡 Hint: check the subject who merged willingly.</div>
+                <div class="modal-actions">
+                    <button onclick="document.getElementById('echo-root-modal').classList.remove('active')" style="background:#111;border-color:#333;color:#666;">Cancel</button>
+                    <button onclick="checkEchoRootCode()" style="background:#fff;color:#000;">EXECUTE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Act 4 Ending -->
+        <div id="act4-ending" class="screen">
+            <div id="act4-ending-content" style="width:100%;height:100%;"></div>
+        </div>
+
+        <!-- Memory Bleed Overlay -->
+        <div id="memory-bleed-overlay" style="position:absolute;inset:0;pointer-events:none;z-index:250;opacity:0;transition:opacity 0.8s;"></div>
 
     </div><!-- end #phone-container -->
     </div><!-- end .phone-shell -->

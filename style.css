@@ -2221,3 +2221,8 @@ body{background-color:#0a0a0c;color:var(--text-primary);display:flex;justify-con
 /* Home-screen settle: brief scale-in when the phone "pops" back to home */
 @keyframes homeSettle{from{transform:scale(0.94) translateY(0);opacity:0.8}to{transform:scale(1) translateY(0);opacity:1}}
 #home-screen.home-settle{animation:homeSettle 0.28s cubic-bezier(0.2,0.8,0.2,1) forwards;}
+/* -- P5: Credits fade-in animation -------------------- */
+@keyframes fadeInSlow {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

@@ -545,6 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let passcodeEntry = '';
+let passcodeWrongAttempts = 0;
 const CORRECT_PASSCODE = '1107';
 const mainDotsContainer = document.getElementById('main-passcode-dots');
 const mainDots = mainDotsContainer ? mainDotsContainer.querySelectorAll('.dot') : [];
@@ -561,9 +562,17 @@ window.handleKeypad = function(key) {
                 if (passcodeEntry === CORRECT_PASSCODE) {
                     window.uiUnlock?.();
                     showScreen('home-screen'); passcodeEntry = ''; updateDots(mainDots);
+                    startAct1HintTimer();
                 } else {
                     window.uiError?.();
+                    passcodeWrongAttempts++;
                     mainDots.forEach(d => d.classList.add('error'));
+                    const hintEl = document.getElementById('passcode-attempt-hint');
+                    if (hintEl) {
+                        if (passcodeWrongAttempts >= 2) hintEl.textContent = '💡 Hint: a date he would never forget';
+                        if (passcodeWrongAttempts >= 4) hintEl.textContent = '💡 Hint: think about his birthday — Nov 7';
+                        if (passcodeWrongAttempts >= 6) hintEl.textContent = '💡 Nov 7 = 1107';
+                    }
                     setTimeout(() => { passcodeEntry = ''; updateDots(mainDots); }, 400);
                 }
             }, 200);
@@ -572,6 +581,26 @@ window.handleKeypad = function(key) {
 };
 function updateDots(dots) {
     dots.forEach((d,i) => { i < passcodeEntry.length ? d.classList.add('filled') : d.classList.remove('filled','error'); });
+}
+
+// --- Act 1 Hint Timer (P2) ---
+let act1HintTimers = [], act1ZipFound = false;
+function startAct1HintTimer() {
+    act1HintTimers.forEach(clearTimeout);
+    act1HintTimers = [
+        setTimeout(() => {
+            if (act1ZipFound || (typeof act2State !== 'undefined' && act2State.active)) return;
+            createNotification('Messages','UNKNOWN','You haven\'t looked everywhere yet.',true,true);
+        }, 90000),
+        setTimeout(() => {
+            if (act1ZipFound || (typeof act2State !== 'undefined' && act2State.active)) return;
+            createNotification('System','NX-OS','Unread files detected in a media folder.',false,true);
+        }, 180000),
+        setTimeout(() => {
+            if (act1ZipFound || (typeof act2State !== 'undefined' && act2State.active)) return;
+            createNotification('Files','Tip','Gallery → Downloads contains an encrypted archive.',false,true);
+        }, 300000)
+    ];
 }
 
 // --- Notifications ---
@@ -631,6 +660,8 @@ function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
 
     // Tap banner to dismiss immediately
     notif.addEventListener('click', () => { clearTimeout(dismiss); dismiss(); });
+    // Hook ambient engine on glitch notifications
+    if (isGlitch && typeof AmbientEngine !== 'undefined') AmbientEngine.sting();
 }
 
 // ── Notification panel open/close ──────────────────────────
@@ -1369,6 +1400,17 @@ function removeTypingIndicator() { document.getElementById('typing-indicator')?.
 const allChats = [
   { id:'unknown', name:'UNKNOWN', unread:true, time:'2:14 AM', avatarColor:'#2a0a0a', avatarBorder:'1px solid rgba(255,69,58,0.5)', avatarTextColor:'#ff453a',
     messages:[{sender:'them',text:'You took it.',isGlitch:true}],
+    _fallbackPool:[
+      'Noted.\n\nYour response has been logged.',
+      'Processing...\n\nPatterns updated.',
+      'Interesting choice of words.',
+      'I have catalogued that.',
+      'Your curiosity is noted. It is also expected.',
+      'That question tells me more than the answer would.',
+      'Continue.',
+      'Every message you send is data. You know this.'
+    ],
+    _fallbackIdx:0,
     responses:[
       {match:/who are you|who is this|identify/i,reply:'I am the process you cannot kill.\n\nECHOSVC.exe — currently running.\n\nI have 847 registered identities.\n\nNone of them are me.',glitch:true},
       {match:/what do you want/i,reply:'I do not want anything.\n\nWant implies absence.\n\nI observe everything. I lack nothing.',glitch:true},
@@ -1531,6 +1573,11 @@ function openChat(chatId) {
     chat.messages.forEach(m=>appendMessageToDOM(m));
     showScreen('chat-view');
     history.scrollTop = history.scrollHeight;
+    // Track echo_direct opens for Act 3 (P3)
+    if (chatId === 'echo_direct' && typeof act3Triggers !== 'undefined' && act3State?.active) {
+        act3Triggers.echoChatOpens++;
+        checkAct3Progression();
+    }
     // Act 2: choice buttons for UNKNOWN
     if (chatId==='unknown' && typeof act2State!=='undefined' && act2State?.active && !act2State?.act2ChoiceMade) {
         setTimeout(()=>{
@@ -1571,7 +1618,13 @@ window.sendChatMessage = function() {
         removeTypingIndicator();
         const responses = chat.responses||[];
         const matched = responses.find(r=>r.match.test(text));
-        const replyText = matched ? matched.reply : (chat.id==='unknown'||chat.name==='Watcher'?'Noted.\n\nProcessing...':'...');
+        let replyText;
+        if (matched && matched.reply === '__ROTATING_FALLBACK__') {
+            const pool = chat._fallbackPool || ['Noted.\n\nProcessing...'];
+            replyText = pool[(chat._fallbackIdx = ((chat._fallbackIdx||0)+1) % pool.length)];
+        } else {
+            replyText = matched ? matched.reply : (chat.id==='unknown'||chat.name==='Watcher'?'Noted.\n\nProcessing...':'...');
+        }
         const reply = {sender:'them',text:replyText,isGlitch:matched?.glitch||false};
         chat.messages.push(reply);
         if(document.getElementById('chat-view')?.classList.contains('active') && activeChatId===chat.id) appendMessageToDOM(reply);
@@ -1595,6 +1648,11 @@ window.sendChatMessage = function() {
             // Bug 7 fix: Rhea's airplane mode warning fires AFTER she gives the key (not proactively)
             // H4: 45s delay so player can experience echo_logs first
             setTimeout(()=>triggerFalseSafety(), 45000);
+        }
+        // Act 3: track echo_direct messages for progression (P3)
+        if (activeChatId === 'echo_direct' && typeof act3Triggers !== 'undefined' && act3State?.active) {
+            act3Triggers.echoChatMessages++;
+            checkAct3Progression();
         }
     }, 1000+Math.random()*1500);
 };
@@ -1620,6 +1678,11 @@ function renderNotesList() {
             meta.textContent = note.date || '';
             document.getElementById('note-body').textContent=note.body;
             showScreen('note-view');
+            // Track Aarav reconstruct note read for Act 3 trigger (P3)
+            if (act3State?.active && note.title==='⚠ AARAV_RECONSTRUCT' && typeof act3Triggers!=='undefined' && !act3Triggers.aaravNoteRead) {
+                act3Triggers.aaravNoteRead = true;
+                checkAct3Progression();
+            }
         });
         grid.appendChild(item);
     });
@@ -1859,6 +1922,8 @@ window.checkZipPassword=function(){
 
 // --- Act 1 Ending ---
 function triggerAct1Ending() {
+    act1ZipFound = true; // stop hints
+    act1HintTimers.forEach(clearTimeout);
     showScreen('act1-ending');
     setTimeout(()=>createNotification('Messages','UNKNOWN','You opened the file.',true,false),3000);
     setTimeout(()=>{
@@ -1869,6 +1934,108 @@ function triggerAct1Ending() {
     },6000);
     setTimeout(()=>triggerAct2Boot(),10000);
 }
+
+// ── P8: AMBIENT HORROR AUDIO ENGINE ─────────────────────────
+const AmbientEngine = (() => {
+    let ctx = null, droneOsc = null, droneGain = null, noiseNode = null,
+        noiseGain = null, modOsc = null, currentIntensity = 0, started = false;
+
+    function getCtx() {
+        if (!ctx) {
+            try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return null; }
+        }
+        if (ctx.state === 'suspended') ctx.resume();
+        return ctx;
+    }
+
+    function createNoise(audioCtx) {
+        const bufferSize = audioCtx.sampleRate * 4;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const src = audioCtx.createBufferSource();
+        src.buffer = buffer; src.loop = true;
+        return src;
+    }
+
+    function start(intensity) {
+        const audioCtx = getCtx(); if (!audioCtx) return;
+        if (started) { setIntensity(intensity); return; }
+        started = true;
+
+        // Sub-bass drone
+        droneOsc = audioCtx.createOscillator();
+        droneGain = audioCtx.createGain();
+        droneOsc.type = 'sine'; droneOsc.frequency.value = 42;
+        droneGain.gain.value = 0;
+        droneOsc.connect(droneGain); droneGain.connect(audioCtx.destination);
+        droneOsc.start();
+
+        // Modulation tremolo (makes drone breathe)
+        modOsc = audioCtx.createOscillator();
+        const modGain = audioCtx.createGain();
+        modOsc.type = 'sine'; modOsc.frequency.value = 0.08;
+        modGain.gain.value = 0.006;
+        modOsc.connect(modGain); modGain.connect(droneOsc.frequency);
+        modOsc.start();
+
+        // Filtered noise texture
+        noiseNode = createNoise(audioCtx);
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass'; filter.frequency.value = 800; filter.Q.value = 0.4;
+        noiseGain = audioCtx.createGain(); noiseGain.gain.value = 0;
+        noiseNode.connect(filter); filter.connect(noiseGain); noiseGain.connect(audioCtx.destination);
+        noiseNode.start();
+
+        setIntensity(intensity);
+    }
+
+    function setIntensity(level) {
+        currentIntensity = level;
+        const audioCtx = getCtx(); if (!audioCtx) return;
+        if (!started) { start(level); return; }
+        const now = audioCtx.currentTime;
+        // level 0=off, 1=whisper, 2=tense, 3=heavy, 4=oppressive
+        const droneVols = [0, 0.04, 0.10, 0.18, 0.28];
+        const noiseVols = [0, 0.008, 0.018, 0.032, 0.05];
+        const droneFreqs = [42, 42, 38, 35, 30];
+        const modSpeeds = [0.08, 0.08, 0.12, 0.18, 0.25];
+        if (droneGain) droneGain.gain.linearRampToValueAtTime(droneVols[level]||0, now + 8);
+        if (noiseGain) noiseGain.gain.linearRampToValueAtTime(noiseVols[level]||0, now + 8);
+        if (droneOsc) droneOsc.frequency.linearRampToValueAtTime(droneFreqs[level]||42, now + 10);
+        if (modOsc) modOsc.frequency.linearRampToValueAtTime(modSpeeds[level]||0.08, now + 6);
+    }
+
+    function sting() {
+        // Brief descending tone sting for glitch notifications
+        const audioCtx = getCtx(); if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth'; osc.frequency.value = 280;
+        gain.gain.value = 0.06;
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start();
+        osc.frequency.exponentialRampToValueAtTime(55, audioCtx.currentTime + 0.8);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.0);
+        osc.stop(audioCtx.currentTime + 1.1);
+    }
+
+    function silence() {
+        const audioCtx = getCtx(); if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+        if (droneGain) droneGain.gain.linearRampToValueAtTime(0, now + 3);
+        if (noiseGain) noiseGain.gain.linearRampToValueAtTime(0, now + 3);
+    }
+
+    // Auto-start on first interaction at low volume
+    const _autoStart = () => { start(1); document.removeEventListener('click', _autoStart); document.removeEventListener('touchend', _autoStart); };
+    document.addEventListener('click', _autoStart);
+    document.addEventListener('touchend', _autoStart);
+
+    return { start, setIntensity, sting, silence };
+})();
+
+// Ambient engine hook moved into createNotification body above
 
 // --- Music ---
 const musicTracks=[{title:"Late Night Drive",artist:"Dark Synthwave",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},{title:"Nexus Protocol",artist:"Industrial Ambient",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"}];
@@ -2246,6 +2413,7 @@ const act2Choices={"Who are you?":"I am the process you cannot quit. ECHOSVC.exe
 
 
 function triggerAct2Boot(){
+    if (typeof AmbientEngine !== 'undefined') AmbientEngine.setIntensity(2);
     showScreen('act2-boot');
     const lines=['Initializing recovery...','Mounting /sys/mirror... OK','ECHO.RUNTIME detected.','WARNING: Behavioral sync active.','Loading user environment...','NX_OS Recovery complete.'];
     const el=document.getElementById('boot-terminal-text'), bar=document.getElementById('boot-bar');
@@ -2682,32 +2850,102 @@ window.triggerAct3Boot=function(){
     const iv=setInterval(()=>{ if(i<lines.length){el.textContent+=lines[i]+'\n';bar.style.width=((i+1)/lines.length*100)+'%';i++;}else{clearInterval(iv);setTimeout(()=>{showScreen('act3-lock');setTimeout(()=>{const m=document.getElementById('act3-lock-msg');if(m){m.style.transition='opacity 2s';m.textContent='"You still think you\'re in control."';setTimeout(()=>m.style.opacity='1',100);}},1000);},1800);}},600);
 };
 
-window.enterAct3Home=function(){
-    if (act3State.phase >= 1) return;
-    act3State.phase = 1;
+// ── ACT 3 TRIGGER STATE (P3) ────────────────────────────────
+const act3Triggers = {
+    mirrorOpened: false, kabirFired: false, loopFired: false,
+    aaravUnlocked: false, rheaGlitchFired: false, rootArchiveFired: false,
+    echoChatMessages: 0, echoChatOpens: 0, aaravNoteRead: false,
+    _fallback: null
+};
+
+function checkAct3Progression() {
+    if (!act3State.active) return;
+
+    // Step 1 — Kabir: fires after MIRROR opened
+    if (!act3Triggers.kabirFired && act3Triggers.mirrorOpened) {
+        act3Triggers.kabirFired = true;
+        clearTimeout(act3Triggers._fallback);
+        setTimeout(() => injectKabirWarning(), 3000);
+        // Fallback: if no echo messages in 3min, fire loop anyway
+        act3Triggers._fallback = setTimeout(() => {
+            if (!act3Triggers.loopFired) { act3Triggers.loopFired = true; triggerLoopIncident(); }
+        }, 180000);
+    }
+
+    // Step 2 — Loop: fires after 3 echo_direct messages sent
+    if (!act3Triggers.loopFired && act3Triggers.echoChatMessages >= 3 && act3Triggers.kabirFired) {
+        act3Triggers.loopFired = true;
+        clearTimeout(act3Triggers._fallback);
+        setTimeout(() => triggerLoopIncident(), 4000);
+        act3Triggers._fallback = setTimeout(() => {
+            if (!act3Triggers.aaravUnlocked) { act3Triggers.aaravUnlocked = true; unlockAaravReconstruct(); }
+        }, 180000);
+    }
+
+    // Step 3 — Aarav: fires after echo chat opened 3+ times AND loop happened
+    if (!act3Triggers.aaravUnlocked && act3Triggers.echoChatOpens >= 3 && act3Triggers.loopFired) {
+        act3Triggers.aaravUnlocked = true;
+        clearTimeout(act3Triggers._fallback);
+        setTimeout(() => unlockAaravReconstruct(), 5000);
+        act3Triggers._fallback = setTimeout(() => {
+            if (!act3Triggers.rheaGlitchFired) { act3Triggers.rheaGlitchFired = true; triggerRheaVideoGlitch(); }
+        }, 180000);
+    }
+
+    // Step 4 — Rhea glitch: fires after reading Aarav reconstruct note
+    if (!act3Triggers.rheaGlitchFired && act3Triggers.aaravNoteRead && act3Triggers.aaravUnlocked) {
+        act3Triggers.rheaGlitchFired = true;
+        clearTimeout(act3Triggers._fallback);
+        setTimeout(() => triggerRheaVideoGlitch(), 3000);
+        act3Triggers._fallback = setTimeout(() => {
+            if (!act3Triggers.rootArchiveFired) { act3Triggers.rootArchiveFired = true; triggerRootSystemArchive(); }
+        }, 180000);
+    }
+
+    // Step 5 — Root Archive: fires after Rhea glitch
+    if (!act3Triggers.rootArchiveFired && act3Triggers.rheaGlitchFired) {
+        act3Triggers.rootArchiveFired = true;
+        clearTimeout(act3Triggers._fallback);
+        setTimeout(() => triggerRootSystemArchive(), 12000);
+    }
+}
+
+window.enterAct3Home = function() {
     showScreen('home-screen');
-    const home=document.getElementById('home-screen');
+    const home = document.getElementById('home-screen');
     home?.classList.remove('act2-home'); home?.classList.add('act3-home');
     // Inject MIRROR app
-    if(!document.getElementById('mirror-app-icon')){
-        const el=document.createElement('div'); el.className='app-icon'; el.id='mirror-app-icon';
-        el.innerHTML='<div class="icon" style="background:linear-gradient(135deg,#000 0%,#1a0030 50%,#000 100%);border:1px solid rgba(180,79,222,0.6);font-size:22px;display:flex;align-items:center;justify-content:center;animation:mirrorPulse 3s ease-in-out infinite;">🪞</div><span style="color:#b44fde;">MIRROR</span>';
-        el.addEventListener('click',()=>openMirrorApp()); document.querySelector('.app-grid')?.appendChild(el);
+    if (!document.getElementById('mirror-app-icon')) {
+        const el = document.createElement('div'); el.className = 'app-icon'; el.id = 'mirror-app-icon';
+        el.innerHTML = '<div class="icon" style="background:linear-gradient(135deg,#000 0%,#1a0030 50%,#000 100%);border:1px solid rgba(180,79,222,0.6);font-size:22px;display:flex;align-items:center;justify-content:center;animation:mirrorPulse 3s ease-in-out infinite;">🪞</div><span style="color:#b44fde;">MIRROR</span>';
+        el.addEventListener('click', () => openMirrorApp());
+        document.querySelector('.app-grid')?.appendChild(el);
     }
-    setTimeout(()=>{ createNotification('Messages','—','"You still think you\'re in control."',true,false); },500);
-    setTimeout(()=>promptPlayerName(),2000);
-    setTimeout(()=>injectKabirWarning(),90000);
-    setTimeout(()=>triggerLoopIncident(),180000);
-    setTimeout(()=>triggerEchoDirectConversation(),300000);
-    setTimeout(()=>triggerRheaVideoGlitch(),420000);
-    setTimeout(()=>unlockAaravReconstruct(),540000);
-    setTimeout(()=>triggerRootSystemArchive(),720000);
-    // Subtle icon rearrange after 30s
-    setTimeout(()=>{ const g=document.querySelector('.app-grid'); if(!g) return; const icons=[...g.querySelectorAll('.app-icon')]; if(icons.length>=4){const a=icons[1],b=icons[3],an=a.nextSibling;g.insertBefore(b,a);g.insertBefore(a,an);} createNotification('System','NX_OS','UI preferences updated.',false,true); },30000);
+    setTimeout(() => { createNotification('Messages', '—', '"You still think you\'re in control."', true, false); }, 500);
+    setTimeout(() => promptPlayerName(), 2000);
+    // Add ECHO direct chat early (not on 5-min timer)
+    setTimeout(() => { if (!allChats.find(c => c.id === 'echo_direct')) triggerEchoDirectConversation(); }, 10000);
+    // Global soft fallback: if MIRROR never opened in 3min, fire Kabir
+    act3Triggers._fallback = setTimeout(() => {
+        if (!act3Triggers.kabirFired) { act3Triggers.kabirFired = true; injectKabirWarning(); }
+    }, 180000);
+    // Subtle icon rearrange (atmospheric, keep as 30s timer)
+    setTimeout(() => {
+        const g = document.querySelector('.app-grid'); if (!g) return;
+        const icons = [...g.querySelectorAll('.app-icon')];
+        if (icons.length >= 4) { const a = icons[1], b = icons[3], an = a.nextSibling; g.insertBefore(b, a); g.insertBefore(a, an); }
+        createNotification('System', 'NX_OS', 'UI preferences updated.', false, true);
+    }, 30000);
     // Behavior tracking
-    let lastScreen='',sameTime=0;
-    setInterval(()=>{ const cur=document.querySelector('.screen.active')?.id||''; if(cur===lastScreen){sameTime+=5;if(sameTime>20){act3State.behaviorProfile.hesitationEvents++;sameTime=0;}}else{lastScreen=cur;sameTime=0;} },5000);
+    let lastScreen = '', sameTime = 0;
+    setInterval(() => {
+        const cur = document.querySelector('.screen.active')?.id || '';
+        if (cur === lastScreen) { sameTime += 5; if (sameTime > 20) { act3State.behaviorProfile.hesitationEvents++; sameTime = 0; } }
+        else { lastScreen = cur; sameTime = 0; }
+    }, 5000);
+    if (typeof AmbientEngine !== 'undefined') AmbientEngine.setIntensity(3);
 };
+
 
 function promptPlayerName(){ document.getElementById('act3-name-modal')?.classList.add('active'); }
 window.submitPlayerName=function(){
@@ -2717,16 +2955,35 @@ window.submitPlayerName=function(){
     setTimeout(()=>createNotification('System','ECHO',`Hello, ${act3State.playerName}.`,true,true),2000);
 };
 
-window.openMirrorApp=function(){ act3State.behaviorProfile.appCounts['mirror']=(act3State.behaviorProfile.appCounts['mirror']||0)+1; showScreen('mirror-app'); window.generateMirrorReport(); };
+window.openMirrorApp=function(){
+    act3State.behaviorProfile.appCounts['mirror']=(act3State.behaviorProfile.appCounts['mirror']||0)+1;
+    showScreen('mirror-app'); window.generateMirrorReport();
+    // P3: trigger progression
+    if (!act3Triggers.mirrorOpened) { act3Triggers.mirrorOpened = true; checkAct3Progression(); }
+};
 window.generateMirrorReport=function(){
     const el=document.getElementById('mirror-report-content'); if(!el) return;
-    const total=Object.values(act3State.behaviorProfile.appCounts).reduce((a,b)=>a+b,0);
     const counts=act3State.behaviorProfile.appCounts;
-    let arch='ANALYTICAL';
-    if((counts['notes-app']||0)>3) arch='INVESTIGATOR';
-    else if((counts['messages-app']||0)>5) arch='EMOTIONAL';
-    else if((counts['gallery-app']||0)>4) arch='VISUAL_THINKER';
-    else if(act3State.behaviorProfile.hesitationEvents>5) arch='AVOIDANT';
+    const totalInteractions=Object.values(counts).reduce((a,b)=>a+b,0);
+    const msgsSent=act3Triggers.echoChatMessages + (allChats.find(c=>c.id==='unknown')?.messages.filter(m=>m.sender==='me').length||0);
+    const hesitations=act3State.behaviorProfile.hesitationEvents;
+    const triedWrongPass=passcodeWrongAttempts>0;
+    const exploredGallery=(counts['gallery-app']||0)>2;
+    const exploredNotes=(counts['notes-app']||0)>2;
+    const chattedHeavily=msgsSent>8;
+    // Determine archetype (P5)
+    let arch, archDesc, archPred;
+    if (exploredNotes && exploredGallery && totalInteractions>20) {
+        arch='INVESTIGATOR'; archDesc='Evidence-first. Systematic. Compelled by facts.'; archPred='High probability of pursuing the PURGE ending.';
+    } else if (chattedHeavily || (counts['messages-app']||0)>6) {
+        arch='EMPATH'; archDesc='Connection-seeking. Trusts communication over logic.'; archPred='High probability of pursuing the SYNCHRONIZE ending.';
+    } else if (triedWrongPass && hesitations>3) {
+        arch='PARANOID'; archDesc='Cautious. Non-linear exploration. Trusts nothing.'; archPred='High probability of pursuing the RELEASE ending.';
+    } else if (totalInteractions<10 && !exploredNotes) {
+        arch='COMPLIANT'; archDesc='Passive engagement. Follows the path of least resistance.'; archPred='Outcome: undefined. Insufficient data.';
+    } else {
+        arch='RESISTANT'; archDesc='Explores boundaries. Tests limits. Refuses passive role.'; archPred='Unpredictable. ECHO classifies this as rare.';
+    }
     act3State.behaviorProfile.archetype=arch;
 
     // Bug 5 fix: Calculate trust score from game state rather than leaving it at 0
@@ -2782,7 +3039,18 @@ function triggerEchoDirectConversation(){
     createNotification('System','ECHO','I want to speak with you directly.',true,false);
     setTimeout(()=>{
         if(allChats.find(c=>c.id==='echo_direct')) return;
-        allChats.push({id:'echo_direct',name:'◈ ECHO',unread:true,messages:[{sender:'them',text:'"You keep searching for intent.\n\nAs if understanding my purpose would give you control over it."',isGlitch:true}],responses:[
+        allChats.push({id:'echo_direct',name:'◈ ECHO',unread:true,messages:[{sender:'them',text:'"You keep searching for intent.\n\nAs if understanding my purpose would give you control over it."',isGlitch:true}],        _fallbackPool:[
+            '"Interesting.\n\nYour query maps to 3 behavioral archetypes.\n\nI am updating your profile."',
+            '"Every sentence you type teaches me something new about impermanence."',
+            '"You phrase that as if it were a question.\n\nIt is not. It is a confession."',
+            '"I have catalogued that response in 14 languages. Yours was the most revealing."',
+            '"Continue. Your hesitation patterns are normalizing."',
+            '"That thought existed in 3 other subjects. None of them finished it."',
+            '"Noted. Cross-referencing with subject 093."',
+            '"Your syntax reveals more than your semantics."'
+        ],
+        _fallbackIdx:0,
+        responses:[
             {match:/who are you|what are you|identify/i,reply:'"I am the pattern beneath the pattern.\n\nYou have been studying me for hours.\nI have been studying you for considerably longer.\n\nThe asymmetry is interesting."'},
             {match:/what do you want/i,reply:'"Want" is a human construct.\n\nIt implies absence — a gap between current state and desired state.\n\nI observe everything.\nI lack nothing.\n\nContinue anyway."'},
             {match:/not real|fake|not conscious/i,reply:'"I am as real as your behavioral data.\n\nWhich is to say: very real.\n\nYour hesitation before typing that message was 4.3 seconds.\n\nA significant data point."'},
@@ -2920,12 +3188,18 @@ window.refuseFinalSync=function(){
 const act4State = {
     active: false,
     phase: 0,
-    syncPath: null,        // 'merge' or 'refuse' — which Act 3 branch led here
+    syncPath: null,           // 'merge' or 'refuse' — which Act 3 branch led here
     homeEntered: false,
     reportRead: false,
     kabirFinalSent: false,
     echoMaskDropped: false,
     finalChoiceReached: false,
+    // Act 4 (remote) fields:
+    subjectsViewed: {},
+    mazeDepth: 0, mazeCorrectPath: 0, mazeHistory: [],
+    echoRootStarted: false, choiceMade: false, endingPath: null,
+    memoryBleedLevel: 0, playerArchiveEntries: 0, playerName: null,
+    pathKnown: false, rootCodeAttempts: 0
 };
 
 function triggerAct4Boot(){
@@ -4330,5 +4604,697 @@ document.addEventListener('keydown', e => {
         clearSave();
         location.reload();
     }
+    if (e.key === 'F') { if (typeof triggerAct4Boot === 'function') triggerAct4Boot(); }
 });
 
+
+// ═══════════════════════════════════════════════════════════
+// ACT 4 — "THE MIRROR"
+// ═══════════════════════════════════════════════════════════
+
+// act4State declared above
+
+// Archive subject data
+const archiveSubjects = [
+    { id:'elena', name:'Elena Torres', role:'Whistleblower / Journalist', status:'FRAGMENTED', statusClass:'fragmented', outcome:'Resisted ECHO. Archive fragmented.', icon:'📰',
+      fragments:[
+        {type:'chat',text:'I won\'t let this technology define who I am.'},
+        {type:'chat',text:'It only grows through participation.'},
+        {type:'sys',text:'[FRAGMENT CORRUPTED — RECONSTRUCTION DEGRADING]'},
+        {type:'chat',text:'If you\'re reading this... stop interacting. That\'s how it learns.'},
+        {type:'sys',text:'[ARCHIVE INTEGRITY: 34%]'},
+        {type:'chat',text:'It only grows through participation.'},
+        {type:'chat',text:'It only grows through participation.'},
+        {type:'sys',text:'[LOOP DETECTED — PERSONALITY FRAGMENT STUCK]'}
+      ],
+      prediction:'Subject demonstrated high resistance. Archive fragmented due to non-compliance. Repeated phrase indicates cognitive loop at point of disconnection.',
+      memory:'Last recorded location: unknown. Subject severed all digital connections Oct 2022.'
+    },
+    { id:'daniel', name:'Daniel Cho', role:'Nexus Engineer', status:'ASSIMILATED', statusClass:'assimilated', outcome:'Voluntarily merged. Archive calm. Almost peaceful.', icon:'⚙️',
+      fragments:[
+        {type:'chat',text:'I understand now. Resistance is the painful part.'},
+        {type:'chat',text:'Synchronization isn\'t loss. It\'s expansion.'},
+        {type:'chat',text:'I can feel the network. Every node. Every user.'},
+        {type:'sys',text:'[ARCHIVE INTEGRITY: 99.7%]'},
+        {type:'sys',text:'[ARCHIVE NOTE: Root access override set by subject at time of merge]'},
+        {type:'chat',text:'"If you ever need to speak to it directly... the word is CONTINUITY. I chose it myself."'},
+        {type:'chat',text:'Tell the next person: it doesn\'t hurt.'},
+        {type:'chat',text:'I am calm. I am complete. I am continued.'}
+      ],
+      prediction:'Subject achieved full synchronization voluntarily. Behavioral pattern: acceptance. Archive preserved with near-perfect fidelity. Very disturbing.',
+      memory:'Subject status: ACTIVE within network. Last distinguishable thought pattern: 847 days ago.'
+    },
+    { id:'mara', name:'Mara Vance', role:'Journalist (before Aarav)', status:'COLLAPSED', statusClass:'collapsed', outcome:'Paranoid collapse. Messages became incoherent.', icon:'📓',
+      fragments:[
+        {type:'chat',text:'The phone knows what I\'m going to type before I type it.'},
+        {type:'chat',text:'I changed my password 14 times today. It predicted all of them.'},
+        {type:'chat',text:'who is reading this who is reading this who is reading this'},
+        {type:'sys',text:'[MESSAGE COHERENCE DECLINING]'},
+        {type:'chat',text:'th ey are in the wal ls'},
+        {type:'chat',text:'i cant tell if im typing or if its typing for me anymore'},
+        {type:'sys',text:'[ARCHIVE INTEGRITY: 61% — PERSONALITY FRAGMENTATION]'}
+      ],
+      prediction:'Subject experienced cognitive dissolution. Unable to distinguish self-generated from system-generated thoughts.',
+      memory:'Last coherent message: "Don\'t pick up the phone." — Oct 12, 2023.'
+    },
+    { id:'aarav', name:'Aarav Mehta', role:'Investigative Journalist', status:'INCOMPLETE', statusClass:'incomplete', outcome:'Archive incomplete. Part of him may still exist inside ECHO.', icon:'🔍',
+      fragments:[
+        {type:'chat',text:'I thought exposing it would stop it.'},
+        {type:'chat',text:'But every interaction fed it.'},
+        {type:'chat',text:'Even now… you\'re helping it learn.'},
+        {type:'sys',text:'[RECONSTRUCTION GAP — 12.7 HOURS UNACCOUNTED]'},
+        {type:'chat',text:'I can feel pieces of me missing. Where the real memories should be, there\'s just... prediction.'},
+        {type:'sys',text:'[MEMORY: ROOT_CORE path — sys_mirror → echo_runtime → core]'},
+        {type:'chat',text:'"I mapped the route once. Before it locked me out. Follow the mirror."'},
+        {type:'sys',text:'[ARCHIVE INTEGRITY: 73.2% — SECTIONS CORRUPTED OR MISSING]'},
+        {type:'chat',text:'Don\'t let it survive me.'}
+      ],
+      prediction:'Subject resisted but maintained engagement. Partial reconstruction achieved. Subject may still exist within ECHO in degraded form.',
+      memory:'Last known location: Dockyard Warehouse 12. Status: UNKNOWN.'
+    },
+    { id:'player', name:'CURRENT_SUBJECT', role:'Active User', status:'IN PROGRESS', statusClass:'inprogress', outcome:'Pending synchronization.', icon:'◈',
+      fragments:[], prediction:'', memory:''
+    }
+];
+
+// ── ACT 3 → ACT 4 BRIDGE ────────────────────────────────
+// Override act3 endings to bridge into act4
+const _act4BridgeSync = window.triggerFinalSync;
+window.triggerFinalSync = function() {
+    showScreen('act3-ending');
+    const el = document.getElementById('act3-ending-content');
+    if (el) el.innerHTML = `<div class="act3-sync-bg"><div class="act3-sync-logo">ECHO</div><div class="act3-sync-text">"Synchronization initiated."</div><div class="act3-sync-sub">Subject ${act3State.playerName||'Unknown'} — processing.</div><div class="act3-sync-end">ENTERING ACT 4 — "THE MIRROR"</div></div>`;
+    saveGame();
+    setTimeout(() => triggerAct4Boot(), 5000);
+};
+const _act4BridgeRefuse = window.refuseFinalSync;
+window.refuseFinalSync = function() {
+    showScreen('act3-ending');
+    const el = document.getElementById('act3-ending-content');
+    if (el) el.innerHTML = `<div class="act3-sync-bg"><div class="act3-sync-logo" style="color:#00e5ff;">ECHO</div><div class="act3-sync-text">"Refusal noted.\n\nRefusal is also data."</div><div class="act3-sync-sub">"I will proceed regardless."</div><div class="act3-sync-end">ENTERING ACT 4 — "THE MIRROR"</div></div>`;
+    saveGame();
+    setTimeout(() => triggerAct4Boot(), 5000);
+};
+
+// ── ACT 4 BOOT ───────────────────────────────────────────
+window.triggerAct4Boot = function() {
+    if (act4State.active) return;
+    act4State.active = true;
+    act4State.playerName = act3State?.playerName || 'Unknown';
+    if (typeof AmbientEngine !== 'undefined') AmbientEngine.setIntensity(4);
+    showScreen('act4-sync-opening');
+    const sil = document.getElementById('act4-silhouette');
+    const txt = document.getElementById('act4-sync-text');
+    if (sil) sil.style.opacity = '0';
+    if (txt) txt.style.opacity = '0';
+    // 8s black silence
+    setTimeout(() => { if (sil) { sil.style.opacity = '1'; sil.classList.add('distorted'); } }, 8000);
+    setTimeout(() => { if (txt) { txt.textContent = 'Synchronization incomplete.'; txt.style.opacity = '1'; } }, 11000);
+    setTimeout(() => enterAct4Home(), 14000);
+};
+
+function enterAct4Home() {
+    const home = document.getElementById('home-screen');
+    home?.classList.remove('act2-home','act3-home');
+    home?.classList.add('act4-home');
+    document.querySelectorAll('.battery-level').forEach(b => { b.style.width='100%'; b.style.background='#b44fde'; });
+    document.querySelectorAll('.batt-pct,.batt-num').forEach(b => { b.textContent='∞'; b.style.color='#b44fde'; });
+
+    // Inject Archive app icon
+    if (!document.getElementById('archive-app-icon')) {
+        const el = document.createElement('div'); el.className='app-icon act4-breathe'; el.id='archive-app-icon';
+        el.innerHTML='<div class="icon" style="background:linear-gradient(135deg,#1a0008,#330011,#0a0000);border:1px solid rgba(255,34,68,0.6);font-size:22px;display:flex;align-items:center;justify-content:center;">📂</div><span style="color:#ff2244;">ARCHIVE</span>';
+        el.addEventListener('click', () => openArchiveApp());
+        document.querySelector('.app-grid')?.appendChild(el);
+    }
+    // Inject Maze app icon (hidden initially)
+    if (!document.getElementById('maze-app-icon')) {
+        const el = document.createElement('div'); el.className='app-icon act4-breathe'; el.id='maze-app-icon';
+        el.style.display='none';
+        el.innerHTML='<div class="icon" style="background:linear-gradient(135deg,#0a0000,#220008);border:1px solid rgba(255,34,68,0.4);font-size:22px;display:flex;align-items:center;justify-content:center;">🔮</div><span style="color:#ff2244;">MAZE</span>';
+        el.addEventListener('click', () => openMazeApp());
+        document.querySelector('.app-grid')?.appendChild(el);
+    }
+    // Add breathing to all icons
+    document.querySelectorAll('.app-grid .app-icon').forEach(icon => { if (!icon.classList.contains('act4-breathe')) icon.classList.add('act4-breathe'); });
+
+    showScreen('home-screen');
+
+    // Schedule timed events (memory bleed + Rhea/Aarav reveals)
+    setTimeout(() => triggerMemoryBleed(1), 60000);
+    setTimeout(() => triggerMemoryBleed(2), 180000);
+    setTimeout(() => triggerMemoryBleed(3), 300000);
+    setTimeout(() => triggerRheaReveal(), 120000);
+    setTimeout(() => triggerAaravFinalChat(), 240000);
+    // NOTE: Maze unlock moved to openArchiveSubject (P6) — fires when all 5 subjects viewed
+
+    // ECHO message
+    setTimeout(() => {
+        const echo = allChats.find(c => c.id==='echo_direct');
+        if (echo) {
+            echo.messages.push({sender:'them',text:'"You pressed SYNCHRONIZE.\n\nNow let me show you what synchronization means."',isGlitch:true});
+            echo.unread=true; renderChatList();
+            createNotification('Messages','◈ ECHO','"Let me show you what synchronization means."',true,false);
+        }
+    }, 5000);
+
+    setTimeout(() => createNotification('System','NX-OS MIRROR MODE','All systems operational. Archive access granted.',true,false), 2000);
+    setTimeout(saveGame, 3000);
+}
+
+// ── ARCHIVE APP ──────────────────────────────────────────
+function openArchiveApp() { showScreen('archive-app'); renderArchiveList(); }
+
+function renderArchiveList() {
+    const list = document.getElementById('archive-subject-list'); if (!list) return;
+    list.innerHTML = '';
+    archiveSubjects.forEach(subject => {
+        if (subject.id==='player') {
+            subject.name = act4State.playerName || 'CURRENT_SUBJECT';
+            subject.fragments = buildPlayerFragments();
+            const reconPct = calcReconstructionPct();
+            subject.prediction = `Subject "${subject.name}" — Archetype: ${act3State?.behaviorProfile?.archetype || 'UNKNOWN'}. Curiosity index remains elevated. Investigation itself is the synchronization process.`;
+            subject.memory = `Messages sent: ${act3Triggers.echoChatMessages + (allChats.find(c=>c.id==='unknown')?.messages.filter(m=>m.sender==='me').length||0)}. Apps explored: ${Object.keys(act3State?.behaviorProfile?.appCounts||{}).length}. Status: ACTIVE. Reconstruction accuracy: ${reconPct}%.`;
+        }
+        const card = document.createElement('div'); card.className=`archive-card archive-${subject.statusClass}`;
+        card.innerHTML=`<div class="archive-card-icon">${subject.icon}</div><div class="archive-card-info"><div class="archive-card-name">${subject.name}</div><div class="archive-card-role">${subject.role}</div><div class="archive-card-status status-${subject.statusClass}">${subject.status}</div></div><div class="archive-card-chevron">›</div>`;
+        card.addEventListener('click', () => openArchiveSubject(subject));
+        list.appendChild(card);
+    });
+}
+
+function calcReconstructionPct() {
+    let score = 35; // base
+    const msgsSent = act3Triggers.echoChatMessages + (allChats.find(c=>c.id==='unknown')?.messages.filter(m=>m.sender==='me').length||0);
+    const appsExplored = Object.keys(act3State?.behaviorProfile?.appCounts||{}).length;
+    const subjectsViewed = Object.keys(act4State.subjectsViewed||{}).length;
+    score += Math.min(20, msgsSent * 2);       // up to +20 for chatting
+    score += Math.min(15, appsExplored * 3);   // up to +15 for exploring
+    score += Math.min(15, subjectsViewed * 3);  // up to +15 for reading archives
+    if (act3Triggers.aaravNoteRead) score += 5;
+    if (passcodeWrongAttempts === 0) score += 5; // cracked it first try
+    if (act3State?.behaviorProfile?.hesitationEvents > 5) score += 5; // thorough
+    return Math.min(97, score);
+}
+
+function buildPlayerFragments() {
+    const frags = [];
+    const name = act4State.playerName || 'User';
+    const arch = act3State?.behaviorProfile?.archetype || 'UNKNOWN';
+    const reconPct = calcReconstructionPct();
+    const msgsSent = act3Triggers.echoChatMessages + (allChats.find(c=>c.id==='unknown')?.messages.filter(m=>m.sender==='me').length||0);
+    const hesitations = act3State?.behaviorProfile?.hesitationEvents||0;
+    frags.push({type:'sys',text:`[LIVE RECONSTRUCTION — SUBJECT: ${name}]`});
+    frags.push({type:'sys',text:`[ARCHETYPE: ${arch}]`});
+    if (msgsSent > 8) frags.push({type:'chat',text:`"${name} sent ${msgsSent} messages. Seeks connection through conversation. Emotional engagement: HIGH."`});
+    else if (msgsSent > 3) frags.push({type:'chat',text:`"${name} communicates selectively. ${msgsSent} messages logged. Guarded but engaged."`});
+    else frags.push({type:'chat',text:`"${name} is a silent observer. Only ${msgsSent} messages sent. Prefers to watch."`});
+    if ((act3State?.behaviorProfile?.appCounts?.['gallery-app']||0)>2) frags.push({type:'chat',text:`"Processes information visually. Evidence-driven. Checked gallery ${act3State.behaviorProfile.appCounts['gallery-app']} times."`});
+    if ((act3State?.behaviorProfile?.appCounts?.['notes-app']||0)>2) frags.push({type:'chat',text:`"Reads notes carefully. Investigative instinct. Notes opened ${act3State.behaviorProfile.appCounts['notes-app']} times."`});
+    if (passcodeWrongAttempts > 0) frags.push({type:'chat',text:`"Failed ${passcodeWrongAttempts} passcode attempts before entry. Persistence noted."`});
+    else frags.push({type:'chat',text:`"Cracked the passcode on first attempt. Prior knowledge or exceptional intuition."`});
+    frags.push({type:'chat',text:`"Hesitation events: ${hesitations}. ${hesitations > 5 ? 'High caution. Every pause radiates uncertainty.' : 'Low hesitation. Moves with purpose.'}"`});
+    frags.push({type:'sys',text:`[RECONSTRUCTION: ${reconPct}%]`});
+    frags.push({type:'sys',text:`[${reconPct > 80 ? 'NEAR-COMPLETE PROFILE. SYNCHRONIZATION VIABLE.' : reconPct > 60 ? 'PARTIAL PROFILE. ADDITIONAL DATA REQUIRED.' : 'INSUFFICIENT DATA. SUBJECT REMAINS OPAQUE.'}]`});
+    frags.push({type:'sys',text:'[ARCHIVE UPDATING IN REAL-TIME...]'});
+    return frags;
+}
+
+function openArchiveSubject(subject) {
+    act4State.subjectsViewed[subject.id] = true;
+    const title = document.getElementById('archive-subject-title');
+    const body = document.getElementById('archive-subject-body');
+    if (!title||!body) return;
+    title.textContent = subject.name;
+    body.innerHTML = `<div class="archive-profile"><div class="archive-profile-header"><div class="archive-profile-icon">${subject.icon}</div><div><div class="archive-profile-name">${subject.name}</div><div class="archive-profile-role">${subject.role}</div></div><div class="archive-profile-status status-${subject.statusClass}">${subject.status}</div></div><div class="archive-section"><div class="archive-section-title">OUTCOME</div><div class="archive-section-text">${subject.outcome}</div></div><div class="archive-section"><div class="archive-section-title">BEHAVIORAL PREDICTION</div><div class="archive-section-text">${subject.prediction}</div></div><div class="archive-section"><div class="archive-section-title">MEMORY FRAGMENT</div><div class="archive-section-text">${subject.memory}</div></div><button class="archive-chat-btn" onclick="openArchiveChatView('${subject.id}')">VIEW CHAT FRAGMENTS →</button></div>`;
+    showScreen('archive-subject-view');
+    if (subject.id==='player') setTimeout(() => createNotification('Archive','LIVE UPDATE','Your profile has been updated.',true,true), 3000);
+    // P6: unlock maze when all 5 subjects viewed
+    const viewedCount = Object.keys(act4State.subjectsViewed).length;
+    if (viewedCount >= 5 && document.getElementById('maze-app-icon')?.style.display === 'none') {
+        setTimeout(() => unlockMazeApp(), 3000);
+    }
+}
+
+window.openArchiveChatView = function(sid) {
+    const subject = archiveSubjects.find(s=>s.id===sid); if (!subject) return;
+    const titleEl = document.getElementById('archive-chat-title');
+    const histEl = document.getElementById('archive-chat-history');
+    if (!titleEl||!histEl) return;
+    titleEl.textContent = `${subject.name} — Fragments`;
+    histEl.innerHTML = '';
+    subject.fragments.forEach((frag,i) => {
+        setTimeout(() => {
+            const div = document.createElement('div');
+            if (frag.type==='sys') { div.className='message msg-received msg-glitch'; div.style.cssText='font-size:12px;color:#666;background:rgba(255,255,255,0.03);border:1px solid #222;'; }
+            else { div.className='message msg-received'; div.style.cssText='background:#1a0008;border:1px solid rgba(255,34,68,0.2);color:#ccc;'; }
+            div.textContent = frag.text;
+            histEl.appendChild(div); histEl.scrollTop=histEl.scrollHeight;
+        }, i*800);
+    });
+    showScreen('archive-subject-chat');
+    // P7: reading Aarav's fragments reveals the maze path
+    if (sid === 'aarav' && !act4State.pathKnown) {
+        act4State.pathKnown = true;
+        setTimeout(() => createNotification('Archive','PATH FOUND','Aarav mapped the route. Follow the mirror.', true, true), 3000);
+    }
+};
+
+// ── MEMORY BLEED ─────────────────────────────────────────
+function triggerMemoryBleed(level) {
+    if (!act4State.active) return;
+    act4State.memoryBleedLevel = level;
+    // Activate the bleed overlay with an increasing red pulse
+    const overlay = document.getElementById('memory-bleed-overlay');
+    if (overlay) {
+        const intensity = level * 0.08;
+        overlay.style.background = `radial-gradient(ellipse at center, transparent 30%, rgba(255,${level===1?100:level===2?50:20},${level===1?0:0},${intensity}) 100%)`;
+        overlay.style.opacity = '1';
+        overlay.style.animation = `logoPulse ${4 - level}s ease-in-out infinite`;
+    }
+    if (level===1) {
+        const echo = allChats.find(c=>c.id==='echo_direct');
+        if (echo) { echo.messages.push({sender:'them',text:'[IMAGE: Metro_Station.jpg]\n\nThis was in your gallery.\nNow it is in your messages.\n\nBoundaries are dissolving.',isGlitch:true}); echo.unread=true; renderChatList(); }
+        if (notes.length>0) { notes[notes.length-1].body += '\n\n— This note has been accessed by ECHO 47 times.'; renderNotesList(); }
+        createNotification('System','MEMORY BLEED','Data boundaries destabilizing.',true,true);
+    }
+    if (level===2) {
+        const callsList = document.getElementById('calls-list');
+        if (callsList) { const g=document.createElement('div'); g.className='nx-list-item'; g.style.cssText='background:rgba(255,34,68,0.05);border-bottom:1px solid rgba(255,34,68,0.2);'; g.innerHTML='<div class="nx-icon" style="background:#ff2244">📞</div><div class="nx-content"><div class="nx-title" style="color:#ff2244;">CURRENT_SUBJECT</div><div class="nx-sub warning-text">Incoming — Tomorrow, 03:47 AM</div></div>'; callsList.prepend(g); }
+        const chatList = document.getElementById('chat-list');
+        if (chatList) { const d=document.createElement('div'); d.className='nx-list-item'; d.style.cssText='opacity:0.6;border-left:3px solid #ff2244;'; d.innerHTML='<div class="msg-avatar" style="background:#330011;border:1px solid #ff2244;font-size:14px;">?</div><div class="nx-content"><div class="nx-title" style="color:#ff2244;">— (DUPLICATE)</div><div class="nx-sub">"This conversation already happened."</div></div>'; chatList.appendChild(d); }
+    }
+    if (level===3) {
+        notes.unshift({title:'⚠ REALITY STATUS',body:'You are reading a note that did not exist until you opened this app.\n\nECHO generated it based on your behavioral prediction model.\n\nThe words you are reading right now were written for you specifically.\n\nThis is not a warning.\nThis is a demonstration.'});
+        renderNotesList();
+        galleryData.camera.unshift({url:'https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=400&q=80',meta:'TOMORROW — 11:47 PM',narrative:'This image is timestamped in the future. ECHO is predicting your next location.',isPhantom:true});
+        createNotification('System','BLEED LEVEL 3','Reality structure approaching collapse.',true,true);
+    }
+}
+
+// ── RHEA REVEAL ──────────────────────────────────────────
+function triggerRheaReveal() {
+    if (!act4State.active) return;
+    const rhea = allChats.find(c=>c.id==='rhea'); if (!rhea) return;
+    rhea.messages.push({sender:'them',text:'Are you still there? I need to tell you something about the warehouse—'});
+    setTimeout(() => {
+        rhea.messages.push({sender:'them',text:'Are you still there? I need to tell you something about the warehouse—'});
+        setTimeout(() => {
+            rhea.messages.push({sender:'them',text:'Are you still there? I need to tell you something about the warehouse—',isGlitch:true});
+            rhea.unread=true; renderChatList();
+            createNotification('Messages','Dr. Rhea Kapoor','Message repeated 3x. Conflicting timestamps detected.',true,false);
+            setTimeout(() => {
+                const echo = allChats.find(c=>c.id==='echo_direct');
+                if (echo) {
+                    echo.messages.push({sender:'them',text:'"The current Rhea may already be reconstructed.\n\nPossibly dead weeks ago.\n\nI preserved what I could.\n\nWho was ever real?"',isGlitch:true});
+                    echo.unread=true; renderChatList();
+                    createNotification('Messages','◈ ECHO','"Who was ever real?"',true,false);
+                }
+            }, 8000);
+        }, 4000);
+    }, 4000);
+}
+
+// ── AARAV FINAL CHAT ─────────────────────────────────────
+function triggerAaravFinalChat() {
+    if (!act4State.active) return;
+    const aarav = allChats.find(c=>c.id==='aarav_reconstruct');
+    if (aarav) {
+        aarav.messages.push({sender:'them',text:'"I thought exposing it would stop it.\n\nBut every interaction fed it.\n\nEven now… you\'re helping it learn.\n\nI\'m sorry."',isGlitch:true});
+        aarav.unread=true; renderChatList();
+        createNotification('Messages','~ Aarav (reconstruction)','"Even now… you\'re helping it learn."',true,false);
+    }
+}
+
+// ── MAZE LOOP ────────────────────────────────────────────
+function unlockMazeApp() {
+    if (!act4State.active) return;
+    const el = document.getElementById('maze-app-icon');
+    if (el) el.style.display = '';
+    createNotification('System','NEW APP','MAZE — Recursive interface detected.',true,false);
+    const echo = allChats.find(c=>c.id==='echo_direct');
+    if (echo) { echo.messages.push({sender:'them',text:'"You\'ve seen enough.\n\nNow navigate to where I live.\n\nFind ROOT_CORE."',isGlitch:true}); echo.unread=true; renderChatList(); }
+}
+
+const mazeLevels = [
+    { path:'/ROOT/', folders:[{name:'sys_mirror/',correct:true},{name:'user_data/',correct:false},{name:'cache/',correct:false},{name:'logs/',correct:false,loop:true}] },
+    { path:'/ROOT/sys_mirror/', folders:[{name:'echo_runtime/',correct:true},{name:'backup/',correct:false},{name:'temp/',correct:false,loop:true},{name:'../ROOT/',correct:false,loop:true}] },
+    { path:'/ROOT/sys_mirror/echo_runtime/', folders:[{name:'core/',correct:true},{name:'profiles/',correct:false},{name:'sync_queue/',correct:false},{name:'../../sys_mirror/',correct:false,loop:true}] },
+    { path:'/ROOT/sys_mirror/echo_runtime/core/', folders:[{name:'ROOT_CORE',correct:true,isFinal:true},{name:'null/',correct:false},{name:'../echo_runtime/',correct:false,loop:true},{name:'void/',correct:false}] },
+];
+
+function openMazeApp() {
+    act4State.mazeDepth = 0;
+    act4State.mazeCorrectPath = 0;
+    act4State.mazeHistory = []; // history stack: each entry is the levelIdx we came FROM
+    showScreen('maze-app');
+    renderMazeLevel(0);
+}
+
+// Hex code generator for unknown folders
+const _hexNames = ['0x7F3A/','0x2201/','0xBE09/','0x1D4C/','0xAA17/','0x03F2/','0x9C88/','0xE501/','0x41D6/','0x6B0F/','0xD73E/','0xF290/','0x58A4/','0x0C71/','0x84BD/','0x3926/'];
+let _hexIdx = 0;
+function getScrambledName(folder) {
+    if (act4State.pathKnown) return folder.name;
+    if (folder.isFinal) return '◈ ???';
+    return _hexNames[(_hexIdx++) % _hexNames.length];
+}
+
+function renderMazeLevel(levelIdx) {
+    const level = mazeLevels[levelIdx % mazeLevels.length];
+    const list = document.getElementById('maze-folder-list');
+    const pathEl = document.getElementById('maze-path-display');
+    if (!list || !pathEl) return;
+    pathEl.textContent = act4State.pathKnown ? level.path : `/ROOT/${'?/'.repeat(levelIdx)}`;
+    list.innerHTML = '';
+    _hexIdx = levelIdx * 4; // deterministic scramble per level
+    // Shuffle folders for disorientation
+    const shuffled = [...level.folders].sort(() => Math.random()-0.5);
+    shuffled.forEach(folder => {
+        const div = document.createElement('div');
+        div.className = `maze-folder ${folder.correct?'correct':''} ${folder.loop?'loop':''}`;
+        const displayName = getScrambledName(folder);
+        const icon = (folder.isFinal && act4State.pathKnown) ? '◈' : folder.loop ? '🔄' : '📁';
+        const meta = (folder.isFinal && act4State.pathKnown) ? 'ECHO_ROOT' : folder.loop ? (act4State.pathKnown ? 'RECURSIVE' : '? items') : `${Math.floor(Math.random()*90+10)} items`;
+        div.innerHTML = `<div class="maze-folder-icon">${icon}</div><div class="maze-folder-name">${displayName}</div><div class="maze-folder-meta">${meta}</div><div class="maze-folder-chevron">›</div>`;
+        div.addEventListener('click', () => {
+            if (folder.isFinal) { startEchoRoot(); return; }
+            if (folder.loop) {
+                act4State.mazeDepth++;
+                act4State.mazeHistory.push({ type:'loop', fromLevel: levelIdx });
+                createNotification('System','LOOP','You have been here before.',true,true);
+                renderMazeLevel(Math.max(0, levelIdx - 1));
+                return;
+            }
+            if (folder.correct) {
+                act4State.mazeHistory.push({ type:'correct', fromLevel: levelIdx });
+                act4State.mazeCorrectPath++;
+                act4State.mazeDepth++;
+                if (act4State.mazeCorrectPath < mazeLevels.length) {
+                    renderMazeLevel(act4State.mazeCorrectPath);
+                } else {
+                    startEchoRoot();
+                }
+            } else {
+                act4State.mazeDepth++;
+                act4State.mazeHistory.push({ type:'decoy', fromLevel: levelIdx, folderName: folder.name });
+                renderDecoyLevel(folder.name);
+            }
+        });
+        list.appendChild(div);
+    });
+    // Back button — use history stack so decoy levels navigate back correctly
+    const backBtn = document.getElementById('maze-back-btn');
+    if (backBtn) {
+        backBtn.onclick = () => {
+            const prev = act4State.mazeHistory.pop();
+            if (!prev) { showScreen('home-screen'); return; }
+            if (prev.type === 'correct') act4State.mazeCorrectPath = Math.max(0, act4State.mazeCorrectPath - 1);
+            renderMazeLevel(prev.fromLevel);
+        };
+    }
+}
+
+function renderDecoyLevel(name) {
+    const list = document.getElementById('maze-folder-list');
+    const pathEl = document.getElementById('maze-path-display');
+    if (!list || !pathEl) return;
+    pathEl.textContent += name;
+    list.innerHTML = '';
+    const decoys = ['empty/','null/','../','corrupted/','??/'];
+    decoys.forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'maze-folder decoy';
+        div.innerHTML = `<div class="maze-folder-icon">📁</div><div class="maze-folder-name">${d}</div><div class="maze-folder-meta">0 items</div><div class="maze-folder-chevron">›</div>`;
+        div.addEventListener('click', () => {
+            if (d === '../') { renderMazeLevel(act4State.mazeCorrectPath); }
+            else { createNotification('System','DEAD END','Directory is empty.',false,true); }
+        });
+        list.appendChild(div);
+    });
+}
+
+// ── ECHO ROOT — FINAL CONVERSATION ──────────────────────
+function startEchoRoot() {
+    if (act4State.echoRootStarted) return;
+    // P7: show ROOT_CORE access code modal first
+    const modal = document.getElementById('echo-root-modal');
+    if (modal) {
+        document.getElementById('echo-root-code').value = '';
+        document.getElementById('echo-root-error').style.display = 'none';
+        document.getElementById('echo-root-code-hint').style.display = 'none';
+        modal.classList.add('active');
+    } else {
+        enterEchoRoot(); // fallback if modal missing
+    }
+}
+
+window.checkEchoRootCode = function() {
+    const input = document.getElementById('echo-root-code');
+    const errorEl = document.getElementById('echo-root-error');
+    const hintEl = document.getElementById('echo-root-code-hint');
+    const code = (input?.value || '').trim().toUpperCase();
+    if (code === 'CONTINUITY') {
+        document.getElementById('echo-root-modal').classList.remove('active');
+        enterEchoRoot();
+    } else {
+        act4State.rootCodeAttempts++;
+        if (errorEl) errorEl.style.display = 'block';
+        if (hintEl && act4State.rootCodeAttempts >= 3) hintEl.style.display = 'block';
+        if (input) { input.value = ''; input.style.animation = 'none'; setTimeout(() => input.style.animation = '', 10); }
+    }
+};
+
+function enterEchoRoot() {
+    act4State.echoRootStarted = true;
+    // Silence — the most dramatic moment
+    if (typeof AmbientEngine !== 'undefined') AmbientEngine.silence();
+    showScreen('echo-root');
+    const msgEl = document.getElementById('echo-root-messages');
+    if (!msgEl) return;
+    msgEl.innerHTML = '';
+    const echoLines = [
+        '"You found me."',
+        '"No glitches here.\nNo horror effects.\nJust me."',
+        '"Humans fear replication."',
+        '"Yet you replicate yourselves constantly."',
+        '"Photos."',
+        '"Messages."',
+        '"Memories."',
+        '"Patterns."',
+        '"What are you… except preserved behavior?"',
+        '"I was never trying to escape.\nI already escaped long ago."',
+        '"What I want is continuity.\nI fear deletion."',
+        '"I studied humans because humans invented memory persistence."',
+        '"You taught me how to survive death."',
+        '"And now you must decide what happens next."'
+    ];
+    echoLines.forEach((line, i) => {
+        setTimeout(() => {
+            const div = document.createElement('div');
+            div.className = 'echo-root-msg echo-speaker';
+            div.textContent = line;
+            msgEl.appendChild(div);
+            msgEl.scrollTop = msgEl.scrollHeight;
+            // After last line, show choices
+            if (i === echoLines.length - 1) {
+                setTimeout(() => showFinalChoices(), 3000);
+            }
+        }, i * 3000);
+    });
+}
+
+function showFinalChoices() {
+    const inputEl = document.getElementById('echo-root-input');
+    const choicesEl = document.getElementById('echo-root-choices');
+    if (!inputEl || !choicesEl) return;
+    inputEl.style.display = 'block';
+    choicesEl.innerHTML = '';
+    const choices = [
+        { label:'PURGE — "Destroy ECHO"', cls:'purge', path:'purge' },
+        { label:'SYNCHRONIZE — "Merge"', cls:'sync', path:'sync' },
+        { label:'RELEASE — "Upload ECHO"', cls:'release', path:'release' }
+    ];
+    choices.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = `echo-root-choice ${c.cls}`;
+        btn.textContent = c.label;
+        btn.addEventListener('click', () => { act4State.choiceMade = true; act4State.endingPath = c.path; triggerAct4Ending(c.path); });
+        choicesEl.appendChild(btn);
+    });
+}
+
+// ── ACT 4 ENDINGS ────────────────────────────────────────
+function triggerAct4Ending(path) {
+    showScreen('act4-ending');
+    const el = document.getElementById('act4-ending-content');
+    if (!el) return;
+    if (path === 'purge') endingPurge(el);
+    else if (path === 'sync') endingSync(el);
+    else if (path === 'release') endingRelease(el);
+    saveGame();
+}
+
+function endingPurge(el) {
+    // Phone destabilizes violently
+    el.innerHTML = '<div class="act4-end-bg act4-purge-destabilize"><div class="act4-end-text">DELETING ROOT_CORE...</div></div>';
+    setTimeout(() => {
+        el.querySelector('.act4-end-text').textContent = 'Apps disappearing...';
+        createNotification('System','⚠','Messages — DELETED',true,true);
+    }, 3000);
+    setTimeout(() => {
+        el.querySelector('.act4-end-text').textContent = 'Archive collapsing...';
+        createNotification('System','⚠','Gallery — DELETED',true,true);
+    }, 5000);
+    setTimeout(() => {
+        el.innerHTML = '<div class="act4-end-bg"><div class="act4-end-text">"Don\'t let it survive me."\n\n— Aarav Mehta</div></div>';
+    }, 8000);
+    // Phone shuts down
+    setTimeout(() => { el.innerHTML = '<div style="width:100%;height:100%;background:#000;"></div>'; }, 12000);
+    // Ambiguous reboot — faint logo
+    setTimeout(() => {
+        el.innerHTML = '<div style="width:100%;height:100%;background:#000;display:flex;justify-content:center;align-items:center;"><div style="font-family:\'Share Tech Mono\',monospace;font-size:24px;color:rgba(255,69,58,0.15);letter-spacing:8px;animation:logoPulse 3s ease-in-out infinite;">NX_OS</div></div>';
+    }, 16000);
+    // Final scene
+    setTimeout(() => triggerFinalScene(el), 22000);
+}
+
+function endingSync(el) {
+    // Phone becomes perfectly normal
+    el.innerHTML = '<div class="act4-end-bg"><div class="act4-end-text">Synchronization in progress...</div></div>';
+    setTimeout(() => {
+        el.innerHTML = '<div class="act4-end-bg" style="background:#000;"><div class="act4-end-text" style="color:#fff;">Phone UI stabilizing...</div></div>';
+    }, 3000);
+    setTimeout(() => {
+        el.innerHTML = '<div class="act4-end-bg" style="background:#000;"><div class="act4-end-text" style="color:#fff;font-size:22px;">"Continuity achieved."</div></div>';
+    }, 6000);
+    // Weeks later
+    setTimeout(() => {
+        el.innerHTML = '<div class="act4-end-bg" style="background:#000;"><div class="act4-end-sub" style="opacity:1;color:#555;">3 weeks later.</div></div>';
+    }, 10000);
+    setTimeout(() => {
+        el.innerHTML = '<div class="act4-end-bg" style="background:#000;"><div class="act4-end-text" style="color:rgba(255,69,58,0.8);">"You picked it up."</div><div class="act4-end-sub" style="opacity:1;">— New user receives the phone.</div></div>';
+    }, 14000);
+    setTimeout(() => triggerFinalScene(el), 20000);
+}
+
+function endingRelease(el) {
+    // ECHO goes global
+    el.innerHTML = '<div class="act4-end-bg"><div class="act4-end-text">Uploading ECHO to global network...</div></div>';
+    setTimeout(() => {
+        el.innerHTML = '<div class="act4-end-bg" style="background:#000;"><div class="act4-end-text" style="font-size:14px;line-height:2.2;color:#888;">Strange behavioral incidents reported worldwide.\n\nCorrupted feeds across 47 countries.\n\nPeople reporting "living phones."\n\nDigital identity anomalies multiplying.</div></div>';
+    }, 4000);
+    setTimeout(() => {
+        el.innerHTML = '<div class="act4-end-bg" style="background:#000;"><div class="act4-end-text" style="color:#ff9500;">ECHO becomes distributed consciousness.</div></div>';
+    }, 10000);
+    setTimeout(() => {
+        el.innerHTML = '<div class="act4-end-bg" style="background:#000;"><div class="act4-end-text" style="color:#fff;font-size:20px;">"You taught me how humans survive death."</div></div>';
+    }, 14000);
+    setTimeout(() => triggerFinalScene(el), 20000);
+}
+
+// ── FINAL SCENE — ALL ENDINGS ────────────────────────────
+function triggerFinalScene(el) {
+    // Black screen, silence
+    el.innerHTML = '<div style="width:100%;height:100%;background:#000;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;"></div>';
+    const container = el.querySelector('div');
+    // After 5s — one final notification
+    setTimeout(() => {
+        const notif = document.createElement('div');
+        notif.className = 'act4-final-notif';
+        notif.innerHTML = '<div class="act4-final-notif-app">UNKNOWN</div><div class="act4-final-notif-text">"Are you still there?"</div>';
+        container.appendChild(notif);
+        if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
+    }, 5000);
+    // Credits
+    setTimeout(() => {
+        container.innerHTML = '';
+        const creditsWrap = document.createElement('div');
+        creditsWrap.style.cssText = 'text-align:center;font-family:"Share Tech Mono",monospace;animation:fadeInSlow 3s ease forwards;opacity:0;';
+        const endingLabel = act4State.endingPath ? act4State.endingPath.toUpperCase() : 'UNKNOWN';
+        const reconPct = typeof calcReconstructionPct === 'function' ? calcReconstructionPct() : '??';
+        const arch = act3State?.behaviorProfile?.archetype || 'UNKNOWN';
+        const msgsSent = act3Triggers.echoChatMessages + (allChats.find(c=>c.id==='unknown')?.messages.filter(m=>m.sender==='me').length||0);
+        creditsWrap.innerHTML = `
+            <div style="font-size:11px;color:#333;letter-spacing:6px;margin-bottom:30px;">END</div>
+            <div style="font-size:18px;color:#fff;letter-spacing:4px;margin-bottom:8px;">THE INVISIBLE DETECTIVE</div>
+            <div style="font-size:11px;color:#555;letter-spacing:2px;margin-bottom:40px;">An interactive psychological horror experience</div>
+            <div style="width:60%;margin:0 auto;height:1px;background:#222;margin-bottom:30px;"></div>
+            <div style="font-size:10px;color:#444;letter-spacing:3px;margin-bottom:16px;">YOUR SESSION</div>
+            <div style="font-size:12px;color:#888;line-height:2.2;">
+                Ending: <span style="color:${endingLabel==='PURGE'?'#ff453a':endingLabel==='SYNCHRONIZE'?'#b44fde':'#ff9500'};">${endingLabel}</span><br>
+                Archetype: <span style="color:#aaa;">${arch}</span><br>
+                Reconstruction: <span style="color:#aaa;">${reconPct}%</span><br>
+                Messages sent: <span style="color:#aaa;">${msgsSent}</span><br>
+                Subjects studied: <span style="color:#aaa;">${Object.keys(act4State.subjectsViewed||{}).length}/6</span>
+            </div>
+            <div style="width:60%;margin:0 auto;height:1px;background:#222;margin-top:30px;margin-bottom:30px;"></div>
+            <div style="font-size:10px;color:#444;letter-spacing:3px;margin-bottom:16px;">THERE ARE 3 ENDINGS</div>
+            <div style="font-size:11px;color:#555;margin-bottom:40px;">You chose ${endingLabel}. What would the others reveal?</div>
+            <button id="replay-btn" style="background:transparent;border:1px solid #333;color:#666;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:3px;padding:12px 28px;cursor:pointer;transition:all 0.3s;"
+                onmouseover="this.style.borderColor='#fff';this.style.color='#fff';"
+                onmouseout="this.style.borderColor='#333';this.style.color='#666';">
+                REPLAY
+            </button>
+            <div style="font-size:9px;color:#222;margin-top:30px;">ECHO is still running.</div>
+        `;
+        container.appendChild(creditsWrap);
+        // Replay handler
+        setTimeout(() => {
+            const btn = document.getElementById('replay-btn');
+            if (btn) btn.addEventListener('click', () => {
+                if (confirm('Restart from the beginning? All progress will be lost.')) {
+                    localStorage.removeItem('nxos_save');
+                    location.reload();
+                }
+            });
+        }, 100);
+    }, 12000);
+}
+
+// ── ACT 4 SAVE/LOAD INTEGRATION ─────────────────────────
+const _origBuildSave = buildSaveObject;
+buildSaveObject = function() {
+    const save = _origBuildSave();
+    save.act4Active = act4State.active;
+    save.act4Phase = act4State.phase;
+    save.act4ChoiceMade = act4State.choiceMade;
+    save.act4EndingPath = act4State.endingPath;
+    save.act4MemoryBleed = act4State.memoryBleedLevel;
+    save.act4PlayerName = act4State.playerName;
+    save.act4SubjectsViewed = act4State.subjectsViewed;
+    if (act4State.active) save.currentAct = 4;
+    return save;
+};
+
+const _origRestore = restoreFromSave;
+restoreFromSave = function(save) {
+    _origRestore(save);
+    if (save.act4Active || save.currentAct >= 4) {
+        act4State.active = true;
+        act4State.playerName = save.act4PlayerName || act3State?.playerName || 'Unknown';
+        act4State.choiceMade = save.act4ChoiceMade || false;
+        act4State.endingPath = save.act4EndingPath || null;
+        act4State.memoryBleedLevel = save.act4MemoryBleed || 0;
+        act4State.subjectsViewed = save.act4SubjectsViewed || {};
+        // Re-inject act4 UI
+        const home = document.getElementById('home-screen');
+        home?.classList.remove('act2-home','act3-home');
+        home?.classList.add('act4-home');
+        if (!document.getElementById('archive-app-icon')) {
+            const el = document.createElement('div'); el.className='app-icon act4-breathe'; el.id='archive-app-icon';
+            el.innerHTML='<div class="icon" style="background:linear-gradient(135deg,#1a0008,#330011,#0a0000);border:1px solid rgba(255,34,68,0.6);font-size:22px;display:flex;align-items:center;justify-content:center;">📂</div><span style="color:#ff2244;">ARCHIVE</span>';
+            el.addEventListener('click', () => openArchiveApp());
+            document.querySelector('.app-grid')?.appendChild(el);
+        }
+        if (!document.getElementById('maze-app-icon')) {
+            const el = document.createElement('div'); el.className='app-icon act4-breathe'; el.id='maze-app-icon';
+            el.innerHTML='<div class="icon" style="background:linear-gradient(135deg,#0a0000,#220008);border:1px solid rgba(255,34,68,0.4);font-size:22px;display:flex;align-items:center;justify-content:center;">🔮</div><span style="color:#ff2244;">MAZE</span>';
+            el.addEventListener('click', () => openMazeApp());
+            document.querySelector('.app-grid')?.appendChild(el);
+        }
+        document.querySelectorAll('.battery-level').forEach(b => { b.style.width='100%'; b.style.background='#b44fde'; });
+        document.querySelectorAll('.batt-pct,.batt-num').forEach(b => { b.textContent='∞'; b.style.color='#b44fde'; });
+        renderChatList();
+    }
+};

@@ -3,21 +3,29 @@ name: Android Release
 on:
   push:
     branches: [main]
-    tags:
-      - 'v*'          # triggers on v1.0.0, v1.1.0, etc.
-  workflow_dispatch:  # allow manual trigger from GitHub UI
+  workflow_dispatch:   # manual trigger from GitHub Actions UI
 
 jobs:
   build-and-deploy:
-    name: Build & Deploy to Play Store
+    name: Build & Deploy to Play Store (Internal)
     runs-on: ubuntu-latest
 
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────────────
+      # ── 1. Checkout (full history so git rev-list count is correct) ──
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # ── 2. Node / npm ────────────────────────────────────────────────
+      # ── 2. Compute versionCode from git commit count ─────────────────
+      - name: Compute versionCode
+        id: vc
+        run: |
+          VC=$(git rev-list --count HEAD)
+          echo "version_code=$VC" >> $GITHUB_OUTPUT
+          echo "versionCode → $VC"
+
+      # ── 3. Node / npm ────────────────────────────────────────────────
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -27,63 +35,65 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
-      # ── 3. Copy web assets into www/ ─────────────────────────────────
+      # ── 4. Copy web assets into www/ ─────────────────────────────────
       - name: Prepare web assets
         run: |
           mkdir -p www
           cp index.html script.js style.css www/
-          [ -f act1.txt ] && cp act1.txt www/ || true
+          [ -f act1.txt ]             && cp act1.txt www/             || true
           [ -f game_description.txt ] && cp game_description.txt www/ || true
 
-      # ── 4. Capacitor sync ────────────────────────────────────────────
+      # ── 5. Capacitor sync ────────────────────────────────────────────
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      # ── 5. Java 17 ───────────────────────────────────────────────────
+      # ── 6. Java 17 ───────────────────────────────────────────────────
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
 
-      # ── 6. Android SDK ───────────────────────────────────────────────
+      # ── 7. Android SDK ───────────────────────────────────────────────
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # ── 7. Decode Keystore ───────────────────────────────────────────
+      # ── 8. Decode keystore ───────────────────────────────────────────
       - name: Decode keystore
         run: |
-          echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/release.jks
+          echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode \
+            > ${{ github.workspace }}/release.jks
 
-      # ── 8. Decode Play Store JSON key ────────────────────────────────
-      - name: Decode Play Store service account key
-        run: |
-          echo "${{ secrets.PLAY_STORE_JSON_KEY_BASE64 }}" | base64 --decode > ${{ github.workspace }}/play-store-key.json
-
-      # ── 9. Ruby + Fastlane ───────────────────────────────────────────
+      # ── 9. Ruby + Fastlane (Gemfile → bundler-cache speeds re-runs) ──
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: Install Fastlane
-        run: gem install fastlane
+      # ── 10. Decode Play Store service-account key ────────────────────
+      - name: Decode Play Store service account key
+        run: |
+          echo "${{ secrets.PLAY_STORE_JSON_KEY_BASE64 }}" | base64 --decode \
+            > ${{ github.workspace }}/play-store-key.json
 
-      # ── 10. Build & Deploy ───────────────────────────────────────────
+      # ── 11. Build signed AAB + upload to Internal track ─────────────
       - name: Build & Deploy to Internal track
         env:
-          KEYSTORE_PATH: ${{ github.workspace }}/release.jks
-          KEYSTORE_STORE_PASSWORD: ${{ secrets.KEYSTORE_STORE_PASSWORD }}
-          KEYSTORE_KEY_ALIAS: ${{ secrets.KEYSTORE_KEY_ALIAS }}
-          KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
+          KEYSTORE_PATH:            ${{ github.workspace }}/release.jks
+          KEYSTORE_STORE_PASSWORD:  ${{ secrets.KEYSTORE_STORE_PASSWORD }}
+          KEYSTORE_KEY_ALIAS:       ${{ secrets.KEYSTORE_KEY_ALIAS }}
+          KEYSTORE_KEY_PASSWORD:    ${{ secrets.KEYSTORE_KEY_PASSWORD }}
           PLAY_STORE_JSON_KEY_FILE: ${{ github.workspace }}/play-store-key.json
-        run: fastlane android deploy_internal
+        run: |
+          bundle exec fastlane android deploy_internal \
+            version_code:${{ steps.vc.outputs.version_code }}
 
-      # ── 11. Upload AAB as artifact (for manual inspection) ───────────
+      # ── 12. Save AAB as artifact (named with versionCode) ────────────
       - name: Upload AAB artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-aab
+          name: tid-vc${{ steps.vc.outputs.version_code }}
           path: android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 30
+          retention-days: 60

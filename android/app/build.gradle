@@ -7,8 +7,10 @@ android {
         applicationId "com.beingdillig.invisibledetective"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 25
-        versionName "0.5.0"
+        // versionCode is driven by git commit count in CI (--Pversion_code=N).
+        // Locally it falls back to the last known value so builds still work offline.
+        versionCode project.hasProperty('version_code') ? project.version_code.toInteger() : 42
+        versionName "0.5.7"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +18,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            // In CI: KEYSTORE_PATH is set to the decoded .jks written by the workflow.
+            // Locally: falls back to the dev keystore in the repo root (not committed to git).
+            storeFile file(System.getenv("KEYSTORE_PATH") ?: "${rootDir}/../release.jks")
+            storePassword System.getenv("KEYSTORE_STORE_PASSWORD") ?: 'InvisibleDetective@2024'
+            keyAlias System.getenv("KEYSTORE_KEY_ALIAS") ?: 'invisibledetective'
+            keyPassword System.getenv("KEYSTORE_KEY_PASSWORD") ?: 'InvisibleDetective@2024'
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }

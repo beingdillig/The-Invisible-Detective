@@ -11,6 +11,21 @@
 </head>
 <body>
 
+    <!-- Ambient desk surface behind phone -->
+    <div class="ambient-surface"></div>
+
+    <!-- Physical phone shell -->
+    <div class="phone-shell">
+        <!-- Left side: silent switch + volume buttons -->
+        <div class="shell-btn shell-btn-silent"></div>
+        <div class="shell-btn shell-btn-vol-up"></div>
+        <div class="shell-btn shell-btn-vol-dn"></div>
+        <!-- Right side: power/lock button -->
+        <div class="shell-btn shell-btn-power"></div>
+
+        <!-- Label on back (subtle, like engraved) -->
+        <div class="shell-label">NX OS</div>
+
     <!-- OS Container -->
     <div id="phone-container">
         <!-- Dynamic Island pill — always on top, purely decorative -->
@@ -222,7 +237,6 @@
                 <div class="hdw-date" id="hdw-date">November 12</div>
             </div>
             <div class="app-grid">
-                <div class="app-icon" data-target="messages-app"><div class="icon msg-icon"></div><span>Messages</span></div>
                 <div class="app-icon" data-target="gallery-app"><div class="icon gallery-icon"></div><span>Gallery</span></div>
                 <div class="app-icon" data-target="calendar-app"><div class="icon calendar-icon"></div><span>Calendar</span></div>
                 <div class="app-icon" data-target="notes-app"><div class="icon notes-icon"></div><span>Notes</span></div>
@@ -235,15 +249,15 @@
                 <div class="app-icon" data-target="voice-app"><div class="icon voice-icon"></div><span>Recorder</span></div>
                 <div class="app-icon" onclick="openCaseFile()"><div class="icon casefile-icon"></div><span>Case File</span></div>
                 <div class="app-icon" data-target="phone-app"><div class="icon phone-icon"></div><span>Phone</span></div>
-                <div class="app-icon" data-target="calendar-app"><div class="icon clock-icon"></div><span>Clock</span></div>
-                <div class="app-icon" data-target="camera-app"><div class="icon camera-icon"></div><span>Camera</span></div>
-                <div class="app-icon" data-target="email-app"><div class="icon email-icon"></div><span>Mail</span></div>
+                <div class="app-icon" data-target="echo-app"><div class="icon echo-icon"></div><span>ECHO</span></div>
+                <div class="app-icon" data-target="contacts-app"><div class="icon contacts-icon"></div><span>Contacts</span></div>
+                <div class="app-icon" data-target="health-app"><div class="icon health-icon"></div><span>Health</span></div>
             </div>
             <!-- Page indicator dots -->
             <div class="page-dots"><div class="page-dot active"></div></div>
             <div class="dock">
                 <div class="app-icon" data-target="phone-app"><div class="icon phone-icon"></div></div>
-                <div class="app-icon" data-target="messages-app"><div class="icon msg-icon"></div></div>
+                <div class="app-icon" data-target="messages-app"><div class="icon msg-icon"></div><span>Messages</span></div>
                 <div class="app-icon" data-target="email-app"><div class="icon email-icon"></div></div>
                 <div class="app-icon" data-target="camera-app"><div class="icon camera-icon"></div></div>
             </div>
@@ -390,32 +404,140 @@
 
         <!-- APP: Gallery -->
         <div id="gallery-app" class="screen app-screen">
-            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Albums</h2></div>
-            <div class="scroll-container">
-                <div class="gallery-albums">
-                    <div class="album-card" onclick="openAlbum('camera')">
-                        <div class="album-thumb" id="thumb-camera"></div>
-                        <div class="album-title">Camera Roll</div><div class="album-count">56 items</div>
-                    </div>
-                    <div class="album-card" onclick="promptHiddenAlbum()">
-                        <div class="album-thumb" style="background:#111; display:flex; justify-content:center; align-items:center; font-size:32px;">🔒</div>
-                        <div class="album-title">Hidden</div><div class="album-count">18 items</div>
-                    </div>
-                    <div class="album-card" onclick="openAlbum('downloads')">
-                        <div class="album-thumb" id="thumb-downloads" style="background:#223;"></div>
-                        <div class="album-title">Downloads</div><div class="album-count">20 items</div>
-                    </div>
+            <!-- Notch-aware status bar -->
+            <div class="gallery-status-row">
+                <span class="gallery-sr-time time">9:41</span>
+                <div class="gallery-sr-right">
+                    <svg class="gsr-icon" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5" opacity="0.4"/><rect x="4" y="5" width="3" height="7" rx="0.5" opacity="0.6"/><rect x="8" y="2" width="3" height="10" rx="0.5" opacity="0.8"/><rect x="12" y="0" width="3" height="12" rx="0.5"/></svg>
+                    <svg class="gsr-icon" viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 5 C5 1 15 1 19 5" opacity="0.4"/><path d="M3.5 7.5 C6 5 14 5 16.5 7.5" opacity="0.7"/><path d="M6 10 C8 8 12 8 14 10"/><circle cx="10" cy="13" r="1" fill="currentColor" stroke="none"/></svg>
+                    <div class="gsr-batt"><div class="gsr-batt-fill batt-pct"></div></div>
                 </div>
             </div>
+
+            <!-- iOS-style large title header -->
+            <div class="gallery-top-header">
+                <button class="back-btn gallery-home-btn" data-back="home-screen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    <span>Home</span>
+                </button>
+                <h1 class="gallery-main-title">Albums</h1>
+                <button class="gallery-add-btn" onclick="void(0)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+            </div>
+
+            <!-- Scrollable gallery content -->
+            <div class="scroll-container gallery-content">
+
+                <!-- My Albums section -->
+                <div class="gallery-section-hdr">
+                    <span>My Albums</span>
+                    <span class="gallery-see-all">See All</span>
+                </div>
+                <div class="gallery-albums-new">
+                    <!-- Camera Roll: full-width featured -->
+                    <div class="album-card album-card-new album-featured-new" onclick="openAlbum('camera')">
+                        <div class="album-thumb-wrap">
+                            <div class="album-thumb album-thumb-new" id="thumb-camera"></div>
+                            <div class="album-vignette"></div>
+                            <div class="album-count-pill">56</div>
+                        </div>
+                        <div class="album-meta-new">
+                            <span class="album-title-new">Camera Roll</span>
+                            <span class="album-count-new">56</span>
+                        </div>
+                    </div>
+
+                    <!-- 2-col row: Hidden + Downloads -->
+                    <div class="album-grid-row-new">
+                        <div class="album-card album-card-new" onclick="promptHiddenAlbum()">
+                            <div class="album-thumb-wrap">
+                                <div class="album-thumb album-thumb-new album-locked-bg">
+                                    <svg class="album-lock-svg" viewBox="0 0 24 24" fill="none" stroke="#ff453a" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                </div>
+                                <div class="album-vignette album-vignette-red"></div>
+                                <div class="album-warn-dot">!</div>
+                            </div>
+                            <div class="album-meta-new">
+                                <span class="album-title-new">Hidden</span>
+                                <span class="album-count-new album-count-warn">18</span>
+                            </div>
+                        </div>
+                        <div class="album-card album-card-new" onclick="openAlbum('downloads')">
+                            <div class="album-thumb-wrap">
+                                <div class="album-thumb album-thumb-new" id="thumb-downloads"></div>
+                                <div class="album-vignette"></div>
+                            </div>
+                            <div class="album-meta-new">
+                                <span class="album-title-new">Downloads</span>
+                                <span class="album-count-new">20</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="gallery-divider"></div>
+
+                <!-- Utilities section -->
+                <div class="gallery-section-hdr" style="margin-top:4px;">
+                    <span>Utilities</span>
+                </div>
+                <div class="gallery-util-list">
+                    <div class="gallery-util-row" onclick="openAlbum('camera')">
+                        <div class="gallery-util-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        </div>
+                        <span class="util-label">Recents</span>
+                        <span class="util-count">12</span>
+                        <svg class="util-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                    <div class="gallery-util-row gallery-util-row-warn" onclick="promptHiddenAlbum()">
+                        <div class="gallery-util-icon gallery-util-icon-warn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#ff453a" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
+                        <span class="util-label">Hidden</span>
+                        <span class="util-count util-count-warn">18</span>
+                        <svg class="util-chevron" viewBox="0 0 24 24" fill="none" stroke="#ff453a" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                </div>
+
+                <!-- Thriller alert banner -->
+                <div class="gallery-threat-banner">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#ff453a" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>3 photos modified since last session</span>
+                </div>
+
+                <div style="height:20px;"></div>
+            </div>
+
+            <!-- Bottom tab bar -->
             <div class="gallery-nav">
-                <div class="g-nav-item">🖼️<span>Photos</span></div>
-                <div class="g-nav-item active">📁<span>Albums</span></div>
-                <div class="g-nav-item">🔍<span>Search</span></div>
+                <div class="g-nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    <span>Library</span>
+                </div>
+                <div class="g-nav-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="3" width="9" height="9" rx="1.5"/><rect x="13" y="3" width="9" height="9" rx="1.5"/><rect x="2" y="14" width="9" height="4" rx="1"/><rect x="13" y="14" width="9" height="4" rx="1"/></svg>
+                    <span>Albums</span>
+                </div>
+                <div class="g-nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span>Search</span>
+                </div>
             </div>
         </div>
 
+        <!-- Album View -->
         <div id="album-view" class="screen app-screen">
-            <div class="app-header app-header-small"><button class="back-btn" data-back="gallery-app">←</button><h2 id="album-title">Album</h2></div>
+            <div class="album-view-header">
+                <button class="av-back-btn back-btn" data-back="gallery-app">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    <span>Albums</span>
+                </button>
+                <h2 id="album-title" class="av-title">Album</h2>
+                <button class="av-select-btn">Select</button>
+            </div>
             <div class="gallery-grid" id="gallery-grid"></div>
         </div>
 
@@ -484,8 +606,16 @@
         <!-- APP: Browser Home -->
         <div id="browser-app" class="screen app-screen">
             <div class="browser-top">
+                <div class="browser-status-row">
+                    <span class="bsr-time time">11:29</span>
+                    <span class="bsr-right">
+                        <span class="bsr-signal"><span></span><span></span><span></span><span></span></span>
+                        <span class="bsr-wifi">🛜</span>
+                        <span class="bsr-batt"><span class="batt-pct">18%</span> 🔋</span>
+                    </span>
+                </div>
                 <div class="browser-nav-row">
-                    <button class="browser-back-home" onclick="showScreen('home-screen')">← Home</button>
+                    <button class="browser-back-home" onclick="showScreen('home-screen')">‹</button>
                     <div class="browser-tabs">
                         <span class="b-tab active" onclick="renderBrowserHome()">Home</span>
                         <span class="b-tab" onclick="showBrowserHistory()">History</span>
@@ -501,7 +631,7 @@
                 <span class="b-btn" onclick="renderBrowserHome()">←</span>
                 <span class="b-btn" style="opacity:0.4">→</span>
                 <span class="b-btn" onclick="renderBrowserHome()">⌂</span>
-                <span class="b-btn" onclick="showBrowserHistory()">🕒</span>
+                <span class="b-btn" onclick="showBrowserHistory()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                 <span class="b-btn" onclick="showScreen('home-screen')">✕</span>
             </div>
         </div>
@@ -509,7 +639,15 @@
         <!-- Browser: Search Results -->
         <div id="search-results" class="screen app-screen">
             <div class="browser-top">
-                <div class="browser-nav-row"><button class="browser-back-home" onclick="showScreen('home-screen')">← Home</button></div>
+                <div class="browser-status-row">
+                    <span class="bsr-time time">11:29</span>
+                    <span class="bsr-right">
+                        <span class="bsr-signal"><span></span><span></span><span></span><span></span></span>
+                        <span class="bsr-wifi">🛜</span>
+                        <span class="bsr-batt"><span class="batt-pct">18%</span> 🔋</span>
+                    </span>
+                </div>
+                <div class="browser-nav-row"><button class="browser-back-home" onclick="showScreen('home-screen')">‹</button></div>
                 <div class="browser-addr-bar">
                     <span class="b-lock">🔒</span>
                     <input type="text" id="search-query-text" style="color:#000; font-size:14px; border:none; outline:none; width:100%; background:transparent;" onkeypress="if(event.key==='Enter') performBrowserSearch(this.value)">
@@ -523,7 +661,7 @@
                 <span class="b-btn" onclick="renderBrowserHome()">←</span>
                 <span class="b-btn" style="opacity:0.4">→</span>
                 <span class="b-btn" onclick="renderBrowserHome()">⌂</span>
-                <span class="b-btn" onclick="showBrowserHistory()">🕒</span>
+                <span class="b-btn" onclick="showBrowserHistory()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                 <span class="b-btn" onclick="showScreen('home-screen')">✕</span>
             </div>
         </div>
@@ -531,7 +669,15 @@
         <!-- Browser: History Screen -->
         <div id="browser-history-screen" class="screen app-screen">
             <div class="browser-top">
-                <div class="browser-nav-row"><button class="browser-back-home" onclick="showScreen('home-screen')">← Home</button></div>
+                <div class="browser-status-row">
+                    <span class="bsr-time time">11:29</span>
+                    <span class="bsr-right">
+                        <span class="bsr-signal"><span></span><span></span><span></span><span></span></span>
+                        <span class="bsr-wifi">🛜</span>
+                        <span class="bsr-batt"><span class="batt-pct">18%</span> 🔋</span>
+                    </span>
+                </div>
+                <div class="browser-nav-row"><button class="browser-back-home" onclick="showScreen('home-screen')">‹</button></div>
                 <div class="browser-addr-bar" style="background:#f1f3f4;">
                     <span class="b-lock">🕒</span>
                     <span style="font-size:14px;color:#3c4043;font-weight:500;">Browsing History</span>
@@ -542,7 +688,7 @@
                 <span class="b-btn" onclick="renderBrowserHome()">←</span>
                 <span class="b-btn" style="opacity:0.4">→</span>
                 <span class="b-btn" onclick="renderBrowserHome()">⌂</span>
-                <span class="b-btn active-tab-btn">🕒</span>
+                <span class="b-btn active-tab-btn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                 <span class="b-btn" onclick="showScreen('home-screen')">✕</span>
             </div>
         </div>
@@ -652,15 +798,107 @@
                     <div class="bank-balance-amount">₹12,480<span class="bank-balance-cents">.55</span></div>
                     <div class="bank-balance-account">HDFC Savings ···· 4821</div>
                     <div class="bank-balance-actions">
-                        <div class="bank-action-btn">↑ Send</div>
-                        <div class="bank-action-btn">↓ Receive</div>
-                        <div class="bank-action-btn">+ Add</div>
+                        <div class="bank-action-btn" onclick="bankFeatureMsg('Send Money')">↑ Send</div>
+                        <div class="bank-action-btn" onclick="bankFeatureMsg('Receive Money')">↓ Receive</div>
+                        <div class="bank-action-btn" onclick="bankFeatureMsg('Add Money')">+ Add</div>
                     </div>
                 </div>
                 <div class="bank-section-label">Recent Transactions</div>
                 <div id="bank-list" class="bank-list"></div>
             </div>
         </div>
+        <!-- APP: ECHO -->
+        <div id="echo-app" class="screen app-screen">
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>ECHO</h2></div>
+            <div class="scroll-container" style="background:#0a000f;">
+                <div style="padding:20px;">
+                    <div style="background:rgba(180,79,222,0.08);border:1px solid rgba(180,79,222,0.25);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center;">
+                        <div style="font-size:36px;margin-bottom:8px;">◉</div>
+                        <div style="font-size:13px;font-weight:700;color:#b44fde;letter-spacing:2px;margin-bottom:4px;">ACTIVE SESSION</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.35);">Sync Node: NX-NODE-441 · Connected</div>
+                    </div>
+                    <div class="echo-stat-row"><span>Prediction Accuracy</span><span style="color:#b44fde;font-weight:700;">91.4%</span></div>
+                    <div class="echo-stat-row"><span>Sync Cycles</span><span style="color:#fff;">847</span></div>
+                    <div class="echo-stat-row"><span>Active Nodes</span><span style="color:#ff453a;">12</span></div>
+                    <div class="echo-stat-row"><span>Next Sync</span><span style="color:#ff9500;">Tonight 3:00 AM</span></div>
+                    <div class="echo-stat-row"><span>Behaviour Delta</span><span style="color:#ff453a;">+2.4σ anxiety</span></div>
+                    <div style="margin-top:20px;background:rgba(255,69,58,0.08);border:1px solid rgba(255,69,58,0.2);border-radius:12px;padding:14px;font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;">⚠ You are enrolled in a personalised optimisation programme. This service cannot be disabled from this device.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP: Contacts -->
+        <div id="contacts-app" class="screen app-screen">
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Contacts</h2></div>
+            <div class="scroll-container">
+                <div style="padding:8px 16px 4px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.7px;">A</div>
+                <div class="contact-row"><div class="contact-avatar" style="background:#1a2a4a;color:#0a84ff;">A</div><div class="contact-info"><div class="contact-name">Aarav Mehta <span style="font-size:10px;color:rgba(255,255,255,0.3);">(Me)</span></div><div class="contact-sub">aarav.mehta@delhichronicle.com</div></div></div>
+                <div style="padding:8px 16px 4px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.7px;">D</div>
+                <div class="contact-row"><div class="contact-avatar" style="background:#1a2a1a;color:#30d158;">D</div><div class="contact-info"><div class="contact-name">Deepa Iyer</div><div class="contact-sub">Editor · Delhi Chronicle</div></div></div>
+                <div style="padding:8px 16px 4px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.7px;">K</div>
+                <div class="contact-row"><div class="contact-avatar" style="background:#0a1a2a;color:#0a84ff;">K</div><div class="contact-info"><div class="contact-name">Kabir</div><div class="contact-sub">+91 98100 ·····</div></div></div>
+                <div style="padding:8px 16px 4px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.7px;">M</div>
+                <div class="contact-row"><div class="contact-avatar" style="background:#2a1a2a;color:#ff9f0a;">M</div><div class="contact-info"><div class="contact-name">Mom</div><div class="contact-sub">+91 94510 ·····</div></div></div>
+                <div style="padding:8px 16px 4px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.7px;">R</div>
+                <div class="contact-row"><div class="contact-avatar" style="background:#1a002a;color:#b44fde;">R</div><div class="contact-info"><div class="contact-name">Dr. Rhea Kapoor</div><div class="contact-sub" style="color:#ff453a;">Contact unavailable</div></div></div>
+                <div style="padding:8px 16px 4px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.7px;">U</div>
+                <div class="contact-row"><div class="contact-avatar" style="background:#1a0000;color:#ff453a;">?</div><div class="contact-info"><div class="contact-name" style="color:#ff453a;">UNKNOWN</div><div class="contact-sub">No number saved</div></div></div>
+            </div>
+        </div>
+
+        <!-- APP: Health -->
+        <div id="health-app" class="screen app-screen">
+            <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Health</h2></div>
+            <div class="scroll-container">
+                <div style="padding:16px 16px 8px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.7px;">Today · Oct 12</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px;">
+                    <div class="health-card" id="hc-hr" style="border-color:rgba(255,59,48,0.3);">
+                        <div style="font-size:22px;margin-bottom:4px;">❤️</div>
+                        <div class="health-val" id="hv-hr" style="color:#ff3b30;">112</div>
+                        <div class="health-label">Heart Rate <span id="hv-hr-unit" style="font-size:9px;color:rgba(255,255,255,0.25);text-transform:none;letter-spacing:0;">BPM</span></div>
+                        <div class="health-sub" id="hv-hr-status" style="color:#ff453a;">↑ Elevated</div>
+                    </div>
+                    <div class="health-card" style="border-color:rgba(48,209,88,0.3);">
+                        <div style="font-size:22px;margin-bottom:4px;">🚶</div>
+                        <div class="health-val" id="hv-steps" style="color:#30d158;">3,241</div>
+                        <div class="health-label">Steps</div>
+                        <div class="health-sub" id="hv-steps-goal">Goal: 8,000</div>
+                    </div>
+                    <div class="health-card" style="border-color:rgba(10,132,255,0.3);">
+                        <div style="font-size:22px;margin-bottom:4px;">😴</div>
+                        <div class="health-val" style="color:#0a84ff;">3h 12m</div>
+                        <div class="health-label">Sleep</div>
+                        <div class="health-sub" style="color:#ff9500;">↓ Poor</div>
+                    </div>
+                    <div class="health-card" style="border-color:rgba(255,149,0,0.3);">
+                        <div style="font-size:22px;margin-bottom:4px;">🧠</div>
+                        <div class="health-val" id="hv-stress" style="color:#ff9500;">High</div>
+                        <div class="health-label">Stress</div>
+                        <div class="health-sub" id="hv-stress-sub" style="color:#ff453a;">Unusual</div>
+                    </div>
+                </div>
+
+                <!-- Live HR graph -->
+                <div style="margin:0 16px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;">Live Heart Rate</span>
+                        <span id="hv-hr-live-badge" style="font-size:11px;color:#ff3b30;font-weight:700;animation:hPulse 1s ease-in-out infinite;">● LIVE</span>
+                    </div>
+                    <div id="health-hr-graph" style="display:flex;align-items:center;gap:2px;height:48px;overflow:hidden;"></div>
+                    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:rgba(255,255,255,0.2);">
+                        <span>60s ago</span><span>Now</span>
+                    </div>
+                </div>
+
+                <div style="margin:0 16px 16px;background:rgba(255,69,58,0.08);border:1px solid rgba(255,69,58,0.2);border-radius:12px;padding:14px;font-size:12px;color:rgba(255,255,255,0.5);line-height:1.7;">
+                    ⚠ <b style="color:#ff453a;">Anomaly detected:</b> Cortisol and adrenaline markers show a pattern inconsistent with normal stress. ECHO Health module reports divergence from your 30-day baseline on <span id="hv-anomaly-days">9</span> of the last 12 days.
+                </div>
+
+                <div style="padding:0 16px 4px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.7px;">7-Day Avg Heart Rate</div>
+                <div id="health-week-bars" style="padding:8px 16px 24px;display:flex;align-items:flex-end;gap:6px;height:88px;"></div>
+            </div>
+        </div>
+
         <div id="email-app" class="screen app-screen">
             <div class="app-header"><button class="back-btn" data-back="home-screen">←</button><h2>Inbox</h2></div>
             <div class="email-account-bar">All Inboxes · <span id="email-unread-count" style="color:#0a84ff;font-weight:600;">3 Unread</span></div>
@@ -1215,6 +1453,7 @@
         <div id="notif-pull-zone"></div>
 
     </div><!-- end #phone-container -->
+    </div><!-- end .phone-shell -->
 
     <script src="script.js"></script>
 </body>

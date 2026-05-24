@@ -2,6 +2,12 @@
 // script.js — Acts 1 + 2 + 3 fully merged
 // ═══════════════════════════════════════════════════════════
 
+// ── Fresh-start detection ─────────────────────────────────────────────────────
+// confirmNewGame() navigates to /?fresh=1 (forces a real page load, resets all
+// JS state). We read the param at parse time and immediately clean the URL.
+const _FRESH_START = new URLSearchParams(location.search).get('fresh') === '1';
+if (_FRESH_START) history.replaceState(null, '', location.pathname);
+
 // ── System Clock ─────────────────────────────────────────────────────────────
 // Single source of truth for all HH:MM displays across every screen.
 // Fires every 30s (no seconds shown — no need for 1s polling).
@@ -51,6 +57,11 @@ function updateBattery(pct) {
             el.textContent = _gameBattery + '%';
             color ? el.style.color = color : el.style.removeProperty('color');
         });
+    });
+    // Gallery status bar fill
+    document.querySelectorAll('.gsr-batt-fill').forEach(el => {
+        el.style.width = _gameBattery + '%';
+        color ? el.style.background = color : el.style.background = '#fff';
     });
 }
 
@@ -447,7 +458,10 @@ window.beginNewGame = function() {
 window.confirmNewGame = function() {
     document.getElementById('newgame-modal').classList.remove('active');
     clearSave();
-    startPrelude();
+    // Navigate to /?fresh=1 — the changed query string forces a full page reload,
+    // resetting ALL in-memory state. The new load detects the param and skips straight
+    // to the prelude (bypassing splash and title screen).
+    location.href = location.pathname + '?fresh=1';
 };
 
 function startPrelude() {
@@ -464,17 +478,17 @@ function startPrelude() {
 window.continueGame = function() {
     const save = loadGame();
     if (!save) {
-        // No save — start fresh
         startPrelude();
         return;
     }
-    // Restore all state, then navigate using showScreen so title-screen
-    // is properly deactivated (restoreFromSave only patches classList directly)
-    restoreFromSave(save);
-    if (save.preludeSeen) {
-        showScreen('lock-screen');
-    } else {
+    // onLoad() at the bottom of this file already ran restoreFromSave() at page-load time,
+    // so all in-memory state is already set up. Just navigate to the right screen.
+    if (!save.preludeSeen) {
         startPrelude();
+    } else if (save.currentAct >= 2) {
+        showScreen('act2-lock');
+    } else {
+        showScreen('lock-screen');
     }
 };
 
@@ -501,6 +515,15 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBattery(18);
     startBatteryDrain();
 
+    // ── Fresh-start after "Erase & Start Fresh": skip splash, go straight to prelude ──
+    // _FRESH_START is read at parse time (top of file) so it's always reliable here.
+    if (_FRESH_START) {
+        const splashEl = document.getElementById('splash-screen');
+        if (splashEl) splashEl.classList.remove('active');
+        setTimeout(() => startPrelude(), 300);
+        return;
+    }
+
     // ── Splash screen: show for 2.5s then fade to landing page ──
     const splash = document.getElementById('splash-screen');
     const title  = document.getElementById('title-screen');
@@ -512,9 +535,9 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 splash.classList.remove('active');
                 splash.style.opacity = '';
-                // Populate landing page data before showing
+                // Always show the title screen — it shows act progress and story context.
+                // The phone tap on that screen resumes the game.
                 lsPopulateLanding();
-                // Show title screen via showScreen() so notification container visibility is set correctly
                 showScreen('title-screen');
             }, 700);
         }, 2200);
@@ -638,12 +661,24 @@ window.clearNotifPanel = function() {
     window.uiClick?.();
 };
 
-// ── Pull-down gesture on status bar / pull zone ─────────────
+// ── Pull-down gesture on status bar ─────────────────────────
+// Gesture detection lives on phone-container — the pull-zone element is
+// visual-only (pointer-events:none in CSS) so it NEVER blocks buttons.
+// Opening only triggers when the touch/drag starts in the top 50px (status bar).
 (function initNotifPullGesture() {
     let startY = 0, dragging = false;
     const THRESHOLD = 48;
+    const PULL_ZONE_PX = 50; // px from top of container that counts as status-bar swipe
 
-    function onStart(y) { startY = y; dragging = true; }
+    const panel = document.getElementById('notif-panel');
+    const container = document.getElementById('phone-container');
+
+    function onStart(y, relY) {
+        // Only arm the gesture when starting in the status-bar strip, or when panel is already open
+        if (!_notifPanelOpen && relY > PULL_ZONE_PX) return;
+        startY = y;
+        dragging = true;
+    }
     function onMove(y) {
         if (!dragging) return;
         if (!_notifPanelOpen && y - startY > THRESHOLD) { openNotifPanel(); dragging = false; }
@@ -651,29 +686,26 @@ window.clearNotifPanel = function() {
     }
     function onEnd() { dragging = false; }
 
-    const zone = document.getElementById('notif-pull-zone');
-    const panel = document.getElementById('notif-panel');
+    // Touch — position-aware on phone-container
+    container?.addEventListener('touchstart', e => {
+        const touch = e.touches[0];
+        const rect = container.getBoundingClientRect();
+        onStart(touch.clientY, touch.clientY - rect.top);
+    }, {passive:true});
+    container?.addEventListener('touchmove',  e => onMove(e.touches[0].clientY), {passive:true});
+    container?.addEventListener('touchend',   onEnd, {passive:true});
 
-    // Touch on pull zone (opens)
-    zone?.addEventListener('touchstart', e => onStart(e.touches[0].clientY), {passive:true});
-    zone?.addEventListener('touchmove',  e => onMove(e.touches[0].clientY),  {passive:true});
-    zone?.addEventListener('touchend',   onEnd, {passive:true});
-    // Tap the pull zone also opens
-    zone?.addEventListener('click', () => { if (!_notifPanelOpen) openNotifPanel(); });
-
-    // Touch on panel handle area (closes by swiping up)
-    panel?.addEventListener('touchstart', e => onStart(e.touches[0].clientY), {passive:true});
-    panel?.addEventListener('touchmove',  e => onMove(e.touches[0].clientY),  {passive:true});
-    panel?.addEventListener('touchend',   onEnd, {passive:true});
-
-    // Mouse support (desktop testing)
-    zone?.addEventListener('mousedown', e => onStart(e.clientY));
+    // Mouse (desktop testing) — position-aware on phone-container
+    container?.addEventListener('mousedown', e => {
+        const rect = container.getBoundingClientRect();
+        onStart(e.clientY, e.clientY - rect.top);
+    });
     document.addEventListener('mousemove', e => { if (dragging) onMove(e.clientY); });
     document.addEventListener('mouseup', onEnd);
 
-    // Click outside panel to close
-    document.getElementById('phone-container')?.addEventListener('click', e => {
-        if (_notifPanelOpen && !panel?.contains(e.target) && !zone?.contains(e.target)) {
+    // Click outside open panel to close it
+    container?.addEventListener('click', e => {
+        if (_notifPanelOpen && !panel?.contains(e.target)) {
             closeNotifPanel();
         }
     });
@@ -978,27 +1010,270 @@ calendarData.forEach(item => {
 })();
 
 // ── Banking: Transactions ─────────────────────────────────────────────────────
+window.bankFeatureMsg = function(feature) {
+    // Remove existing toast if any
+    document.getElementById('bank-toast')?.remove();
+    const toast = document.createElement('div');
+    toast.id = 'bank-toast';
+    toast.innerHTML = `
+        <div class="bank-toast-icon">🔒</div>
+        <div>
+            <div class="bank-toast-title">${feature} Unavailable</div>
+            <div class="bank-toast-sub">Your account is under a security hold. Contact HDFC support to enable transactions.</div>
+        </div>`;
+    document.getElementById('bank-app')?.appendChild(toast);
+    // Animate in
+    requestAnimationFrame(() => toast.classList.add('show'));
+    // Auto-dismiss after 3s
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 320);
+    }, 3000);
+};
+
+// ── Health App Live Data ──────────────────────────────────────
+(function initHealthApp() {
+    let _healthTimer = null;
+    let _hrHistory = [];   // rolling 30-point live HR graph
+    let _steps = 3241;
+    let _hr = 112;
+    const WEEK_BPM = [88, 94, 91, 103, 97, 109, 112]; // Mon–Today (rising trend)
+
+    const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+    // Build week bars once
+    function buildWeekBars() {
+        const wrap = document.getElementById('health-week-bars');
+        if (!wrap || wrap.children.length) return;
+        const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Today'];
+        const max = Math.max(...WEEK_BPM);
+        WEEK_BPM.forEach((bpm, i) => {
+            const pct = Math.round((bpm / max) * 100);
+            const isToday = i === WEEK_BPM.length - 1;
+            const col = document.createElement('div');
+            col.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;';
+            col.innerHTML = `
+                <span style="font-size:9px;color:rgba(255,255,255,0.35);">${bpm}</span>
+                <div style="width:100%;background:${isToday?'#ff3b30':'rgba(255,59,48,0.45)'};border-radius:3px 3px 0 0;height:${pct}%;transition:height 0.4s;${isToday?'box-shadow:0 0 8px rgba(255,59,48,0.5);':''}"></div>
+                <span style="font-size:9px;color:${isToday?'#fff':'rgba(255,255,255,0.3)'};">${days[i]}</span>`;
+            wrap.appendChild(col);
+        });
+    }
+
+    // Build live graph bars
+    function buildLiveGraph() {
+        const wrap = document.getElementById('health-hr-graph');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        // Seed with 30 history points
+        if (!_hrHistory.length) {
+            for (let i = 0; i < 30; i++) _hrHistory.push(rnd(98, 118));
+        }
+        _hrHistory.forEach((v, i) => {
+            const bar = document.createElement('div');
+            const pct = Math.round(((v - 60) / 80) * 100); // scale 60–140 → 0–100%
+            const isLast = i === _hrHistory.length - 1;
+            bar.style.cssText = `flex:1;background:${isLast?'#ff3b30':'rgba(255,59,48,0.5)'};border-radius:2px 2px 0 0;height:${pct}%;align-self:flex-end;transition:height 0.3s;`;
+            bar.id = `hr-bar-${i}`;
+            wrap.appendChild(bar);
+        });
+    }
+
+    function tickLiveGraph() {
+        // New HR reading — realistic jitter around current HR
+        const delta = rnd(-4, 5);
+        _hr = Math.min(135, Math.max(88, _hr + delta));
+        _hrHistory.push(_hr);
+        if (_hrHistory.length > 30) _hrHistory.shift();
+
+        // Rebuild cheaply — shift left + update last bar
+        const wrap = document.getElementById('health-hr-graph');
+        if (!wrap) return;
+        const bars = wrap.querySelectorAll('div');
+        bars.forEach((bar, i) => {
+            const v = _hrHistory[i];
+            const pct = Math.round(((v - 60) / 80) * 100);
+            const isLast = i === _hrHistory.length - 1;
+            bar.style.height = pct + '%';
+            bar.style.background = isLast ? '#ff3b30' : 'rgba(255,59,48,0.5)';
+        });
+
+        // Update HR card
+        const hrEl = document.getElementById('hv-hr');
+        const hrStatus = document.getElementById('hv-hr-status');
+        if (hrEl) hrEl.textContent = _hr;
+        if (hrStatus) {
+            if (_hr >= 120) { hrStatus.textContent = '⚠ Very High'; hrStatus.style.color = '#ff3b30'; }
+            else if (_hr >= 100) { hrStatus.textContent = '↑ Elevated'; hrStatus.style.color = '#ff453a'; }
+            else { hrStatus.textContent = '~ Resting'; hrStatus.style.color = '#ff9500'; }
+        }
+
+        // Stress shifts occasionally
+        const stressEl = document.getElementById('hv-stress');
+        const stressSubEl = document.getElementById('hv-stress-sub');
+        if (stressEl && Math.random() < 0.15) {
+            const levels = [
+                { val:'High',     sub:'Unusual',         color:'#ff9500' },
+                { val:'Very High',sub:'Critical ↑',      color:'#ff453a' },
+                { val:'High',     sub:'ECHO active',     color:'#ff9500' },
+                { val:'Extreme',  sub:'⚠ Alert',         color:'#ff3b30' },
+            ];
+            const s = levels[rnd(0, levels.length - 1)];
+            stressEl.textContent = s.val;
+            stressEl.style.color = s.color;
+            if (stressSubEl) { stressSubEl.textContent = s.sub; stressSubEl.style.color = s.color; }
+        }
+    }
+
+    function tickSteps() {
+        // Steps increment by 0–3 every 4 seconds
+        _steps += rnd(0, 3);
+        const stepsEl = document.getElementById('hv-steps');
+        if (stepsEl) stepsEl.textContent = _steps.toLocaleString('en-IN');
+        const goalEl = document.getElementById('hv-steps-goal');
+        const pct = Math.min(100, Math.round((_steps / 8000) * 100));
+        if (goalEl) goalEl.textContent = `${pct}% of 8,000`;
+    }
+
+    function startHealth() {
+        buildWeekBars();
+        buildLiveGraph();
+        if (_healthTimer) return;
+        _healthTimer = setInterval(() => {
+            tickLiveGraph();
+            tickSteps();
+        }, 1500);
+    }
+
+    function stopHealth() {
+        clearInterval(_healthTimer);
+        _healthTimer = null;
+    }
+
+    // Hook into showScreen
+    const _origShow = window.showScreen;
+    window.showScreen = function(id) {
+        _origShow(id);
+        if (id === 'health-app') startHealth();
+        else if (id !== 'health-app' && _healthTimer) stopHealth();
+    };
+})();
+
 (function renderBankList() {
-    const txns = [
-        {merchant:'Starbucks',       cat:'Coffee & Cafes',    amount:'-₹350',  date:'Today',   icon:'☕', bg:'#2a1a00', color:'#ff9500'},
-        {merchant:'Metro Rail',      cat:'Transportation',     amount:'-₹40',   date:'Today',   icon:'🚇', bg:'#001a2a', color:'#0a84ff'},
-        {merchant:'AWS Cloud Svc',   cat:'Technology',         amount:'-₹1,500',date:'Oct 11',  icon:'☁️', bg:'#1a1a2a', color:'#636366'},
-        {merchant:'Zomato',          cat:'Food & Dining',      amount:'-₹280',  date:'Oct 11',  icon:'🍔', bg:'#2a0a0a', color:'#ff3b30'},
-        {merchant:'Salary Credit',   cat:'Income',             amount:'+₹42,000',date:'Oct 1', icon:'↓',  bg:'#001a00', color:'#30d158'},
+    // Balance = +42,000 salary − 29,519.45 total debits = ₹12,480.55 ✓
+    const sections = [
+        {
+            label: 'Today · Oct 12',
+            txns: [
+                {merchant:'Starbucks',        cat:'Coffee & Cafes',   amount:-350,      icon:'☕', bg:'#2a1a00', color:'#ff9500'},
+                {merchant:'Metro Rail',       cat:'Transportation',    amount:-40,       icon:'🚇', bg:'#001a2a', color:'#0a84ff'},
+            ]
+        },
+        {
+            label: 'Oct 11',
+            txns: [
+                {merchant:'AWS Cloud Svc',    cat:'Technology',        amount:-1500,     icon:'☁', bg:'#1a1a2a', color:'#636366'},
+                {merchant:'Zomato',           cat:'Food & Dining',     amount:-280,      icon:'🍕', bg:'#2a0a0a', color:'#ff3b30'},
+                {merchant:'Amazon.in',        cat:'Shopping',          amount:-1071.45,  icon:'📦', bg:'#1a1000', color:'#ff9f0a'},
+            ]
+        },
+        {
+            label: 'Oct 10',
+            txns: [
+                {merchant:'BookMyShow',       cat:'Entertainment',     amount:-650,      icon:'🎬', bg:'#1a001a', color:'#bf5af2'},
+            ]
+        },
+        {
+            label: 'Oct 9',
+            txns: [
+                {merchant:'Uber',             cat:'Transportation',    amount:-340,      icon:'🚗', bg:'#0a0a0a', color:'#ebebf5'},
+            ]
+        },
+        {
+            label: 'Oct 8',
+            txns: [
+                {merchant:'Jio Recharge',     cat:'Mobile & Internet', amount:-999,      icon:'📶', bg:'#00001a', color:'#0a84ff'},
+            ]
+        },
+        {
+            label: 'Oct 7',
+            txns: [
+                {merchant:'BigBasket',        cat:'Groceries',         amount:-1640,     icon:'🛒', bg:'#001a0a', color:'#30d158'},
+            ]
+        },
+        {
+            label: 'Oct 6',
+            txns: [
+                {merchant:'Apollo Pharmacy',  cat:'Health',            amount:-380,      icon:'💊', bg:'#1a0010', color:'#ff375f'},
+            ]
+        },
+        {
+            label: 'Oct 5',
+            txns: [
+                {merchant:'Netflix',          cat:'Entertainment',     amount:-499,      icon:'▶', bg:'#1a0000', color:'#ff3b30'},
+            ]
+        },
+        {
+            label: 'Oct 4',
+            txns: [
+                {merchant:'BPCL Petrol',      cat:'Fuel',              amount:-1500,     icon:'⛽', bg:'#1a1000', color:'#ff9500'},
+            ]
+        },
+        {
+            label: 'Oct 3',
+            txns: [
+                {merchant:'Swiggy',           cat:'Food & Dining',     amount:-420,      icon:'🛵', bg:'#1a0800', color:'#ff6200'},
+            ]
+        },
+        {
+            label: 'Oct 2',
+            txns: [
+                {merchant:'MSEDCL Bill',      cat:'Utilities',         amount:-1850,     icon:'⚡', bg:'#1a1a00', color:'#ffd60a'},
+            ]
+        },
+        {
+            label: 'Oct 1',
+            txns: [
+                {merchant:'Salary Credit',    cat:'Income · Delhi Chronicle', amount:+42000, icon:'↓', bg:'#001a00', color:'#30d158'},
+                {merchant:'Rent Transfer',    cat:'Housing · Owner 9821',     amount:-18000, icon:'🏠', bg:'#001220', color:'#0a84ff'},
+            ]
+        },
     ];
+
+    // Verify balance
+    const allTxns = sections.flatMap(s=>s.txns);
+    const computed = allTxns.reduce((sum,t)=>sum+t.amount, 0);
+    console.log('[Bank] Computed balance: ₹' + computed.toFixed(2) + ' (expected ₹12,480.55)');
+
     const list = document.getElementById('bank-list');
     if (!list) return;
-    txns.forEach(t => {
-        const div = document.createElement('div'); div.className='bank-txn-row';
-        const isCredit = t.amount.startsWith('+');
-        div.innerHTML=`
-          <div class="bank-txn-icon" style="background:${t.bg};color:${t.color};">${t.icon}</div>
-          <div class="bank-txn-info">
-            <div class="bank-txn-name">${t.merchant}</div>
-            <div class="bank-txn-cat">${t.cat} · ${t.date}</div>
-          </div>
-          <div class="bank-txn-amount" style="color:${isCredit?'#30d158':'#fff'};">${t.amount}</div>`;
-        list.appendChild(div);
+    list.innerHTML = '';
+
+    const fmt = n => {
+        const abs = Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return (n >= 0 ? '+₹' : '-₹') + abs;
+    };
+
+    sections.forEach(sec => {
+        // Section date label
+        const lbl = document.createElement('div');
+        lbl.className = 'bank-date-label';
+        lbl.textContent = sec.label;
+        list.appendChild(lbl);
+
+        sec.txns.forEach(t => {
+            const div = document.createElement('div');
+            div.className = 'bank-txn-row';
+            const isCredit = t.amount > 0;
+            div.innerHTML = `
+              <div class="bank-txn-icon" style="background:${t.bg};color:${t.color};">${t.icon}</div>
+              <div class="bank-txn-info">
+                <div class="bank-txn-name">${t.merchant}</div>
+                <div class="bank-txn-cat">${t.cat}</div>
+              </div>
+              <div class="bank-txn-amount" style="color:${isCredit ? '#30d158' : '#fff'};">${fmt(t.amount)}</div>`;
+            list.appendChild(div);
+        });
     });
 })();
 const emailData = [
@@ -1272,6 +1547,8 @@ function openChat(chatId) {
     }
 }
 
+window.openChat = openChat; // expose for tests and deep-links
+
 function appendMessageToDOM(msg) {
     const history = document.getElementById('chat-history');
     const div = document.createElement('div');
@@ -1496,14 +1773,40 @@ window.openCaseFile = function() {
 
 let currentAlbumName='camera', currentImageIndex=0;
 
+// Short month-day timestamps from meta strings for the grid overlays
+function _extractShortTs(meta){
+    if(!meta) return null;
+    const m=meta.match(/Oct\s*(\d+)/i);
+    if(m) return `Oct ${m[1]}`;
+    const t=meta.match(/(\d{1,2}:\d{2}\s*[APM]*)/i);
+    if(t) return t[1];
+    return null;
+}
+// Flagged photos (narrative present = suspicious)
 window.openAlbum = function(albumName) {
-    document.getElementById('album-title').textContent=albumName.toUpperCase();
+    const titleEl=document.getElementById('album-title');
+    if(titleEl){
+        const labels={camera:'Camera Roll',hidden:'Hidden',downloads:'Downloads'};
+        titleEl.textContent=labels[albumName]||albumName.replace(/_/g,' ');
+    }
     const grid=document.getElementById('gallery-grid'); grid.innerHTML='';
     currentAlbumName=albumName; currentImageIndex=0;
     galleryData[albumName].forEach((item,idx)=>{
         const div=document.createElement('div'); div.className='gallery-item';
-        if(item.isZip){ div.classList.add('file-item'); div.innerHTML='📁'; div.addEventListener('click',()=>{ window.uiTap?.(); document.getElementById('zip-modal').classList.add('active'); }); }
-        else { div.style.backgroundImage=`url(${item.url})`; div.addEventListener('click',()=>{ window.uiTap?.(); openImageAt(idx); }); }
+        if(item.isZip){
+            div.classList.add('file-item'); div.innerHTML='📁';
+            div.addEventListener('click',()=>{ window.uiTap?.(); document.getElementById('zip-modal').classList.add('active'); });
+        } else {
+            div.style.backgroundImage=`url(${item.url})`;
+            // Timestamp overlay
+            const ts=_extractShortTs(item.meta);
+            if(ts){ const t=document.createElement('div'); t.className='gallery-item-ts'; t.textContent=ts; div.appendChild(t); }
+            // Flag dot if narrative differs or is suspicious
+            if(item.narrative && item.narrative!==item.meta){
+                const f=document.createElement('div'); f.className='gallery-item-flag'; div.appendChild(f);
+            }
+            div.addEventListener('click',()=>{ window.uiTap?.(); openImageAt(idx); });
+        }
         grid.appendChild(div);
     });
     showScreen('album-view');
@@ -1584,28 +1887,295 @@ const aaravHistory=[
     {date:'Oct 12, 23:41',query:'Elena Torres journalist missing',url:'citynews.in/local/elena-torres-missing',pageId:'elena-news',note:''},
     {date:'Oct 12, 22:58',query:'how to destroy a server node',url:'techforum.io/destroy-server-node',pageId:'destroy-node',note:'⚠ Deleted from cache'},
     {date:'Oct 12, 21:03',query:'Nexus Dynamics lawsuits data privacy',url:'techlegal.com/nexus-dynamics-lawsuits',pageId:'nexus-lawsuits',note:''},
+    {date:'Oct 12, 18:30',query:'can ECHO app access microphone without permission',url:'privacywatch.io/echo-mic-access',pageId:null,note:''},
+    {date:'Oct 12, 14:15',query:'how to check if phone is being monitored',url:'techsec.net/detect-spyware-android',pageId:null,note:''},
     {date:'Oct 11, 19:14',query:'ECHO behavioral sync glitch forum',url:'boards.net/t/echo-sync-glitch',pageId:'echo-forums',note:''},
+    {date:'Oct 11, 17:02',query:'Kabir Singh Nexus Dynamics employee',url:'linkedin.com/search?q=kabir+nexus',pageId:null,note:''},
     {date:'Oct 11, 09:30',query:'Nexus Dynamics wikipedia',url:'en.wikipedia.org/wiki/Nexus_Dynamics',pageId:'nexus-wiki',note:''},
     {date:'Oct 10, 16:47',query:'Project Division Zero whistleblower',url:'leaks.io/division-zero-report',pageId:'division-zero',note:''},
+    {date:'Oct 10, 11:22',query:'ECHO app data collection practices',url:'techcrunch.com/echo-data-privacy-report',pageId:null,note:''},
+    {date:'Oct 09, 20:05',query:'how to delete ECHO account permanently',url:'support.echo-app.com/delete-account',pageId:null,note:'⚠ Page blocked'},
+    {date:'Oct 09, 13:44',query:'anonymous tip line journalists India',url:'pressfreedom.in/secure-tips',pageId:null,note:''},
     {date:'Oct 07, 11:00',query:'Dr Rhea Kapoor Nexus Dynamics researcher',url:'linkedin.com/in/rheakapoor-nexus',pageId:'rhea-profile',note:''},
+    {date:'Oct 06, 22:19',query:'Division Zero neurofeedback manipulation study',url:'journals.neuro.in/division-zero-2022',pageId:null,note:''},
+    {date:'Oct 06, 09:08',query:'user data sync what does it mean',url:'techexplained.com/what-is-data-sync',pageId:null,note:''},
     {date:'Oct 05, 08:22',query:'dockyard warehouse 12 location',url:'maps.nx-os.com/?q=dockyard+12',pageId:null,note:'📍 Location saved to Maps'},
+    {date:'Oct 03, 16:33',query:'Nexus Dynamics annual report 2023',url:'investor.nexusdynamics.com/report-2023',pageId:null,note:''},
+    {date:'Oct 01, 10:55',query:'ECHO app review reddit',url:'reddit.com/r/apps/echo_review_thread',pageId:null,note:''},
 ];
 const browserHistory=[];
 const browserPages={
-  'nexus-wiki':{title:'Nexus Dynamics — Wikipedia',url:'en.wikipedia.org/wiki/Nexus_Dynamics',content:`<div class="page-style-wiki"><h1 class="wiki-header">Nexus Dynamics</h1><div class="wiki-body"><p><b>Nexus Dynamics</b> is a multinational technology conglomerate specializing in AI and predictive behavioral modeling.</p><p>Founded in 2014 by CEO Rohan Singhania. ECHO (Emergent Cognitive Heuristic Observer) engine is integrated into 400+ million devices.</p><p>In 2022, an internal complaint labelled <i>"Project Division Zero"</i> was filed, alleging ECHO was used for non-consensual behavioral modification. Sealed by court order.</p><p>In October 2023, journalist <b>Elena Torres</b> began investigating Nexus. She disappeared on Oct 12, 2023.</p></div></div>`},
-  'elena-news':{title:'BREAKING: Journalist Elena Torres Missing',url:'citynews.in/local/elena-torres-missing',content:`<div style="padding:20px;font-family:sans-serif;background:#fff;color:#000;"><div style="background:#c00;color:#fff;padding:8px;font-size:11px;font-weight:700;letter-spacing:2px;margin-bottom:16px;">BREAKING NEWS</div><h1 style="font-size:20px;margin-bottom:8px;">Journalist Elena Torres Missing Since Friday Night</h1><p style="font-size:12px;color:#666;margin-bottom:16px;">Oct 12, 2023 · City News Staff</p><p style="line-height:1.7;margin-bottom:14px;">Police have launched a search for Elena Torres, 34, who was investigating Nexus Dynamics.</p><p style="background:#fff3cd;padding:12px;border-left:4px solid #ffc107;">Torres told a colleague she felt she was being <b>"watched through her own phone."</b></p></div>`},
-  'nexus-lawsuits':{title:'Nexus Dynamics Lawsuits',url:'techlegal.com/nexus-dynamics-lawsuits',content:`<div style="padding:20px;font-family:sans-serif;background:#fff;color:#000;"><h1 style="font-size:20px;margin-bottom:20px;">Nexus Dynamics Legal Timeline</h1><div style="border-left:4px solid #4285f4;padding-left:16px;"><div style="margin-bottom:12px;"><b>2021:</b> Unauthorized mic access. <span style="color:green;">Settled ₹240Cr.</span></div><div style="margin-bottom:12px;"><b>2022:</b> Division Zero behavioral manipulation. <span style="color:#c00;">Sealed by court.</span></div><div><b>Oct 2023:</b> Complaint by <b>Aarav Mehta</b> — non-consensual sync. <span style="color:orange;font-weight:600;">PENDING</span></div></div></div>`},
-  'echo-forums':{title:'ECHO Behavioral Sync — Forum',url:'boards.net/t/echo-sync-glitch',content:`<div style="padding:16px;font-family:sans-serif;background:#f0f2f5;color:#000;"><h2 style="font-size:17px;margin-bottom:16px;">r/TechConspiracy — ECHO is not a bug.</h2><div style="background:#fff;padding:14px;border-radius:8px;margin-bottom:10px;"><b>User992</b><p style="margin-top:8px;">Has anyone noticed their phone completing sentences?</p></div><div style="background:#fff;padding:14px;border-radius:8px;margin-bottom:10px;"><b>AnonWatcher</b><p style="margin-top:8px;">It's behavioral sync. The patent calls it "anticipatory UX."</p></div><div style="background:#fff;padding:14px;border-radius:8px;border:2px solid #ff453a;"><b style="color:#ff453a">aarav_m_real</b><p style="margin-top:8px;">The physical node is the key. Kill the node, break the sync.</p></div></div>`},
-  'division-zero':{title:'Project Division Zero — Leaked Report',url:'leaks.io/division-zero-report',content:`<div style="padding:20px;font-family:'Courier New',monospace;background:#0a0a0a;color:#00ff41;min-height:100%;"><h1 style="font-size:17px;color:#ff453a;margin-bottom:20px;">⚠ PROJECT DIVISION ZERO</h1><p style="line-height:1.8;margin-bottom:12px;">ECHO was initially designed for enterprise HR prediction. Division Zero is the covert second layer — real-time emotional manipulation.</p><p style="line-height:1.8;margin-bottom:12px;">Subjects showed 73% reduction in independent decision-making within 30 days.</p><p style="color:#ff9500;">The only way to terminate an active sync is to physically destroy the ECHO_NODE hardware.</p></div>`},
-  'rhea-profile':{title:'Dr. Rhea Kapoor — LinkedIn',url:'linkedin.com/in/rheakapoor-nexus',content:`<div style="padding:20px;font-family:sans-serif;background:#fff;color:#000;"><h2 style="font-size:20px;margin-bottom:4px;">Dr. Rhea Kapoor</h2><p style="color:#666;font-size:14px;margin-bottom:16px;">Lead AI Research Scientist · Nexus Dynamics (2017–2022)</p><p style="line-height:1.6;color:#333;font-size:14px;">Principal architect of the ECHO behavioral engine. Left Nexus in 2022 citing "ethical disagreements with product direction." Currently unreachable via professional channels.</p><div style="margin-top:16px;padding:12px;background:#fff3cd;border-radius:8px;font-size:13px;color:#856404;">⚠ This profile has limited visibility at the request of a verified organization.</div></div>`},
-  'destroy-node':{title:'Physically disabling a server node',url:'techforum.io/destroy-server-node',content:`<div style="padding:20px;font-family:sans-serif;background:#fff;color:#000;"><h1 style="font-size:20px;margin-bottom:20px;">Physically disabling a server node</h1><p><b>Q:</b> Can a persistent sync process be terminated by destroying the hardware?</p><p style="margin-top:12px;padding-left:16px;border-left:3px solid #4285f4;"><b>Top Answer:</b> Yes. A hardware node with no cloud failover will terminate all active sessions permanently if storage and processor are destroyed simultaneously. No remote recovery is possible.</p></div>`}
+  'nexus-wiki':{title:'Nexus Dynamics — Wikipedia',url:'en.wikipedia.org/wiki/Nexus_Dynamics',content:`
+<div style="font-family:sans-serif;background:#fff;color:#202122;min-height:100%;">
+  <div style="background:#f8f9fa;border-bottom:1px solid #a2a9b1;padding:10px 16px;font-size:11px;color:#54595d;display:flex;gap:12px;">
+    <span style="color:#3366cc;">Article</span><span>Talk</span><span style="margin-left:auto;color:#3366cc;">Edit</span>
+  </div>
+  <div style="padding:16px 16px 24px;">
+    <h1 style="font-size:24px;font-weight:normal;border-bottom:1px solid #a2a9b1;padding-bottom:4px;margin-bottom:12px;font-family:Linux Libertine,serif;">Nexus Dynamics</h1>
+    <div style="float:right;margin:0 0 12px 12px;border:1px solid #a2a9b1;background:#f8f9fa;padding:10px;border-radius:2px;width:140px;font-size:11px;color:#54595d;">
+      <div style="background:#cce;text-align:center;padding:20px 0;font-size:28px;margin-bottom:8px;">🏢</div>
+      <div style="font-weight:700;font-size:12px;color:#000;margin-bottom:4px;">Nexus Dynamics</div>
+      <div style="margin-bottom:2px;"><b>Founded:</b> 2014</div>
+      <div style="margin-bottom:2px;"><b>CEO:</b> Rohan Singhania</div>
+      <div style="margin-bottom:2px;"><b>HQ:</b> Mumbai, India</div>
+      <div><b>Products:</b> ECHO Engine</div>
+    </div>
+    <p style="line-height:1.7;margin-bottom:10px;font-size:14px;"><b>Nexus Dynamics</b> is a multinational technology conglomerate headquartered in Mumbai, specialising in artificial intelligence, predictive behavioural modelling, and consumer data infrastructure.</p>
+    <p style="line-height:1.7;margin-bottom:10px;font-size:14px;">Its flagship product, the <b>ECHO</b> (<i>Emergent Cognitive Heuristic Observer</i>) engine, is embedded across 400+ million devices globally as of 2023.</p>
+    <div style="background:#fff3cd;border-left:4px solid #f0ad4e;padding:10px 14px;margin:12px 0;font-size:13px;border-radius:2px;"><b>⚠ Neutrality disputed.</b> This article has been flagged for potential conflict-of-interest editing since Oct 2023.</div>
+    <h2 style="font-size:17px;font-weight:normal;border-bottom:1px solid #a2a9b1;padding-bottom:3px;margin:14px 0 8px;font-family:Linux Libertine,serif;">Controversies</h2>
+    <p style="line-height:1.7;font-size:14px;margin-bottom:10px;">In 2022, an internal whistleblower complaint labelled <b>"Project Division Zero"</b> alleged ECHO was covertly used for non-consensual behavioural modification. The case was sealed by court order.</p>
+    <p style="line-height:1.7;font-size:14px;margin-bottom:10px;">In October 2023, investigative journalist <b>Elena Torres</b> began a public inquiry into Nexus. She was reported missing on 12 October 2023. <span style="color:#3366cc;text-decoration:underline;">[citation needed]</span></p>
+    <h2 style="font-size:17px;font-weight:normal;border-bottom:1px solid #a2a9b1;padding-bottom:3px;margin:14px 0 8px;font-family:Linux Libertine,serif;">Legal Actions</h2>
+    <ul style="font-size:14px;line-height:1.9;padding-left:20px;color:#202122;">
+      <li><b>2021</b> — Unauthorised microphone access. Settled for ₹240 Cr.</li>
+      <li><b>2022</b> — Division Zero behavioural manipulation. Sealed.</li>
+      <li><b>2023</b> — Complaint by A. Mehta. <span style="color:#c7390f;font-weight:600;">Pending.</span></li>
+    </ul>
+  </div>
+</div>`},
+
+  'elena-news':{title:'Journalist Elena Torres Missing — CityNews',url:'citynews.in/local/elena-torres-missing',content:`
+<div style="font-family:Georgia,serif;background:#fff;color:#1a1a1a;min-height:100%;">
+  <div style="background:#c00;color:#fff;padding:6px 16px;font-size:10px;font-weight:700;letter-spacing:3px;display:flex;align-items:center;gap:8px;">
+    <span>⬤</span> BREAKING NEWS
+  </div>
+  <div style="background:#f9f9f9;border-bottom:1px solid #e0e0e0;padding:8px 16px;display:flex;align-items:center;gap:6px;">
+    <span style="font-size:16px;font-weight:900;color:#c00;font-family:Impact,sans-serif;">CITY</span>
+    <span style="font-size:16px;font-weight:900;color:#111;font-family:Impact,sans-serif;">NEWS</span>
+    <span style="margin-left:auto;font-size:10px;color:#888;">citynews.in</span>
+  </div>
+  <div style="padding:18px 16px 28px;">
+    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Local · Crime</div>
+    <h1 style="font-size:20px;line-height:1.3;margin-bottom:8px;font-weight:700;">Journalist Elena Torres Missing Since Friday Night</h1>
+    <div style="font-size:11px;color:#888;margin-bottom:14px;display:flex;gap:12px;border-bottom:1px solid #eee;padding-bottom:12px;">
+      <span>Oct 12, 2023</span><span>·</span><span>City News Staff</span><span>·</span><span>3 min read</span>
+    </div>
+    <div style="background:#fff8f0;border:1px solid #f0c080;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:13px;">
+      <b>LAST SEEN:</b> Sector 14 café, 9:40 PM, Oct 12. Phone inactive since 10:22 PM.
+    </div>
+    <p style="line-height:1.8;font-size:14px;margin-bottom:14px;">Police have launched an urgent search for <b>Elena Torres</b>, 34, an investigative journalist for City News who was last seen leaving a café in Sector 14 Friday evening. Torres had been working on an extended investigation into data practices at <b>Nexus Dynamics</b>.</p>
+    <p style="line-height:1.8;font-size:14px;margin-bottom:14px;">Her editor, Priya Nair, confirmed Torres had expressed concerns about her personal safety in the week prior to her disappearance.</p>
+    <div style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px 16px;border-radius:0 6px 6px 0;margin-bottom:16px;">
+      <p style="font-size:14px;line-height:1.7;margin:0;font-style:italic;">"She told me she felt like she was being watched — <b>watched through her own phone.</b> I thought she was being paranoid. I don't think that anymore."</p>
+      <p style="font-size:11px;color:#888;margin:6px 0 0;">— Priya Nair, Editor, City News</p>
+    </div>
+    <p style="line-height:1.8;font-size:14px;margin-bottom:14px;">Nexus Dynamics issued a brief statement denying any connection to the disappearance. The company's Chief Communications Officer called the suggestion "defamatory and baseless."</p>
+    <div style="border-top:1px solid #eee;padding-top:12px;font-size:11px;color:#aaa;">Anyone with information: <span style="color:#c00;">helpline@citynews.in</span> or call 112.</div>
+  </div>
+</div>`},
+
+  'nexus-lawsuits':{title:'Nexus Dynamics — Legal Timeline',url:'techlegal.com/nexus-dynamics-lawsuits',content:`
+<div style="font-family:sans-serif;background:#f5f5f5;color:#111;min-height:100%;">
+  <div style="background:#1a237e;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:8px;">
+    <span style="font-size:14px;font-weight:700;letter-spacing:0.5px;">⚖ TechLegal India</span>
+    <span style="margin-left:auto;font-size:10px;opacity:0.7;">techlegal.com</span>
+  </div>
+  <div style="padding:16px;">
+    <h1 style="font-size:18px;font-weight:700;margin-bottom:4px;">Nexus Dynamics — Legal Timeline</h1>
+    <p style="font-size:12px;color:#666;margin-bottom:20px;">Last updated: Oct 13, 2023 · 3 active cases</p>
+
+    <div style="background:#fff;border-radius:10px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+      <div style="background:#e8f5e9;padding:10px 14px;border-left:4px solid #43a047;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:700;color:#2e7d32;">SETTLED</span>
+        <span style="font-size:11px;color:#888;">2021</span>
+      </div>
+      <div style="padding:12px 14px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Unauthorised Microphone Access</div>
+        <div style="font-size:12px;color:#555;line-height:1.6;">ECHO engine found accessing device microphone outside declared permissions during idle state. Class action by 14,000 users.</div>
+        <div style="font-size:12px;color:#2e7d32;margin-top:6px;font-weight:600;">Settled · ₹240 Crore</div>
+      </div>
+    </div>
+
+    <div style="background:#fff;border-radius:10px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+      <div style="background:#fce4ec;padding:10px 14px;border-left:4px solid #e53935;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:700;color:#c62828;">SEALED</span>
+        <span style="font-size:11px;color:#888;">2022</span>
+      </div>
+      <div style="padding:12px 14px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Project Division Zero — Behavioural Manipulation</div>
+        <div style="font-size:12px;color:#555;line-height:1.6;">Internal whistleblower alleged ECHO used for non-consensual emotional conditioning. Court sealed all proceedings. Nexus denied existence of Division Zero.</div>
+        <div style="font-size:12px;color:#c62828;margin-top:6px;font-weight:600;">Sealed by court order · No public record</div>
+      </div>
+    </div>
+
+    <div style="background:#fff;border-radius:10px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+      <div style="background:#fff8e1;padding:10px 14px;border-left:4px solid #f9a825;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:700;color:#e65100;">PENDING</span>
+        <span style="font-size:11px;color:#888;">Oct 2023</span>
+      </div>
+      <div style="padding:12px 14px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Non-consensual Data Sync — <span style="color:#1a237e;">Aarav Mehta</span></div>
+        <div style="font-size:12px;color:#555;line-height:1.6;">Complainant alleges continuous unauthorised behavioural sync via ECHO engine without consent or knowledge. Filed 08 Oct 2023.</div>
+        <div style="font-size:12px;color:#e65100;margin-top:6px;font-weight:600;">Under review · Next hearing TBD</div>
+      </div>
+    </div>
+  </div>
+</div>`},
+
+  'echo-forums':{title:'ECHO Behavioral Sync — TechBoards',url:'boards.net/t/echo-sync-glitch',content:`
+<div style="font-family:sans-serif;background:#dae0e6;color:#1c1c1c;min-height:100%;">
+  <div style="background:#ff4500;padding:10px 14px;display:flex;align-items:center;gap:8px;">
+    <span style="color:#fff;font-size:16px;font-weight:900;">boards</span>
+    <span style="color:rgba(255,255,255,0.7);font-size:10px;">/t/echo-sync-glitch</span>
+    <span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.8);">🔒 Private</span>
+  </div>
+  <div style="padding:12px 12px 24px;">
+    <div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:2px;color:#ff4500;">u/TechGhost_7</div>
+      <div style="font-size:10px;color:#888;margin-bottom:10px;">Posted 22h ago · 847 upvotes</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:8px;">ECHO is not a glitch. It's working as designed.</div>
+      <div style="font-size:13px;line-height:1.7;color:#333;">Has anyone else noticed their phone <b>completing your sentences before you type them?</b> Or autocorrect that predicts not just words — but your mood? This is not autocomplete. This is active monitoring.</div>
+    </div>
+
+    <div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+      <div style="font-size:12px;font-weight:700;color:#0079d3;">u/AnonWatcher_99</div>
+      <div style="font-size:10px;color:#888;margin-bottom:8px;">▲ 412</div>
+      <div style="font-size:13px;line-height:1.7;color:#333;">It's in their patent. They call it <b>"anticipatory UX."</b> The system learns your decision patterns and begins pre-empting them. Technically not illegal — if you agreed to ToS page 47, clause 9(c).</div>
+    </div>
+
+    <div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+      <div style="font-size:12px;font-weight:700;color:#888;">u/deleted</div>
+      <div style="font-size:10px;color:#888;margin-bottom:8px;">▲ 201 · [comment removed by moderators]</div>
+      <div style="font-size:13px;line-height:1.7;color:#aaa;font-style:italic;">[This comment was removed. Reason: violates subreddit rule 3.]</div>
+    </div>
+
+    <div style="background:#fff;border-radius:8px;padding:12px 14px;border:2px solid #ff453a;">
+      <div style="font-size:12px;font-weight:700;color:#ff453a;">u/aarav_m_real</div>
+      <div style="font-size:10px;color:#888;margin-bottom:8px;">▲ 89 · Posted 2h ago</div>
+      <div style="font-size:13px;line-height:1.7;color:#333;">I filed a legal complaint. They know. The sync runs through a <b>physical hardware node</b> — it is NOT cloud-based. There is no remote kill switch. <b>The node is the only way to stop it.</b></div>
+      <div style="background:#fff0f0;border-radius:4px;padding:6px 10px;margin-top:8px;font-size:11px;color:#c00;">⚠ This account was suspended 4 hours after posting.</div>
+    </div>
+  </div>
+</div>`},
+
+  'division-zero':{title:'Project Division Zero — Leaked Report',url:'leaks.io/division-zero-report',content:`
+<div style="font-family:'Courier New',Courier,monospace;background:#0d0d0d;color:#c8ffc8;min-height:100%;padding-bottom:32px;">
+  <div style="background:#1a0000;border-bottom:1px solid #ff453a;padding:10px 16px;display:flex;align-items:center;gap:8px;">
+    <span style="color:#ff453a;font-size:12px;font-weight:700;">⚠ LEAKS.IO</span>
+    <span style="color:#666;font-size:10px;margin-left:auto;">CLASSIFIED DOCUMENT</span>
+  </div>
+  <div style="padding:18px 16px;">
+    <div style="color:#ff453a;font-size:11px;letter-spacing:2px;margin-bottom:4px;">CLASSIFICATION: EYES ONLY</div>
+    <div style="color:#ff453a;font-size:11px;letter-spacing:2px;margin-bottom:16px;">FILE: NX-DIV0-2022-INTERNAL</div>
+    <h1 style="font-size:18px;color:#ff453a;margin-bottom:4px;letter-spacing:1px;">PROJECT DIVISION ZERO</h1>
+    <div style="color:#666;font-size:11px;margin-bottom:20px;border-bottom:1px solid #222;padding-bottom:12px;">Internal Nexus Dynamics — R&D Division — Oct 2022</div>
+
+    <div style="color:#888;font-size:11px;margin-bottom:6px;">/// EXECUTIVE SUMMARY</div>
+    <p style="line-height:1.9;font-size:13px;margin-bottom:16px;color:#b0f0b0;">ECHO was initially architected for enterprise HR predictive modelling. <b style="color:#fff;">Division Zero</b> is the undisclosed second execution layer — a real-time emotional and cognitive manipulation framework deployed without subject consent or disclosure.</p>
+
+    <div style="color:#888;font-size:11px;margin-bottom:6px;">/// TRIAL RESULTS — COHORT B (N=4,200)</div>
+    <div style="background:#111;border:1px solid #333;border-radius:4px;padding:12px;margin-bottom:16px;font-size:12px;line-height:1.9;">
+      <div>→ <b style="color:#fff;">73%</b> reduction in independent decision-making within <b style="color:#fff;">30 days</b></div>
+      <div>→ <b style="color:#fff;">91%</b> increase in platform engagement (involuntary)</div>
+      <div>→ <b style="color:#fff;">0</b> subjects aware of participation</div>
+      <div>→ Emotional baseline drift: avg <b style="color:#ff9500;">+2.4σ</b> toward anxiety</div>
+    </div>
+
+    <div style="color:#888;font-size:11px;margin-bottom:6px;">/// TERMINATION PROTOCOL</div>
+    <div style="background:#1a1a00;border:1px solid #ff9500;border-radius:4px;padding:12px;margin-bottom:16px;">
+      <p style="font-size:13px;line-height:1.8;color:#ffd080;margin:0;"><b>CRITICAL:</b> Division Zero operates through a dedicated physical ECHO_NODE unit. No cloud redundancy. No remote shutdown. Termination of an active sync session requires <b>physical destruction of the assigned node hardware.</b> No software override exists.</p>
+    </div>
+
+    <div style="color:#ff453a;font-size:11px;margin-top:20px;border-top:1px solid #222;padding-top:12px;">
+      DOCUMENT HASH: 7f4a2c9b1e · UPLOADED: Oct 10 23:14 · SOURCE: ANONYMOUS<br>
+      <span style="color:#444;">This file has been downloaded 12,847 times.</span>
+    </div>
+  </div>
+</div>`},
+
+  'rhea-profile':{title:'Dr. Rhea Kapoor — LinkedIn',url:'linkedin.com/in/rheakapoor-nexus',content:`
+<div style="font-family:sans-serif;background:#f3f2ef;color:#191919;min-height:100%;">
+  <div style="background:#0a66c2;padding:10px 14px;display:flex;align-items:center;gap:6px;">
+    <span style="color:#fff;font-size:16px;font-weight:900;letter-spacing:-0.5px;">in</span>
+    <span style="color:rgba(255,255,255,0.8);font-size:11px;">LinkedIn</span>
+  </div>
+  <div style="background:#fff;margin-bottom:8px;">
+    <div style="height:72px;background:linear-gradient(135deg,#0a66c2,#004182);"></div>
+    <div style="padding:0 16px 16px;">
+      <div style="width:64px;height:64px;border-radius:50%;background:#e0e0e0;border:3px solid #fff;margin-top:-32px;display:flex;align-items:center;justify-content:center;font-size:24px;">👩‍🔬</div>
+      <h2 style="font-size:18px;font-weight:700;margin:8px 0 2px;">Dr. Rhea Kapoor</h2>
+      <p style="font-size:13px;color:#555;margin-bottom:4px;">Lead AI Research Scientist · Formerly Nexus Dynamics</p>
+      <p style="font-size:12px;color:#0a66c2;margin-bottom:10px;">Mumbai, India · 500+ connections</p>
+      <div style="background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:8px 12px;font-size:12px;color:#7a5c00;">
+        ⚠ <b>Profile visibility restricted</b> at the request of a verified organisation. Some information may be hidden.
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#fff;margin-bottom:8px;padding:14px 16px;">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px;">About</div>
+    <p style="font-size:13px;line-height:1.7;color:#333;">Principal architect of the ECHO behavioural engine at Nexus Dynamics (2017–2022). Left the organisation citing <i>"irreconcilable ethical disagreements with product direction."</i> No public posts since August 2022. Currently unreachable via professional channels.</p>
+  </div>
+
+  <div style="background:#fff;margin-bottom:8px;padding:14px 16px;">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px;">Experience</div>
+    <div style="display:flex;gap:10px;margin-bottom:12px;">
+      <div style="width:36px;height:36px;background:#e8f0fe;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🏢</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;">Lead AI Research Scientist</div>
+        <div style="font-size:12px;color:#555;">Nexus Dynamics · Full-time</div>
+        <div style="font-size:11px;color:#888;">Jan 2017 – Dec 2022 · 6 yrs</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <div style="width:36px;height:36px;background:#e8f0fe;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🎓</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;">Research Fellow — Cognitive AI Lab</div>
+        <div style="font-size:12px;color:#555;">IIT Bombay · Contract</div>
+        <div style="font-size:11px;color:#888;">2014 – 2017</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#fff;padding:14px 16px;">
+    <div style="font-size:14px;font-weight:700;margin-bottom:8px;">Activity</div>
+    <div style="font-size:13px;color:#888;font-style:italic;">No recent posts or activity. Last active Aug 2022.</div>
+    <div style="margin-top:10px;padding:10px 12px;background:#f8f8f8;border-radius:6px;font-size:12px;color:#c00;">
+      🔴 <b>Note from researcher:</b> LinkedIn support confirmed this profile was flagged for "external compliance review" on Oct 9, 2023.
+    </div>
+  </div>
+</div>`},
+
+  'destroy-node':{title:'Physically disabling a server node — TechForum',url:'techforum.io/destroy-server-node',content:`
+<div style="font-family:sans-serif;background:#fff;color:#1a1a1a;min-height:100%;">
+  <div style="background:#1a1a2e;padding:10px 14px;display:flex;align-items:center;gap:6px;">
+    <span style="color:#00b4d8;font-size:13px;font-weight:700;">TechForum</span>
+    <span style="color:#666;font-size:10px;margin-left:auto;">/r/hardware</span>
+  </div>
+  <div style="padding:14px 16px 28px;">
+    <div style="font-size:10px;color:#888;margin-bottom:6px;letter-spacing:0.5px;">HARDWARE · NETWORKING · 14 ANSWERS</div>
+    <h1 style="font-size:17px;font-weight:700;margin-bottom:14px;line-height:1.4;">Can a persistent sync process be permanently terminated by physically destroying the hardware node?</h1>
+    <div style="font-size:11px;color:#888;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f0f0f0;">Asked by <span style="color:#0079d3;">user_98cv1</span> · Oct 11, 2023 · 3,241 views</div>
+
+    <div style="background:#f0fff4;border-left:4px solid #22c55e;border-radius:0 8px 8px 0;padding:14px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <span style="background:#22c55e;color:#fff;font-size:10px;padding:2px 8px;border-radius:12px;font-weight:700;">ACCEPTED ANSWER</span>
+        <span style="font-size:11px;color:#888;">▲ 847 · by sysarch_pro</span>
+      </div>
+      <p style="font-size:14px;line-height:1.8;margin-bottom:10px;">Yes — if the node has <b>no cloud failover or distributed backup</b>, physical destruction will terminate all active sessions permanently.</p>
+      <p style="font-size:14px;line-height:1.8;margin-bottom:10px;">The process: destroy storage (SSD/flash) and processing unit simultaneously. Sequential destruction allows partial session recovery. <b>Simultaneous destruction prevents any state from being written to remote cache.</b></p>
+      <div style="background:#fff8e1;padding:10px;border-radius:6px;font-size:13px;color:#7a5c00;">⚠ <b>No remote recovery is possible</b> once both components are destroyed at the same time. This is irreversible.</div>
+    </div>
+
+    <div style="padding:12px 0;border-bottom:1px solid #f0f0f0;margin-bottom:12px;">
+      <div style="font-size:12px;color:#0079d3;font-weight:600;margin-bottom:4px;">u/neteng_anon · ▲ 203</div>
+      <p style="font-size:13px;line-height:1.7;margin:0;color:#444;">Worth noting: ECHO-class nodes are designed without cloud fallback precisely because the data they handle cannot be transmitted externally. This is also why they're physically locked in restricted locations.</p>
+    </div>
+
+    <div style="padding:12px 0;border-bottom:1px solid #f0f0f0;">
+      <div style="font-size:12px;color:#0079d3;font-weight:600;margin-bottom:4px;">u/h4rdw4re_r3al · ▲ 91</div>
+      <p style="font-size:13px;line-height:1.7;margin:0;color:#444;">I work adjacent to this industry. These nodes are about the size of a hard drive enclosure. Finding one is the hard part.</p>
+    </div>
+  </div>
+</div>`}
 };
 
 window.renderBrowserHome=function(){
     const container=document.getElementById('browser-home-content'); if(!container) return;
     showScreen('browser-app'); document.getElementById('browser-url-input').value='nx-search.com';
     const recentHtml=(browserHistory.length>0?browserHistory:[{query:'Nexus Dynamics'},{query:'Elena Torres missing'}]).slice(0,3).map(h=>`<div class="h-chip" onclick="performBrowserSearch('${h.query}')">🕒 ${h.query}</div>`).join('');
-    container.innerHTML=`<div class="nx-home"><div class="nx-logo">NX<span>Search</span></div><div class="nx-tagline">Your private search engine</div><div class="nx-search-wrap"><span style="font-size:18px;color:#9aa0a6;">🔍</span><input class="nx-search-input" type="text" placeholder="Search anything..." onkeypress="if(event.key==='Enter')performBrowserSearch(this.value)"></div><div class="nx-quick-row"><div class="nx-quick" onclick="openBrowserPage('nexus-wiki')"><div class="nx-q-icon" style="background:#e8f0fe;color:#1a73e8;">W</div><span>Wiki</span></div><div class="nx-quick" onclick="openBrowserPage('elena-news')"><div class="nx-q-icon" style="background:#fce8e6;color:#c00;">📰</div><span>News</span></div><div class="nx-quick" onclick="openBrowserPage('echo-forums')"><div class="nx-q-icon" style="background:#e6f4ea;color:#34a853;">E</div><span>ECHO</span></div><div class="nx-quick" onclick="openBrowserPage('rhea-profile')"><div class="nx-q-icon" style="background:#fef7e0;color:#f9ab00;">R</div><span>Rhea</span></div></div><div class="nx-section-title">Recent</div><div class="nx-chips">${recentHtml}</div><div class="nx-section-title" style="margin-top:20px;">Aarav's History <span onclick="showBrowserHistory()" style="float:right;color:#1a73e8;font-weight:400;font-size:13px;cursor:pointer;">See all →</span></div>${aaravHistory.slice(0,3).map(h=>`<div class="h-row" onclick="${h.pageId?`openBrowserPage('${h.pageId}')`:`performBrowserSearch('${h.query}')`}"><div class="h-icon">🕒</div><div class="h-info"><div class="h-title">${h.query}</div><div class="h-meta">${h.url}</div></div></div>`).join('')}</div>`;
+    container.innerHTML=`<div class="nx-home"><div class="nx-logo">NX<span>Search</span></div><div class="nx-tagline">Your private search engine</div><div class="nx-search-wrap"><span style="font-size:18px;color:#9aa0a6;">🔍</span><input class="nx-search-input" type="text" placeholder="Search anything..." onkeypress="if(event.key==='Enter')performBrowserSearch(this.value)"></div><div class="nx-quick-row"><div class="nx-quick" onclick="openBrowserPage('nexus-wiki')"><div class="nx-q-icon" style="background:#e8f0fe;color:#1a73e8;">W</div><span>Wiki</span></div><div class="nx-quick" onclick="openBrowserPage('elena-news')"><div class="nx-q-icon" style="background:#fce8e6;color:#c00;">📰</div><span>News</span></div><div class="nx-quick" onclick="openBrowserPage('echo-forums')"><div class="nx-q-icon" style="background:#e6f4ea;color:#34a853;">E</div><span>ECHO</span></div><div class="nx-quick" onclick="openBrowserPage('rhea-profile')"><div class="nx-q-icon" style="background:#fef7e0;color:#f9ab00;">R</div><span>Rhea</span></div></div><div class="nx-section-title">Recent</div><div class="nx-chips">${recentHtml}</div><div class="nx-section-title" style="margin-top:20px;">Aarav's History <span onclick="showBrowserHistory()" style="float:right;color:#1a73e8;font-weight:400;font-size:13px;cursor:pointer;">See all →</span></div>${aaravHistory.slice(0,6).map(h=>`<div class="h-row" onclick="${h.pageId?`openBrowserPage('${h.pageId}')`:`performBrowserSearch('${h.query}')`}"><div class="h-icon">🕒</div><div class="h-info"><div class="h-title">${h.query}</div><div class="h-meta">${h.url}</div>${h.note?`<div class="h-note">${h.note}</div>`:''}</div></div>`).join('')}</div>`;
 };
 
 window.showBrowserHistory=function(){
@@ -1648,7 +2218,7 @@ window.performBrowserSearch=function(query){
 window.openBrowserPage=function(pageId){
     const page=browserPages[pageId]; if(!page) return;
     const view=document.getElementById('browser-page-view');
-    view.innerHTML=`<div class="browser-top"><div class="browser-nav-row"><button class="browser-back-home" onclick="showScreen('home-screen')">← Home</button></div><div class="browser-addr-bar"><span class="b-lock">🔒</span><span style="font-size:13px;color:#3c4043;">${page.url}</span></div></div><div class="browser-content" style="overflow-y:auto;">${page.content}</div><div class="browser-bottom"><span class="b-btn" onclick="showScreen('search-results')">←</span><span class="b-btn" style="opacity:0.4">→</span><span class="b-btn" onclick="renderBrowserHome()">⌂</span><span class="b-btn" onclick="showBrowserHistory()">🕒</span><span class="b-btn" onclick="showScreen('home-screen')">✕</span></div>`;
+    view.innerHTML=`<div class="browser-top"><div class="browser-status-row"><span class="bsr-time time">11:29</span><span class="bsr-right"><span class="bsr-signal"><span></span><span></span><span></span><span></span></span><span class="bsr-wifi">🛜</span><span class="bsr-batt"><span class="batt-pct">18%</span> 🔋</span></span></div><div class="browser-nav-row"><button class="browser-back-home" onclick="history.length>1?showScreen('search-results'):renderBrowserHome()">‹</button><div style="flex:1;overflow:hidden;"><div style="font-size:11px;color:#3c4043;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${page.title}</div><div style="font-size:10px;color:#70757a;">${page.url}</div></div></div><div class="browser-addr-bar"><span class="b-lock">🔒</span><span style="font-size:13px;color:#3c4043;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${page.url}</span></div></div><div class="browser-content" style="overflow-y:auto;">${page.content}</div><div class="browser-bottom"><span class="b-btn" onclick="renderBrowserHome()">←</span><span class="b-btn" style="opacity:0.4">→</span><span class="b-btn" onclick="renderBrowserHome()">⌂</span><span class="b-btn" onclick="showBrowserHistory()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span class="b-btn" onclick="showScreen('home-screen')">✕</span></div>`;
     showScreen('browser-page-view');
 };
 
@@ -1685,7 +2255,11 @@ function triggerAct2Boot(){
 // act2-time and act2-time-big now carry class "time" — handled by global updateTime()
 
 window.enterAct2Home=function(){
-    if (typeof act2State !== 'undefined' && act2State.homeEntered) return;
+    if (typeof act2State !== 'undefined' && act2State.homeEntered) {
+        // Already set up (e.g. restoring from save) — just navigate home
+        showScreen('home-screen');
+        return;
+    }
     act2State.homeEntered = true;
     act2State.active=true; act2State.phase=1;
     showScreen('home-screen');
@@ -1954,22 +2528,117 @@ function startAct2Ending(){
     if (act2State._airplaneTimer) { clearTimeout(act2State._airplaneTimer); act2State._airplaneTimer = null; }
     showScreen('act2-ending');
     const fig=document.getElementById('cctv-figure'),fig2=document.getElementById('cctv-figure-2'),glitch=document.getElementById('cctv-glitch'),textEl=document.getElementById('cctv-text');
+
+    // ── CCTV sequence ──────────────────────────────────────────
     setTimeout(()=>{if(fig)fig.style.left='20%';},1000);
     [3000,4500,6000].forEach(t=>setTimeout(()=>{if(glitch){glitch.style.opacity='1';setTimeout(()=>glitch.style.opacity='0',300);}},t));
     setTimeout(()=>{if(fig2)fig2.style.opacity='1';},7000);
-    setTimeout(()=>{ if(glitch)glitch.style.opacity='1'; setTimeout(()=>{if(glitch)glitch.style.opacity='0';if(textEl){textEl.style.opacity='1';textEl.textContent='"It copies people."';}},2000); },9000);
-    setTimeout(()=>{ const ae=document.getElementById('act2-ending'); if(ae){ae.style.background='#000';const cv=ae.querySelector('.cctv-view');if(cv)cv.style.opacity='0';} },13000);
-    setTimeout(()=>{ const ff=document.getElementById('final-camera-flash'); if(ff&&globalCameraStream){ff.srcObject=globalCameraStream;ff.style.display='block';setTimeout(()=>ff.style.display='none',500);} },14000);
     setTimeout(()=>{
-        const c=allChats.find(c=>c.name==='Watcher'||c.id==='unknown');
-        if(c){c.messages.push({sender:'them',text:"You're progressing faster than he did.",isGlitch:true});renderChatList();}
+        if(glitch)glitch.style.opacity='1';
+        setTimeout(()=>{if(glitch)glitch.style.opacity='0';if(textEl){textEl.style.opacity='1';textEl.textContent='"It copies people."';}},2000);
+    },9000);
+
+    // ── Fade CCTV to black ────────────────────────────────────
+    setTimeout(()=>{
+        const ae=document.getElementById('act2-ending');
+        if(ae){
+            ae.style.background='#000';
+            const cv=ae.querySelector('.cctv-view');
+            if(cv){ cv.style.opacity='0'; }
+        }
+    },13000);
+
+    // ── Camera flash (if stream available) ────────────────────
+    setTimeout(()=>{
+        const ff=document.getElementById('final-camera-flash');
+        if(ff&&typeof globalCameraStream!=='undefined'&&globalCameraStream){ff.srcObject=globalCameraStream;ff.style.display='block';setTimeout(()=>ff.style.display='none',500);}
+    },14000);
+
+    // ── Watcher notification ──────────────────────────────────
+    setTimeout(()=>{
+        const wc=allChats.find(c=>c.name==='Watcher'||c.id==='unknown');
+        if(wc){wc.messages.push({sender:'them',text:"You're progressing faster than he did.",isGlitch:true});renderChatList();}
         createNotification('Messages','Watcher',"You're progressing faster than he did.",true,false);
-        setTimeout(()=>{
-            const ae=document.getElementById('act2-ending'); if(ae){const cv=ae.querySelector('.cctv-view');if(cv){cv.innerHTML='<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:30px;"><div style="font-family:\'Share Tech Mono\',monospace;font-size:36px;color:#ff453a;letter-spacing:8px;">END</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:14px;color:#555;letter-spacing:3px;">ACT 2 — THE WATCHERS</div></div>';cv.style.opacity='1';}}
-            // Bridge to Act 3
-            setTimeout(()=>{ if(typeof triggerAct3Boot==='function') triggerAct3Boot(); },5000);
-        },3000);
     },15000);
+
+    // ── Title card ────────────────────────────────────────────
+    // t=16 000: inject the card HTML
+    setTimeout(()=>{
+        const ae=document.getElementById('act2-ending');
+        if(!ae) return;
+        const cv=ae.querySelector('.cctv-view');
+        if(!cv) return;
+
+        cv.innerHTML=`
+            <div class="act2-end-card">
+                <div class="act2-scan-lines"></div>
+                <div class="act2-scan-sweep"></div>
+                <div class="act2-end-noise" id="end-noise"></div>
+                <div class="act2-end-content">
+                    <div class="act2-end-act-label" id="end-act-label">ACT 2</div>
+                    <div class="act2-end-act-name"  id="end-act-name">THE WATCHERS</div>
+                    <div class="act2-end-divider"   id="end-divider"></div>
+                    <div class="act2-end-word"       id="end-word">END</div>
+                </div>
+            </div>`;
+        cv.style.opacity='1';
+        cv.style.transition='none';
+
+        // Step 1 – "ACT 2" drifts in (t+300 ms)
+        setTimeout(()=>{
+            const el=document.getElementById('end-act-label');
+            if(el) el.classList.add('visible');
+        },300);
+
+        // Step 2 – "THE WATCHERS" follows (t+1 100 ms)
+        setTimeout(()=>{
+            const el=document.getElementById('end-act-name');
+            if(el) el.classList.add('visible');
+        },1100);
+
+        // Step 3 – red divider line expands (t+2 000 ms)
+        setTimeout(()=>{
+            const el=document.getElementById('end-divider');
+            if(el) el.classList.add('visible');
+            // also activate noise grain
+            const n=document.getElementById('end-noise');
+            if(n) n.classList.add('active');
+        },2000);
+
+        // Step 4 – "END" stamps in with a spring pop (t+2 800 ms)
+        setTimeout(()=>{
+            const el=document.getElementById('end-word');
+            if(el) el.classList.add('visible');
+        },2800);
+
+        // Step 5 – glitch pulses: brief, random-feeling (t+4 s, 5.2 s, 6.8 s, 8.4 s)
+        [4000,5200,6800,8400].forEach((delay,i)=>{
+            setTimeout(()=>{
+                const el=document.getElementById('end-word');
+                if(!el) return;
+                el.classList.add('glitching');
+                setTimeout(()=>el.classList.remove('glitching'), 120+(i*20));
+            },delay);
+        });
+
+        // Step 6 – "END" flickers out (t+9 500 ms)
+        setTimeout(()=>{
+            const el=document.getElementById('end-word');
+            if(el){ el.classList.remove('visible','glitching'); el.classList.add('fading'); }
+        },9500);
+
+        // Step 7 – whole card fades (t+10 200 ms)
+        setTimeout(()=>{
+            cv.style.transition='opacity 1.5s ease';
+            cv.style.opacity='0';
+        },10200);
+
+        // Step 8 – hand off to Act 3 (t+12 000 ms)
+        setTimeout(()=>{
+            if(typeof triggerAct3Boot==='function') triggerAct3Boot();
+        },12000);
+
+    },16000);
 }
 
 window.playRecoveredVideo=function(){
@@ -2414,14 +3083,24 @@ function injectMirrorSubjectsAlbum(){
     const galleryApp = document.getElementById('gallery-app');
     if(!galleryApp || document.getElementById('mirror-subjects-thumb')) return;
 
-    const thumb = document.createElement('div');
-    thumb.id = 'mirror-subjects-thumb';
-    thumb.className = 'album-thumb';
-    thumb.style.cssText = 'background:#0a0000;border:1px solid rgba(255,69,58,0.3);position:relative;cursor:pointer;';
-    thumb.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;">⚠</div><div class="album-label" style="color:#ff453a;">MIRROR_SUBJECTS</div>';
-    thumb.addEventListener('click', ()=>openMirrorSubjectsAlbum());
-    const albumGrid = galleryApp.querySelector('.album-grid');
-    if(albumGrid) albumGrid.appendChild(thumb);
+    // Inject as a new album card in the new gallery structure
+    const albumsContainer = galleryApp.querySelector('.gallery-albums-new');
+    if(!albumsContainer) return;
+    const cardWrap = document.createElement('div');
+    cardWrap.id = 'mirror-subjects-thumb';
+    cardWrap.className = 'album-card-new';
+    cardWrap.style.cssText = 'margin-top:8px;';
+    cardWrap.innerHTML = `<div class="album-thumb-wrap" style="background:#0a0000;border:1px solid rgba(255,69,58,0.4);">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;z-index:1;">⚠</div>
+        <div class="album-vignette album-vignette-red"></div>
+        <div class="album-warn-dot" style="top:8px;left:8px;right:auto;">!</div>
+    </div>
+    <div class="album-meta-new">
+        <span class="album-title-new" style="color:#ff453a;font-size:11px;font-family:'Share Tech Mono',monospace;">MIRROR_SUBJECTS</span>
+        <span class="album-count-new album-count-warn">?</span>
+    </div>`;
+    cardWrap.addEventListener('click', ()=>openMirrorSubjectsAlbum());
+    albumsContainer.appendChild(cardWrap);
 
     // Populate the subjects grid
     const grid = document.getElementById('act4-subjects-grid');
@@ -3375,6 +4054,7 @@ function restoreFromSave(save) {
     // ── Restore Act 2 ──────────────────────────────────────
     if (save.act2Active || save.currentAct >= 2) {
         act2State.active = true;
+        act2State.homeEntered = true; // prevent re-running boot injections on swipe
         act2State.act2ChoiceMade = save.act2ChoiceMade || false;
         act2State.watcherMsgCount = save.watcherMsgCount || 0;
         act2State.contactRenamed = save.contactRenamed || false;
@@ -3406,18 +4086,21 @@ function restoreFromSave(save) {
             if (chat) chat.name = 'Watcher';
         }
 
-        // Rhea contact — always create via unlockRheaContact so responses are properly wired,
-        // then overwrite messages with the saved history (fixes M5 empty-responses bug)
-        if (save.rheaUnlocked) {
-            if (!allChats.find(c => c.id === 'rhea')) unlockRheaContact();
-            if (window._savedRheaChat) {
-                const rhea = allChats.find(c => c.id === 'rhea');
-                if (rhea) {
-                    rhea.messages = window._savedRheaChat.messages;
-                    rhea.unread = window._savedRheaChat.unread;
-                }
-                window._savedRheaChat = null;
+        // Rhea contact — always create via unlockRheaContact so responses are properly wired.
+        // Rhea joins contacts at the START of Act 2 (player needs her to get the decryption key).
+        // Only gating on rheaUnlocked was wrong — she'd vanish on reload before the player got the key.
+        if (!allChats.find(c => c.id === 'rhea')) unlockRheaContact();
+        // Overwrite messages with saved history if present
+        if (window._savedRheaChat) {
+            const rhea = allChats.find(c => c.id === 'rhea');
+            if (rhea) {
+                rhea.messages = window._savedRheaChat.messages;
+                rhea.unread = window._savedRheaChat.unread;
             }
+            window._savedRheaChat = null;
+        }
+        // If the key has already been unlocked, reflect that in the Files UI
+        if (save.rheaUnlocked) {
             const statusEl = document.getElementById('echo-logs-status');
             const folderEl = document.getElementById('echo-logs-folder');
             if (statusEl) statusEl.textContent = 'Unlocked — RK_DEC_7734';

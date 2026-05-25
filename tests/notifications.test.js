@@ -85,8 +85,8 @@ describe('Auto-remove notifications', () => {
   test('autoRemove=true: notification removed after 6s timeout + rise animation', () => {
     window.createNotification('App', 'Auto', 'Removes', false, true);
     expect(getNotifCount()).toBe(1);
-    jest.advanceTimersByTime(6100); // 6s hold
-    jest.advanceTimersByTime(450);  // 380ms rise animation + buffer
+    jest.advanceTimersByTime(6100); // 6s auto-remove timer fires
+    jest.advanceTimersByTime(450);  // 320ms rise animation + buffer
     expect(getNotifCount()).toBe(0);
   });
 

@@ -173,3 +173,84 @@ describe('Ending system', () => {
     expect(() => window.triggerEnding('escape')).not.toThrow();
   });
 });
+
+// ── Mirror app — ANALYZE SUBJECT button ───────────────────
+// These tests would have caught the `total` vs `totalInteractions`
+// ReferenceError that made the button appear completely broken.
+describe('generateMirrorReport()', () => {
+  beforeEach(() => {
+    // Mirror app requires Act 3 context
+    window.act2State.active = true;
+    window.act3State.active = true;
+  });
+
+  test('runs without throwing (basic smoke test)', () => {
+    expect(() => window.generateMirrorReport()).not.toThrow();
+  });
+
+  test('populates mirror-report-content with terminal lines', () => {
+    window.generateMirrorReport();
+    jest.runAllTimers(); // flush the per-line setTimeout chain
+    const content = document.getElementById('mirror-report-content');
+    expect(content.children.length).toBeGreaterThan(0);
+  });
+
+  test('sets act3State.behaviorProfile.archetype to a non-null string', () => {
+    window.generateMirrorReport();
+    jest.runAllTimers();
+    const arch = window.act3State.behaviorProfile.archetype;
+    expect(typeof arch).toBe('string');
+    expect(arch.length).toBeGreaterThan(0);
+  });
+
+  test('sets act3State.behaviorProfile.echoTrustScore to a number 0-100', () => {
+    window.generateMirrorReport();
+    jest.runAllTimers();
+    const score = window.act3State.behaviorProfile.echoTrustScore;
+    expect(typeof score).toBe('number');
+    expect(score).toBeGreaterThanOrEqual(0);
+    expect(score).toBeLessThanOrEqual(100);
+  });
+
+  test('rendered output contains ARCHETYPE label', () => {
+    window.generateMirrorReport();
+    jest.runAllTimers();
+    const content = document.getElementById('mirror-report-content');
+    const text = content.textContent;
+    expect(text).toMatch(/ARCHETYPE:/);
+  });
+
+  test('rendered output contains ECHO_TRUST_SCORE label', () => {
+    window.generateMirrorReport();
+    jest.runAllTimers();
+    const content = document.getElementById('mirror-report-content');
+    expect(content.textContent).toMatch(/ECHO_TRUST_SCORE:/);
+  });
+
+  test('rendered output contains APP_ENGAGEMENT with a number', () => {
+    window.act3State.behaviorProfile.appCounts = { 'mirror': 3, 'gallery-app': 2 };
+    window.generateMirrorReport();
+    jest.runAllTimers();
+    const content = document.getElementById('mirror-report-content');
+    // Must show the actual interaction count, not "undefined interactions"
+    expect(content.textContent).toMatch(/APP_ENGAGEMENT:\s*\d+ interactions/);
+  });
+
+  test('INVESTIGATOR archetype triggered by heavy gallery+notes exploration', () => {
+    window.act3State.behaviorProfile.appCounts = {
+      'gallery-app': 5, 'notes-app': 5, 'messages-app': 2,
+      'mirror': 1, 'bank-app': 2, 'files-app': 2, 'settings-app': 2,
+      'map-app': 1, 'browser-app': 1,
+    };
+    window.generateMirrorReport();
+    jest.runAllTimers();
+    expect(window.act3State.behaviorProfile.archetype).toBe('INVESTIGATOR');
+  });
+
+  test('EMPATH archetype triggered by heavy messaging', () => {
+    window.act3State.behaviorProfile.appCounts = { 'messages-app': 10 };
+    window.generateMirrorReport();
+    jest.runAllTimers();
+    expect(window.act3State.behaviorProfile.archetype).toBe('EMPATH');
+  });
+});

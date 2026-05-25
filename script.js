@@ -629,12 +629,14 @@ function _addToNotifPanel(app, title, body, isGlitch, timeLabel) {
     list.insertBefore(item, list.firstChild.nextSibling || list.firstChild);
 }
 
+const MAX_NOTIFS = 5; // max banners visible at once
+
 function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
     const container = document.getElementById('notification-container');
     if (!container) return;
-    // Cap at 3 banners at a time
+    // Cap at MAX_NOTIFS banners at a time — remove oldest if over limit
     const existing = container.querySelectorAll('.notification');
-    if (existing.length >= 3) existing[0].remove();
+    if (existing.length >= MAX_NOTIFS) existing[0].remove();
 
     window.uiNotif?.();
 
@@ -648,7 +650,7 @@ function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
     notif.innerHTML = `<div class="notification-header"><span class="notification-app">${app}</span><span class="notification-time">now</span></div><div class="notification-title">${title}</div><div class="notification-body">${body}</div>`;
     container.appendChild(notif);
 
-    // Dismiss banner after 2.5s → add to panel
+    // Dismiss banner → add to panel
     const dismiss = () => {
         if (!notif.parentNode) return;
         notif.classList.add('rising');
@@ -658,10 +660,12 @@ function createNotification(app, title, body, isGlitch=false, autoRemove=true) {
             _notifHistory.unshift({ app, title, body, isGlitch, time: timeLabel });
         }, 320);
     };
-    setTimeout(dismiss, 2500);
+    // autoRemove=true: auto-dismiss after 6s. autoRemove=false: stays until tapped or pushed out.
+    let dismissTimer;
+    if (autoRemove) dismissTimer = setTimeout(dismiss, 6000);
 
     // Tap banner to dismiss immediately
-    notif.addEventListener('click', () => { clearTimeout(dismiss); dismiss(); });
+    notif.addEventListener('click', () => { if (dismissTimer) clearTimeout(dismissTimer); dismiss(); });
     // Hook ambient engine on glitch notifications
     if (isGlitch && typeof AmbientEngine !== 'undefined') AmbientEngine.sting();
 }
@@ -5271,12 +5275,14 @@ buildSaveObject = function() {
     save.act4MemoryBleed = act4State.memoryBleedLevel;
     save.act4PlayerName = act4State.playerName;
     save.act4SubjectsViewed = act4State.subjectsViewed;
-    if (act4State.active) save.currentAct = 4;
+    // Only override currentAct to 4 if Act 5 is NOT active — act5 takes priority
+    if (act4State.active && !act5State.active) save.currentAct = 4;
     return save;
 };
 
 const _origRestore = restoreFromSave;
 restoreFromSave = function(save) {
+    if (!save) return; // guard matches original; wrapper must not access save.act4Active on null
     _origRestore(save);
     if (save.act4Active || save.currentAct >= 4) {
         act4State.active = true;

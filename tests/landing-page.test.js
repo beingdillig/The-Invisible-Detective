@@ -222,6 +222,49 @@ describe('continueGame()', () => {
     window.saveGame();
     expect(() => window.continueGame()).not.toThrow();
   });
+
+  // ── Routing tests: verify the correct screen is activated ──
+
+  test('Act 1 save with preludeSeen=true routes to lock-screen', () => {
+    window._preludeComplete = true;
+    window.saveGame(); // currentAct=1, preludeSeen=true
+    window.continueGame();
+    expect(document.getElementById('lock-screen').classList.contains('active')).toBe(true);
+    expect(document.getElementById('act2-lock').classList.contains('active')).toBe(false);
+    expect(document.getElementById('prelude-screen').classList.contains('active')).toBe(false);
+  });
+
+  test('Act 2 save with preludeSeen=true routes to act2-lock', () => {
+    window.act2State.active = true;
+    window._preludeComplete = true;
+    window.saveGame(); // currentAct=2, preludeSeen=true
+    window.continueGame();
+    expect(document.getElementById('act2-lock').classList.contains('active')).toBe(true);
+    expect(document.getElementById('prelude-screen').classList.contains('active')).toBe(false);
+  });
+
+  // This is the exact bug that was filed: Act 2 player with preludeSeen=false
+  // (caused by _preludeComplete not being restored after app restart) must NOT
+  // be sent back to the prelude — currentAct >= 2 takes priority.
+  test('Act 2 save with preludeSeen=false (corrupted flag) routes to act2-lock NOT prelude', () => {
+    window.act2State.active = true;
+    window._preludeComplete = false; // simulate corrupted save
+    window.saveGame(); // currentAct=2, preludeSeen=false
+    window._preludeComplete = undefined; // simulate app restart wiping flag
+    window.continueGame();
+    expect(document.getElementById('act2-lock').classList.contains('active')).toBe(true);
+    expect(document.getElementById('prelude-screen').classList.contains('active')).toBe(false);
+  });
+
+  test('restoreFromSave sets window._preludeComplete=true when currentAct >= 2', () => {
+    window.act2State.active = true;
+    window._preludeComplete = false;
+    window.saveGame(); // saves preludeSeen=false but currentAct=2
+    window._preludeComplete = undefined; // simulate restart
+    const save = window.gameLoadFn();
+    window.restoreFromSave(save);
+    expect(window._preludeComplete).toBe(true);
+  });
 });
 
 // ── DOM elements exist ─────────────────────────────────────

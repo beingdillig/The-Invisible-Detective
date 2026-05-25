@@ -13,10 +13,21 @@ const { buildDOMFixture } = require('./dom-fixture');
 
 // ── Browser API mocks ─────────────────────────────────────
 function installMocks() {
+  const mockAudioParam = () => ({
+    value: 0,
+    setValueAtTime: jest.fn(),
+    linearRampToValueAtTime: jest.fn(),
+    exponentialRampToValueAtTime: jest.fn(),
+    setTargetAtTime: jest.fn(),
+    cancelScheduledValues: jest.fn(),
+  });
   const mockNode = () => ({
     connect: jest.fn(), start: jest.fn(), stop: jest.fn(),
-    type: '', frequency: { value: 0 },
-    gain: { setValueAtTime: jest.fn(), linearRampToValueAtTime: jest.fn() },
+    type: '',
+    frequency: mockAudioParam(),
+    gain: mockAudioParam(),
+    Q: mockAudioParam(),
+    detune: mockAudioParam(),
   });
   class MockAudioContext {
     get currentTime() { return 0; }
@@ -91,7 +102,7 @@ function transformScript(src) {
   if(typeof lsGetProgress==='function')     window.lsGetProgress     = lsGetProgress;
   if(typeof lsPopulateLanding==='function') window.lsPopulateLanding = lsPopulateLanding;
   if(typeof openChat==='function')          window.openChat          = openChat;
-  window.MAX_NOTIFS = 5; // constant defined inside createNotification — hoist to window
+  if(typeof MAX_NOTIFS!=='undefined')       window.MAX_NOTIFS        = MAX_NOTIFS;
 })();`;
 
   return src;

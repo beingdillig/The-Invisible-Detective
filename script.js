@@ -483,10 +483,12 @@ window.continueGame = function() {
     }
     // onLoad() at the bottom of this file already ran restoreFromSave() at page-load time,
     // so all in-memory state is already set up. Just navigate to the right screen.
-    if (!save.preludeSeen) {
-        startPrelude();
-    } else if (save.currentAct >= 2) {
+    // currentAct >= 2 implies the prelude was completed — check it first so a corrupted
+    // preludeSeen flag cannot send an Act-2+ player back to the prelude.
+    if (save.currentAct >= 2) {
         showScreen('act2-lock');
+    } else if (!save.preludeSeen) {
+        startPrelude();
     } else {
         showScreen('lock-screen');
     }
@@ -4308,8 +4310,14 @@ function restoreFromSave(save) {
         });
     }
 
-    // ── Skip prelude if already seen ──────────────────────
-    if (save.preludeSeen) {
+    // ── Skip prelude if already seen (or player is in Act 2+, which implies it was seen) ──
+    const preludeEffectivelySeen = save.preludeSeen || save.currentAct >= 2;
+    if (preludeEffectivelySeen) {
+        // Restore the in-memory flag so that the NEXT saveGame() call doesn't clobber preludeSeen.
+        // Without this, every app restart resets _preludeComplete to undefined, and the next auto-save
+        // writes preludeSeen: false — causing the prelude to fire on the session after that.
+        window._preludeComplete = true;
+
         const preludeScreen = document.getElementById('prelude-screen');
         if (preludeScreen) {
             preludeScreen.classList.remove('active');

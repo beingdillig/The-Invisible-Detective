@@ -4,6 +4,9 @@ import android.content.IntentSender;
 import android.os.Bundle;
 import android.view.View;
 
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+
 import com.getcapacitor.BridgeActivity;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.play.core.appupdate.AppUpdateInfo;
@@ -25,13 +28,14 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        checkForUpdate();
+        setupUpdateManager();
+        observeLifecycle();
     }
 
-    private void checkForUpdate() {
+    private void setupUpdateManager() {
         appUpdateManager = AppUpdateManagerFactory.create(this);
 
-        // When download finishes in the background, show a "Restart" prompt
+        // When the flexible download finishes silently, show a "Restart" prompt
         installStateUpdatedListener = state -> {
             if (state.installStatus() == InstallStatus.DOWNLOADED) {
                 showRestartSnackbar();
@@ -39,6 +43,7 @@ public class MainActivity extends BridgeActivity {
         };
         appUpdateManager.registerListener(installStateUpdatedListener);
 
+        // Check if an update is available and start the flexible download
         appUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
                     && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
@@ -50,14 +55,41 @@ public class MainActivity extends BridgeActivity {
                             UPDATE_REQUEST_CODE
                     );
                 } catch (IntentSender.SendIntentException e) {
-                    // Couldn't launch update flow — app still works fine
+                    // Update flow couldn't launch — app works fine without it
                     e.printStackTrace();
                 }
             }
         });
     }
 
-    /** Snackbar shown after the update finishes downloading silently in the background. */
+    /**
+     * Use Jetpack Lifecycle observer instead of overriding onResume/onDestroy
+     * (BridgeActivity marks those final).
+     */
+    private void observeLifecycle() {
+        getLifecycle().addObserver(new DefaultLifecycleObserver() {
+            @Override
+            public void onResume(LifecycleOwner owner) {
+                // If the user returned after a background download completed, re-prompt
+                if (appUpdateManager == null) return;
+                appUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
+                    if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED) {
+                        showRestartSnackbar();
+                    }
+                });
+            }
+
+            @Override
+            public void onDestroy(LifecycleOwner owner) {
+                // Clean up listener to prevent memory leak
+                if (appUpdateManager != null && installStateUpdatedListener != null) {
+                    appUpdateManager.unregisterListener(installStateUpdatedListener);
+                }
+            }
+        });
+    }
+
+    /** Snackbar shown after the update finishes downloading in the background. */
     private void showRestartSnackbar() {
         View rootView = findViewById(android.R.id.content);
         Snackbar.make(rootView, "Update ready — restart to apply", Snackbar.LENGTH_INDEFINITE)
@@ -68,25 +100,5 @@ public class MainActivity extends BridgeActivity {
                 })
                 .setActionTextColor(0xFFFFFFFF)
                 .show();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // If the user backgrounded the app mid-download and returned, re-check
-        if (appUpdateManager == null) return;
-        appUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
-            if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED) {
-                showRestartSnackbar();
-            }
-        });
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (appUpdateManager != null && installStateUpdatedListener != null) {
-            appUpdateManager.unregisterListener(installStateUpdatedListener);
-        }
     }
 }

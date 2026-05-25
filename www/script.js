@@ -3002,12 +3002,12 @@ window.generateMirrorReport=function(){
     if(rheaChat && rheaChat.messages.filter(m=>m.sender==='me').length>0) score+=10;
     const echoChat=allChats.find(c=>c.id==='echo_direct');
     if(echoChat && echoChat.messages.filter(m=>m.sender==='me').length>0) score+=10;
-    score += Math.min(total*2, 20); // up to 20 pts from app engagement
+    score += Math.min(totalInteractions*2, 20); // up to 20 pts from app engagement
     score = Math.min(score, 100);
     act3State.behaviorProfile.echoTrustScore = score;
 
     el.innerHTML='';
-    const lines=[{t:'dim',v:'MIRROR BEHAVIORAL RECONSTRUCTION v2.0'},{t:'dim',v:'══════════════════════════════════════'},{t:'',v:`SUBJECT: ${act3State.playerName||'CURRENT_USER'}`},{t:'dim',v:'──────────────────────────────────────'},{t:'warn',v:`ARCHETYPE: ${arch}`},{t:'',v:`APP_ENGAGEMENT: ${total} interactions`},{t:'warn',v:`ECHO_TRUST_SCORE: ${score}/100`},{t:'dim',v:'──────────────────────────────────────'},{t:'dim',v:'BEHAVIORAL OBSERVATIONS:'},{t:'',v:'"Subject exhibits compulsive pattern validation."'},{t:'',v:'"Emotional responsiveness increasing."'},{t:'warn',v:'"Subject demonstrates attachment to Rhea Kapoor."'},{t:'dim',v:'──────────────────────────────────────'},{t:'warn',v:'Compatibility approaching threshold.'}];
+    const lines=[{t:'dim',v:'MIRROR BEHAVIORAL RECONSTRUCTION v2.0'},{t:'dim',v:'══════════════════════════════════════'},{t:'',v:`SUBJECT: ${act3State.playerName||'CURRENT_USER'}`},{t:'dim',v:'──────────────────────────────────────'},{t:'warn',v:`ARCHETYPE: ${arch}`},{t:'',v:`APP_ENGAGEMENT: ${totalInteractions} interactions`},{t:'warn',v:`ECHO_TRUST_SCORE: ${score}/100`},{t:'dim',v:'──────────────────────────────────────'},{t:'dim',v:'BEHAVIORAL OBSERVATIONS:'},{t:'',v:'"Subject exhibits compulsive pattern validation."'},{t:'',v:'"Emotional responsiveness increasing."'},{t:'warn',v:'"Subject demonstrates attachment to Rhea Kapoor."'},{t:'dim',v:'──────────────────────────────────────'},{t:'warn',v:'Compatibility approaching threshold.'}];
     lines.forEach((l,i)=>setTimeout(()=>{ const d=document.createElement('div');d.className=`terminal-line ${l.t}`;d.textContent=l.v;el.appendChild(d);el.scrollTop=el.scrollHeight; },i*200));
 };
 

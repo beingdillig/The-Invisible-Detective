@@ -265,6 +265,64 @@ describe('continueGame()', () => {
     window.restoreFromSave(save);
     expect(window._preludeComplete).toBe(true);
   });
+
+  test('Act 3 save (currentAct=3) does not route to prelude-screen', () => {
+    window.act2State.active = true;
+    window.act3State.active = true;
+    window._preludeComplete = true;
+    window.saveGame();
+    window.continueGame();
+    expect(document.getElementById('prelude-screen').classList.contains('active')).toBe(false);
+  });
+
+  test('Act 3 save (currentAct=3) does not route to lock-screen', () => {
+    window.act2State.active = true;
+    window.act3State.active = true;
+    window._preludeComplete = true;
+    window.saveGame();
+    window.continueGame();
+    // currentAct >= 2 → always routes to act2-lock, not lock-screen
+    expect(document.getElementById('lock-screen').classList.contains('active')).toBe(false);
+  });
+
+  test('Act 4 save (currentAct=4) does not route to prelude-screen', () => {
+    window.act2State.active = true;
+    window.act3State.active = true;
+    window.act4State.active = true;
+    window._preludeComplete = true;
+    window.saveGame();
+    window.continueGame();
+    expect(document.getElementById('prelude-screen').classList.contains('active')).toBe(false);
+  });
+
+  test('lsGetProgress with currentAct=3: completedActs=2, hasSave=true', () => {
+    window.act2State.active = true;
+    window.act3State.active = true;
+    window.saveGame();
+    const r = window.lsGetProgress();
+    expect(r.hasSave).toBe(true);
+    expect(r.currentAct).toBe(3);
+    expect(r.completedActs).toBe(2);
+  });
+
+  test('lsGetProgress with currentAct=4: completedActs=3', () => {
+    window.act2State.active = true;
+    window.act3State.active = true;
+    window.act4State.active = true;
+    window.saveGame();
+    const r = window.lsGetProgress();
+    expect(r.completedActs).toBe(3);
+  });
+
+  test('lsGetProgress with currentAct=5: completedActs=4', () => {
+    window.act2State.active = true;
+    window.act3State.active = true;
+    window.act4State.active = true;
+    window.act5State.active = true;
+    window.saveGame();
+    const r = window.lsGetProgress();
+    expect(r.completedActs).toBe(4);
+  });
 });
 
 // ── DOM elements exist ─────────────────────────────────────

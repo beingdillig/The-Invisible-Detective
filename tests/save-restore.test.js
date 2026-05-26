@@ -262,3 +262,155 @@ describe('lsGetProgress()', () => {
     }
   });
 });
+
+// ── buildSaveObject — Act 4 & 5 fields ────────────────────
+describe('buildSaveObject() — Act 4 & 5 fields', () => {
+  test('Act 4 active: save.act4Active = true', () => {
+    window.act2State.active = true;
+    window.act3State.active = true;
+    window.act4State.active = true;
+    const save = window.buildSaveObject();
+    expect(save.act4Active).toBe(true);
+  });
+
+  test('Act 4 active: save.act4ChoiceMade reflects state', () => {
+    window.act4State.active = true;
+    window.act4State.choiceMade = true;
+    const save = window.buildSaveObject();
+    expect(save.act4ChoiceMade).toBe(true);
+  });
+
+  test('Act 4 + 5 both active: currentAct = 5 (act5 takes priority over act4)', () => {
+    window.act2State.active = true;
+    window.act3State.active = true;
+    window.act4State.active = true;
+    window.act5State.active = true;
+    const save = window.buildSaveObject();
+    expect(save.currentAct).toBe(5);
+  });
+
+  test('Act 4 playerName saved: act4State.playerName stored in save', () => {
+    window.act4State.active = true;
+    window.act4State.playerName = 'TestName';
+    const save = window.buildSaveObject();
+    // act4PlayerName is the field written by the act4 save wrapper
+    expect(save.act4PlayerName).toBe('TestName');
+  });
+
+  test('Behavior profile archetype saved: set EMPATH, verify save.archetype', () => {
+    window.act3State.active = true;
+    window.act3State.behaviorProfile.archetype = 'EMPATH';
+    const save = window.buildSaveObject();
+    expect(save.archetype).toBe('EMPATH');
+  });
+
+  test('echoTrustScore saved: set 75, verify save.echoTrustScore = 75', () => {
+    window.act3State.active = true;
+    window.act3State.behaviorProfile.echoTrustScore = 75;
+    const save = window.buildSaveObject();
+    expect(save.echoTrustScore).toBe(75);
+  });
+
+  test('cameraGallery field exists and is an array', () => {
+    const save = window.buildSaveObject();
+    expect(Array.isArray(save.cameraGallery)).toBe(true);
+  });
+
+  test('restoreFromSave with Act 4 save: act4State.active = true', () => {
+    const save = {
+      version: 1, timestamp: Date.now(),
+      currentAct: 4, act2Active: true, act3Active: true, act4Active: true,
+      act5Active: false, preludeSeen: true,
+      playerName: 'Aarav', archetype: 'INVESTIGATOR', echoTrustScore: 30,
+      rheaUnlocked: true, echoLogsRead: true, warehouseSolved: true,
+      contactRenamed: false, watcherMsgCount: 0, airplaneActive: false,
+      act2ChoiceMade: true, hiddenUnlocked: false, chats: [],
+      extraNoteCount: 0, cameraGallery: [], galleryMutations: 0,
+      finalSyncUnlocked: true, echoConversationStarted: false,
+      aaravReconstructUnlocked: false, loopIncidentTriggered: false,
+      rhea_glitching: false, act3SyncPath: null,
+      act4SyncPath: 'merge', act4HomeEntered: false,
+      act4ReportRead: false, act4KabirFinalSent: false,
+      act4EchoMaskDropped: false, act4FinalChoiceReached: false,
+      act4ChoiceMade: false,
+    };
+    window.restoreFromSave(save);
+    jest.runAllTimers();
+    expect(window.act4State.active).toBe(true);
+  });
+
+  test('restoreFromSave with Act 4 save: act4State.choiceMade restored', () => {
+    const save = {
+      version: 1, timestamp: Date.now(),
+      currentAct: 4, act2Active: true, act3Active: true, act4Active: true,
+      act5Active: false, preludeSeen: true,
+      playerName: 'Aarav', archetype: 'INVESTIGATOR', echoTrustScore: 30,
+      rheaUnlocked: true, echoLogsRead: true, warehouseSolved: true,
+      contactRenamed: false, watcherMsgCount: 0, airplaneActive: false,
+      act2ChoiceMade: true, hiddenUnlocked: false, chats: [],
+      extraNoteCount: 0, cameraGallery: [], galleryMutations: 0,
+      finalSyncUnlocked: true, echoConversationStarted: false,
+      aaravReconstructUnlocked: false, loopIncidentTriggered: false,
+      rhea_glitching: false, act3SyncPath: null,
+      act4SyncPath: 'merge', act4HomeEntered: false,
+      act4ReportRead: false, act4KabirFinalSent: false,
+      act4EchoMaskDropped: false, act4FinalChoiceReached: false,
+      act4ChoiceMade: true,
+    };
+    window.restoreFromSave(save);
+    jest.runAllTimers();
+    expect(window.act4State.choiceMade).toBe(true);
+  });
+
+  test('restoreFromSave with Act 5 save: act5State.active = true', () => {
+    const save = {
+      version: 1, timestamp: Date.now(),
+      currentAct: 5, act2Active: true, act3Active: true, act4Active: true,
+      act5Active: true, preludeSeen: true,
+      playerName: 'Aarav', archetype: 'EMPATH', echoTrustScore: 60,
+      rheaUnlocked: true, echoLogsRead: true, warehouseSolved: true,
+      contactRenamed: false, watcherMsgCount: 0, airplaneActive: false,
+      act2ChoiceMade: true, hiddenUnlocked: false, chats: [],
+      extraNoteCount: 0, cameraGallery: [], galleryMutations: 0,
+      finalSyncUnlocked: true, echoConversationStarted: false,
+      aaravReconstructUnlocked: false, loopIncidentTriggered: false,
+      rhea_glitching: false, act3SyncPath: null,
+      act4SyncPath: 'merge', act4HomeEntered: false,
+      act4ReportRead: false, act4KabirFinalSent: false,
+      act4EchoMaskDropped: false, act4FinalChoiceReached: false,
+      act4ChoiceMade: true,
+      act5ImpossibleCallDone: true, act5PlayerPhotoDone: false,
+      act5ChatGlitchDone: false, act5EchoEmotionalDone: false,
+      act5ServerNarrativeDone: false, act5FinalChoiceShown: false,
+    };
+    window.restoreFromSave(save);
+    jest.runAllTimers();
+    expect(window.act5State.active).toBe(true);
+  });
+
+  test('restoreFromSave with Act 5 save: act5State.impossibleCallDone restored', () => {
+    const save = {
+      version: 1, timestamp: Date.now(),
+      currentAct: 5, act2Active: true, act3Active: true, act4Active: true,
+      act5Active: true, preludeSeen: true,
+      playerName: 'Aarav', archetype: 'EMPATH', echoTrustScore: 60,
+      rheaUnlocked: true, echoLogsRead: true, warehouseSolved: true,
+      contactRenamed: false, watcherMsgCount: 0, airplaneActive: false,
+      act2ChoiceMade: true, hiddenUnlocked: false, chats: [],
+      extraNoteCount: 0, cameraGallery: [], galleryMutations: 0,
+      finalSyncUnlocked: true, echoConversationStarted: false,
+      aaravReconstructUnlocked: false, loopIncidentTriggered: false,
+      rhea_glitching: false, act3SyncPath: null,
+      act4SyncPath: 'merge', act4HomeEntered: false,
+      act4ReportRead: false, act4KabirFinalSent: false,
+      act4EchoMaskDropped: false, act4FinalChoiceReached: false,
+      act4ChoiceMade: false,
+      act5ImpossibleCallDone: true, act5PlayerPhotoDone: false,
+      act5ChatGlitchDone: false, act5EchoEmotionalDone: false,
+      act5ServerNarrativeDone: false, act5FinalChoiceShown: false,
+    };
+    window.restoreFromSave(save);
+    jest.runAllTimers();
+    expect(window.act5State.impossibleCallDone).toBe(true);
+  });
+});

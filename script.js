@@ -3803,7 +3803,10 @@ window.proceedToFinalChoice = function(){
     const score = act3State.behaviorProfile.echoTrustScore || 0;
     const textEl = document.getElementById('act4-choice-text');
     if(textEl){
-        textEl.innerHTML=`"${name}.<br><br>You understand what this is now.<br><br>Not a server. Not a company.<br><br>A pattern you have been part of<br>since the moment you found the phone.<br><br>ECHO_TRUST_SCORE: ${score}/100<br><br>Three options remain.<br><br>Choose."`;
+        // Sanitize player-controlled name before inserting into innerHTML (XSS prevention)
+        const safeName = name.replace(/[<>&"']/g, c =>
+            ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+        textEl.innerHTML=`"${safeName}.<br><br>You understand what this is now.<br><br>Not a server. Not a company.<br><br>A pattern you have been part of<br>since the moment you found the phone.<br><br>ECHO_TRUST_SCORE: ${score}/100<br><br>Three options remain.<br><br>Choose."`;
     }
     saveGame();
 };

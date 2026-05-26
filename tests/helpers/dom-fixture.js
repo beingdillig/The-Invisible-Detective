@@ -33,7 +33,9 @@ function buildDOMFixture() {
       <div class="dot"></div><div class="dot"></div>
     </div>
   </div>
-  <div id="home-screen" class="screen"></div>
+  <div id="home-screen" class="screen">
+    <div class="app-grid"></div>
+  </div>
   <div id="black-screen" class="screen"></div>
 
   <!-- Case File -->
@@ -242,6 +244,26 @@ function buildDOMFixture() {
   </div>
   <div id="act4-subjects-album" class="screen"><div id="act4-subjects-grid"></div></div>
   <div id="act4-final-choice" class="screen"><div id="act4-choice-text"></div></div>
+
+  <!-- Notification panel -->
+  <div id="notif-panel">
+    <div id="notif-panel-list">
+      <div id="notif-panel-empty">No notifications</div>
+    </div>
+  </div>
+
+  <!-- Echo Root modal (Act 4) -->
+  <div id="echo-root-modal">
+    <input id="echo-root-code" type="text" value="">
+    <div id="echo-root-error" style="display:none">ACCESS DENIED</div>
+    <div id="echo-root-code-hint" style="display:none">Hint: check the subject who merged willingly.</div>
+  </div>
+  <div id="echo-root" class="screen">
+    <div id="echo-root-messages"></div>
+    <div id="echo-root-input" style="display:none">
+      <div id="echo-root-choices"></div>
+    </div>
+  </div>
 
   <!-- Act 5 screens -->
   <div id="act5-call-overlay" class="screen">

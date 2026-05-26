@@ -35,6 +35,41 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      # ── 3a. Unit tests — gate: build blocked if any test fails ───────
+      - name: Run unit tests
+        run: npm run test:ci
+
+      # ── 3b. Coverage gate — fail if below 80% threshold ─────────────
+      - name: Check coverage thresholds
+        run: npm run test:coverage:ci
+
+      # ── 3c. Prepare www for E2E (needed before Playwright can serve) ─
+      - name: Prepare www for E2E
+        run: |
+          mkdir -p www
+          cp index.html script.js style.css www/
+          [ -f act1.txt ]             && cp act1.txt www/             || true
+          [ -f game_description.txt ] && cp game_description.txt www/ || true
+
+      # ── 3d. Playwright E2E — gate ─────────────────────────────────────
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e:ci
+
+      # ── 3e. Upload test artifacts (always — needed for failure triage) ─
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-vc${{ steps.vc.outputs.version_code }}
+          path: |
+            playwright-report/
+            coverage/
+            test-results/
+          retention-days: 14
+
       # ── 4. Copy web assets into www/ ─────────────────────────────────
       - name: Prepare web assets
         run: |

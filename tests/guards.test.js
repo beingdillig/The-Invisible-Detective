@@ -254,3 +254,43 @@ describe('generateMirrorReport()', () => {
     expect(window.act3State.behaviorProfile.archetype).toBe('EMPATH');
   });
 });
+
+// ── Act 3 & 4 function gates ───────────────────────────────
+describe('Act 3 & 4 function gates', () => {
+  beforeEach(() => {
+    window.act2State.active = true;
+    window.act3State.active = true;
+  });
+
+  test('triggerFinalSync does not crash', () => {
+    expect(() => window.triggerFinalSync()).not.toThrow();
+  });
+
+  test('refuseFinalSync does not crash', () => {
+    expect(() => window.refuseFinalSync()).not.toThrow();
+  });
+
+  test('openMirrorApp increments act3State.behaviorProfile.appCounts["mirror"]', () => {
+    const before = window.act3State.behaviorProfile.appCounts['mirror'] || 0;
+    window.openMirrorApp();
+    jest.runAllTimers();
+    expect(window.act3State.behaviorProfile.appCounts['mirror']).toBe(before + 1);
+  });
+
+  test('openAudioAnalyzer activates audio-analyzer screen', () => {
+    window.openAudioAnalyzer();
+    expect(document.getElementById('audio-analyzer').classList.contains('active')).toBe(true);
+  });
+
+  test('triggerAct3Boot sets act3State.active = true', () => {
+    // Reset to a state where act3 is not yet active but act2 is
+    window.act3State.active = false;
+    window.triggerAct3Boot();
+    expect(window.act3State.active).toBe(true);
+  });
+
+  test('triggerAct4Boot does not crash', () => {
+    // act4State may or may not set active depending on guard state
+    expect(() => window.triggerAct4Boot()).not.toThrow();
+  });
+});

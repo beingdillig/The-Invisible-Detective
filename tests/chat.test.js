@@ -191,4 +191,81 @@ describe('sendChatMessage()', () => {
     const myMsg = chat.messages.find(m => m.sender === 'me' && m.text === 'test123');
     expect(myMsg).toBeDefined();
   });
+
+  test('sendChatMessage with "unknown" contact and known greeting "hello" schedules reply', () => {
+    if (typeof window.openChat !== 'function') return;
+    window.openChat('unknown');
+    const chat = window.allChats.find(c => c.id === 'unknown');
+    const before = chat.messages.length;
+    const input = document.getElementById('chat-input-field');
+    input.value = 'hello';
+    window.sendChatMessage();
+    // Message was sent (appears immediately); reply is scheduled via setTimeout
+    expect(chat.messages.length).toBeGreaterThan(before);
+    // After timers fire, a reply should appear too
+    jest.runAllTimers();
+    expect(chat.messages.length).toBeGreaterThan(before + 1);
+  });
+
+  test('sendChatMessage with "rhea" contact: some response expected after unlock', () => {
+    if (typeof window.openChat !== 'function') return;
+    // Rhea is unlocked at the start of Act 2 — ensure she exists
+    if (typeof window.unlockRheaContact === 'function') {
+      window.unlockRheaContact();
+    }
+    const rheaChat = window.allChats.find(c => c.id === 'rhea');
+    if (!rheaChat) return; // Rhea not available in this game state — skip
+    window.openChat('rhea');
+    const before = rheaChat.messages.length;
+    const input = document.getElementById('chat-input-field');
+    input.value = 'hi';
+    window.sendChatMessage();
+    expect(rheaChat.messages.length).toBeGreaterThan(before);
+    jest.runAllTimers();
+    // A reply must also have been added
+    expect(rheaChat.messages.length).toBeGreaterThan(before + 1);
+  });
+
+  test('Chat typing indicator appears after sendChatMessage', () => {
+    if (typeof window.openChat !== 'function') return;
+    window.openChat('mom');
+    const input = document.getElementById('chat-input-field');
+    input.value = 'typing test';
+    window.sendChatMessage();
+    // showTypingIndicator() is called synchronously inside sendChatMessage
+    const indicator = document.getElementById('typing-indicator');
+    // The indicator element should exist and be visible (display not none, or has class)
+    if (indicator) {
+      expect(indicator.style.display).not.toBe('none');
+    } else {
+      // Indicator may be injected dynamically — check chat-messages for a .typing-indicator child
+      const chatMessages = document.getElementById('chat-messages');
+      const dynamicIndicator = chatMessages?.querySelector('.typing-indicator');
+      expect(dynamicIndicator).not.toBeNull();
+    }
+  });
+
+  test('Typing indicator disappears after jest.runAllTimers()', () => {
+    if (typeof window.openChat !== 'function') return;
+    window.openChat('kabir');
+    const input = document.getElementById('chat-input-field');
+    input.value = 'another test';
+    window.sendChatMessage();
+    jest.runAllTimers();
+    // After reply fires, removeTypingIndicator() should have been called
+    const indicator = document.getElementById('typing-indicator');
+    if (indicator) {
+      // Either hidden or removed from DOM
+      const isHidden = indicator.style.display === 'none' ||
+                       !document.body.contains(indicator);
+      expect(isHidden).toBe(true);
+    } else {
+      // Dynamically created indicator should be removed (querySelector returns null, not undefined)
+      const chatMessages = document.getElementById('chat-messages');
+      const dynamicIndicator = chatMessages
+        ? chatMessages.querySelector('.typing-indicator')
+        : null;
+      expect(dynamicIndicator).toBeNull();
+    }
+  });
 });

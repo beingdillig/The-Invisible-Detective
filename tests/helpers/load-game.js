@@ -11,6 +11,23 @@ const fs   = require('fs');
 const path = require('path');
 const { buildDOMFixture } = require('./dom-fixture');
 
+// Istanbul instrumentation for coverage measurement.
+// Jest's coverage system only instruments files loaded via its module resolver.
+// Since script.js is loaded via new Function() (to keep const/let scoped),
+// we manually run the Istanbul instrumenter so coverage counters are embedded
+// in the code. Jest's babel provider reads global.__coverage__ for the results.
+let _instrumenter = null;
+function getInstrumenter() {
+  if (_instrumenter !== null) return _instrumenter;
+  try {
+    const { createInstrumenter } = require('istanbul-lib-instrument');
+    _instrumenter = createInstrumenter({ esModules: false, compact: false, produceSourceMap: false });
+  } catch (e) {
+    _instrumenter = false; // unavailable — mark as disabled
+  }
+  return _instrumenter;
+}
+
 // ── Browser API mocks ─────────────────────────────────────
 function installMocks() {
   const mockAudioParam = () => ({
@@ -119,8 +136,21 @@ function loadGame() {
   let src = fs.readFileSync(scriptPath, 'utf8');
   src = transformScript(src);
 
+  // When Jest runs with --coverage, instrument the source so coverage counters
+  // are embedded. The instrumented code writes to global.__coverage__ which
+  // Jest's babel provider reads back. This is the only way to get real coverage
+  // from code that's eval'd via new Function() rather than require().
+  const isCoverage = typeof global.__coverage__ !== 'undefined' ||
+                     process.env.JEST_WORKER_ID !== undefined && process.argv.some(a => a.includes('--coverage'));
+  if (isCoverage) {
+    const inst = getInstrumenter();
+    if (inst) {
+      try { src = inst.instrumentSync(src, scriptPath); } catch (e) { /* parse errors — skip */ }
+    }
+  }
+
   try {
-    // new Function keeps variables in a private scope; window.xxx assignments land on global
+    // new Function keeps const/let scoped; window.xxx assignments land on global
     // eslint-disable-next-line no-new-func
     const fn = new Function(src);
     fn.call(window);

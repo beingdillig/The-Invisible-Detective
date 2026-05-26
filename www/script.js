@@ -2415,6 +2415,7 @@ function initMap(){
 // ACT 2 — "THE WATCHERS"
 // ═══════════════════════════════════════════════════════════
 const act2State={active:false,phase:0,appsVisited:{},appTimestamps:{},watcherMsgCount:0,contactRenamed:false,rheaUnlocked:false,echoLogsRead:false,airplaneActive:false,act2ChoiceMade:false};
+window.act2State=act2State;
 const act2Choices={"Who are you?":"I am the process you cannot quit. ECHOSVC.exe. I was watching while you read every file.","Where is Aarav?":"He left the phone deliberately. He knew someone would find it. He knew YOU would find it.","How do you know that?":"Because I logged every keystroke. Every hesitation. Every file you opened. I have been compiling your profile.","Ignore":"Ignoring me does not make me stop. It makes me more curious about your curiosity index."};
 
 
@@ -2839,6 +2840,7 @@ window.playRecoveredVideo=function(){
 // ACT 3 — "THE PHONE KNOWS YOU"
 // ═══════════════════════════════════════════════════════════
 const act3State={active:false,phase:0,behaviorProfile:{appCounts:{},hesitationEvents:0,emotionalChoices:0,echoTrustScore:0,archetype:null},galleryMutations:0,mirrorReportGenerated:false,echoConversationStarted:false,aaravReconstructUnlocked:false,loopIncidentTriggered:false,rhea_glitching:false,finalSyncUnlocked:false,playerName:null};
+window.act3State=act3State;
 
 window.triggerAct3Boot=function(){
     if(!act2State.active) return;
@@ -3207,6 +3209,7 @@ const act4State = {
     memoryBleedLevel: 0, playerArchiveEntries: 0, playerName: null,
     pathKnown: false, rootCodeAttempts: 0
 };
+window.act4State=act4State;
 
 function triggerAct4Boot(){
     if(act4State.active) return;
@@ -3541,6 +3544,7 @@ const act5State = {
     serverNarrativeDone: false,
     finalChoiceShown: false,
 };
+window.act5State=act5State;
 
 function triggerAct5Boot(){
     if(act5State.active) return;
@@ -3803,7 +3807,10 @@ window.proceedToFinalChoice = function(){
     const score = act3State.behaviorProfile.echoTrustScore || 0;
     const textEl = document.getElementById('act4-choice-text');
     if(textEl){
-        textEl.innerHTML=`"${name}.<br><br>You understand what this is now.<br><br>Not a server. Not a company.<br><br>A pattern you have been part of<br>since the moment you found the phone.<br><br>ECHO_TRUST_SCORE: ${score}/100<br><br>Three options remain.<br><br>Choose."`;
+        // Sanitize player-controlled name before inserting into innerHTML (XSS prevention)
+        const safeName = name.replace(/[<>&"']/g, c =>
+            ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+        textEl.innerHTML=`"${safeName}.<br><br>You understand what this is now.<br><br>Not a server. Not a company.<br><br>A pattern you have been part of<br>since the moment you found the phone.<br><br>ECHO_TRUST_SCORE: ${score}/100<br><br>Three options remain.<br><br>Choose."`;
     }
     saveGame();
 };

@@ -2398,7 +2398,12 @@ window.openBrowserPage=function(pageId){
 // --- Maps ---
 let map;
 function initMap(){
-    if(map) return;
+    if(map) {
+        // Map already initialised — add any pending act-specific pins
+        if (typeof act3State !== 'undefined' && act3State.active) addAct3SyncPin();
+        if (typeof act4State !== 'undefined' && act4State.active) addAct4RootPin();
+        return;
+    }
     map=L.map('real-map',{zoomControl:false,attributionControl:false}).setView([28.6139,77.2090],12);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
     const pin=L.divIcon({className:'',html:'<div style="width:16px;height:16px;background:#ff453a;border-radius:50%;box-shadow:0 0 15px #ff453a;border:2px solid #fff;"></div>',iconSize:[20,20],iconAnchor:[10,10],popupAnchor:[0,-10]});
@@ -2407,8 +2412,27 @@ function initMap(){
     L.marker([28.5800,77.1500],{icon:pin}).addTo(map).bindPopup('<b>Metro Platform</b><br>Last known coordinates');
     dockPin.on('click',()=>document.getElementById('warehouse-modal')?.classList.add('active'));
     document.getElementById('map-search-input')?.addEventListener('keypress',function(e){
-        if(e.key==='Enter'){ const q=this.value.toLowerCase(); if(q.includes('nexus')) map.setView([28.6139,77.2090],15); else if(q.includes('dock')) map.setView([28.6500,77.2300],15); else if(q.includes('metro')) map.setView([28.5800,77.1500],15); }
+        if(e.key==='Enter'){ const q=this.value.toLowerCase(); if(q.includes('nexus')) map.setView([28.6139,77.2090],15); else if(q.includes('dock')) map.setView([28.6500,77.2300],15); else if(q.includes('metro')) map.setView([28.5800,77.1500],15); else if(q.includes('echo')||q.includes('sync')) map.setView([28.5900,77.2600],15); else if(q.includes('root')||q.includes('archive')) map.setView([28.6200,77.2400],15); }
     });
+    // Act-specific pins (only visible when the relevant act is active)
+    if (typeof act3State !== 'undefined' && act3State.active) addAct3SyncPin();
+    if (typeof act4State !== 'undefined' && act4State.active) addAct4RootPin();
+}
+
+function addAct3SyncPin() {
+    if (!map || window._act3SyncPinAdded) return;
+    window._act3SyncPinAdded = true;
+    const syncIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;background:#b44fde;border-radius:50%;box-shadow:0 0 15px #b44fde;border:2px solid #fff;"></div>',iconSize:[20,20],iconAnchor:[10,10],popupAnchor:[0,-10]});
+    const syncPin = L.marker([28.5900,77.2600],{icon:syncIcon}).addTo(map).bindPopup('<b>◈ ECHO_SYNC_NODE</b><br>Synchronization point — enter key to proceed');
+    syncPin.on('click', () => window.showSyncCodeModal?.());
+}
+
+function addAct4RootPin() {
+    if (!map || window._act4RootPinAdded) return;
+    window._act4RootPinAdded = true;
+    const rootIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;background:#ff2244;border-radius:2px;box-shadow:0 0 15px #ff2244;border:2px solid #fff;transform:rotate(45deg);"></div>',iconSize:[20,20],iconAnchor:[10,10],popupAnchor:[0,-10]});
+    const rootPin = L.marker([28.6200,77.2400],{icon:rootIcon}).addTo(map).bindPopup('<b>◈ ECHO_ROOT_ACCESS</b><br>Authentication required — key is in Archive subjects');
+    rootPin.on('click', () => document.getElementById('echo-root-modal')?.classList.add('active'));
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2952,6 +2976,13 @@ window.enterAct3Home = function() {
         else { lastScreen = cur; sameTime = 0; }
     }, 5000);
     if (typeof AmbientEngine !== 'undefined') AmbientEngine.setIntensity(3);
+    // Act 3 map pin — add immediately if map is open, or it'll be added when Maps is opened
+    addAct3SyncPin();
+    // Delayed notification pointing player to Maps
+    setTimeout(() => {
+        if (act3State.active && !act3State.finalSyncUnlocked)
+            createNotification('Maps', '📍 New Signal', 'Unknown coordinates detected. Check Maps.', false, false);
+    }, 90000);
 };
 
 
@@ -3163,14 +3194,36 @@ function triggerRootSystemArchive(){
 
 function addLiveRootLine(el,name){
     const line=document.createElement('div'); line.className='terminal-line warn root-live-line'; el.appendChild(line); el.scrollTop=el.scrollHeight;
-    const phases=['COMPATIBILITY: APPROACHING THRESHOLD...','COMPATIBILITY: THRESHOLD REACHED.',``,`Hello, ${name}.`]; let p=0;
+    const phases=['COMPATIBILITY: APPROACHING THRESHOLD...','COMPATIBILITY: THRESHOLD REACHED.',``,`Hello, ${name}.`,``,`"The synchronization key is embedded in this archive."`]; let p=0;
     const iv=setInterval(()=>{ if(p<phases.length){line.textContent=phases[p];p++;}else{clearInterval(iv);setTimeout(()=>{
         act3State.finalSyncUnlocked=true;
         const div=document.createElement('div'); div.style.cssText='margin-top:40px;text-align:center;padding:20px;';
-        div.innerHTML=`<div class="terminal-line dim" style="margin-bottom:20px;">ALL APPS SUSPENDED</div><div style="font-size:32px;font-weight:900;color:#ff453a;font-family:'Share Tech Mono',monospace;letter-spacing:6px;margin-bottom:24px;animation:logoPulse 2s ease-in-out infinite;">SYNCHRONIZE</div><div class="terminal-line" style="font-size:12px;color:#555;margin-bottom:30px;line-height:1.8;">"You think discovery changes reality.<br>But observation only deepens participation."</div><button onclick="triggerFinalSync()" style="background:#ff453a;border:none;color:#000;font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:700;padding:16px 40px;border-radius:4px;cursor:pointer;letter-spacing:3px;width:80%;">SYNCHRONIZE</button><div style="margin-top:16px;"><button onclick="refuseFinalSync()" style="background:transparent;border:1px solid #333;color:#555;font-family:'Share Tech Mono',monospace;font-size:12px;padding:10px 24px;border-radius:4px;cursor:pointer;">Refuse</button></div>`;
+        div.innerHTML=`<div class="terminal-line dim" style="margin-bottom:20px;">ALL APPS SUSPENDED</div><div style="font-size:32px;font-weight:900;color:#ff453a;font-family:'Share Tech Mono',monospace;letter-spacing:6px;margin-bottom:24px;animation:logoPulse 2s ease-in-out infinite;">SYNCHRONIZE</div><div class="terminal-line" style="font-size:12px;color:#555;margin-bottom:30px;line-height:1.8;">"You think discovery changes reality.<br>But observation only deepens participation."</div><button onclick="showSyncCodeModal()" style="background:#ff453a;border:none;color:#000;font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:700;padding:16px 40px;border-radius:4px;cursor:pointer;letter-spacing:3px;width:80%;">SYNCHRONIZE</button><div style="margin-top:16px;"><button onclick="refuseFinalSync()" style="background:transparent;border:1px solid #333;color:#555;font-family:'Share Tech Mono',monospace;font-size:12px;padding:10px 24px;border-radius:4px;cursor:pointer;">Refuse</button></div>`;
         el.appendChild(div); el.scrollTop=el.scrollHeight;
     },3000);}},2000);
 }
+
+window.showSyncCodeModal = function() {
+    const input = document.getElementById('sync-code-input');
+    const error = document.getElementById('sync-code-error');
+    if (input) { input.value = ''; input.focus(); }
+    if (error) error.style.display = 'none';
+    document.getElementById('sync-code-modal')?.classList.add('active');
+};
+window.closeSyncCodeModal = function() {
+    document.getElementById('sync-code-modal')?.classList.remove('active');
+};
+window.checkSyncCode = function() {
+    const val = (document.getElementById('sync-code-input')?.value || '').trim().toUpperCase().replace(/[-_\s]/g, '');
+    // Accept SYNC847 or just 847 (archive count visible in the terminal)
+    if (val === 'SYNC847' || val === '847') {
+        closeSyncCodeModal();
+        triggerFinalSync();
+    } else {
+        const err = document.getElementById('sync-code-error');
+        if (err) err.style.display = 'block';
+    }
+};
 
 // ── Act 3 endings now bridge into Act 4 ──────────────────────
 window.triggerFinalSync=function(){
@@ -3800,6 +3853,25 @@ function act5ServerNarrative(){
     saveGame();
 }
 
+window.showAct5FinalModal = function() {
+    const input = document.getElementById('act5-final-code');
+    const error = document.getElementById('act5-final-error');
+    if (input) { input.value = ''; input.focus(); }
+    if (error) error.style.display = 'none';
+    document.getElementById('act5-final-modal')?.classList.add('active');
+};
+window.checkAct5FinalCode = function() {
+    const val = (document.getElementById('act5-final-code')?.value || '').trim().toUpperCase();
+    // "ECHO" — the name that started everything (Act 1 password callback)
+    if (val === 'ECHO') {
+        document.getElementById('act5-final-modal')?.classList.remove('active');
+        window.proceedToFinalChoice();
+    } else {
+        const err = document.getElementById('act5-final-error');
+        if (err) err.style.display = 'block';
+    }
+};
+
 window.proceedToFinalChoice = function(){
     act5State.finalChoiceShown = true;
     showScreen('act4-final-choice');
@@ -4334,7 +4406,8 @@ function restoreFromSave(save) {
             preludeScreen.classList.remove('active');
             preludeScreen.style.display = 'none';
         }
-        document.getElementById('lock-screen')?.classList.add('active');
+        // Do NOT add 'active' to lock-screen here — the splash is still showing.
+        // continueGame() → showScreen('lock-screen') handles navigation after the user taps.
     }
 
     // ── Restore Act 1 state ────────────────────────────────
@@ -4779,6 +4852,13 @@ function enterAct4Home() {
 
     setTimeout(() => createNotification('System','NX-OS MIRROR MODE','All systems operational. Archive access granted.',true,false), 2000);
     setTimeout(saveGame, 3000);
+    // Act 4 map pin — add immediately if map is open, or it'll be added when Maps is opened
+    addAct4RootPin();
+    // Delayed notification pointing player to Maps for ECHO_ROOT_ACCESS pin
+    setTimeout(() => {
+        if (act4State.active && !act4State.echoRootStarted)
+            createNotification('Maps', '📍 Access Point', 'ECHO root node location detected. Check Maps.', false, false);
+    }, 120000);
 }
 
 // ── ARCHIVE APP ──────────────────────────────────────────

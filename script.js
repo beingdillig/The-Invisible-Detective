@@ -246,11 +246,20 @@ window._startBatteryDrain = startBatteryDrain;
 })();
 
 // --- Screen Management ---
+// Screens that render full-viewport (outside the phone frame)
+const FULLSCREEN_SCREENS = new Set(['splash-screen', 'title-screen', 'prelude-screen']);
+
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active','active-under'); });
     const target = document.getElementById(id);
     if (!target) return;
     target.classList.add('active');
+    // Toggle phone-frame visibility
+    if (FULLSCREEN_SCREENS.has(id)) {
+        document.body.classList.add('fullscreen-mode');
+    } else {
+        document.body.classList.remove('fullscreen-mode');
+    }
     if (target.classList.contains('app-screen') && id !== 'weather-app' && id !== 'maps-app' && id !== 'camera-app') {
         document.getElementById('home-screen')?.classList.add('active-under');
     }
@@ -474,6 +483,13 @@ function startPrelude() {
         if (typeof preludeLines !== 'undefined') runPrelude();
     }
 }
+
+window.exitPhoneToLanding = function() {
+    window.stopAmbient?.(0.5);
+    window.uiBack?.();
+    showScreen('title-screen');
+    lsPopulateLanding();
+};
 
 window.continueGame = function() {
     const save = loadGame();

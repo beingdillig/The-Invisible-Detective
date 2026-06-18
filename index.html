@@ -9,10 +9,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
-<body>
+<body class="fullscreen-mode">
 
     <!-- Ambient desk surface behind phone -->
     <div class="ambient-surface"></div>
+
+    <!-- Back-to-landing nav (visible only while inside Aarav's phone) -->
+    <div id="phone-nav">
+        <button id="phone-nav-btn" onclick="exitPhoneToLanding()">&#8592; Home</button>
+    </div>
 
     <!-- Physical phone shell -->
     <div class="phone-shell">
